@@ -1,18 +1,16 @@
 import express from "express";
 import {authService} from "../service/auth_service.js";
 import {userService} from "../service/user_service.js";
+import {rotationService} from "../service/rotation_service.js";
 import {seasonService} from "../service/season_service.js";
 
 const router = express.Router();
-
-router.get('/', async (req, res) => {
-
-});
 
 router.get('/:id', async (req, res) => {
     const id = req.params.id;
 
     const user = await userService.selectUser(id);
+    await authService.insertUsers(id);
     if (user === null || new Date(new Date(user.USER_LST_CK).getTime() + (5 * 60 * 1000)) < new Date()) {
         await authService.insertUsers(id);
     }
@@ -31,20 +29,37 @@ router.get('/:id/profile', async (req, res) => {
     });
 });
 
-router.get('/:id/battles/:type/summary', async (req, res) => {
+router.get('/:id/battles/summary', async (req, res) => {
     const id = req.params.id;
-    const type = req.params.type;
+    const {type} = req.query;
+    const {mode} = req.query;
 
     const season = await seasonService.selectRecentSeason();
-    const [userBattles, userBrawlers, userDailyBattles] = await userService.selectUserBattleRecordSummary(id, type, season);
-
-    console.log(userDailyBattles)
+    const [userBattles, userBrawlers] = await userService.selectUserBattleRecords(id, type, mode, season);
+    const rotationTL = await rotationService.selectRotationTL();
+    const rotationPL = await rotationService.selectRotationPL();
 
     res.send({
         userBattles: userBattles,
         userBrawlers: userBrawlers,
-        userDailyBattles: userDailyBattles,
+        rotationTL: rotationTL,
+        rotationPL: rotationPL,
         season: season
+    });
+});
+
+router.get('/:id/battles/logs', async (req, res) => {
+    const id = req.params.id;
+    const {type} = req.query;
+    const {mode} = req.query;
+
+    const season = await seasonService.selectRecentSeason();
+    const [userRecentBattles, userRecentBrawlers, userBattles] = await userService.selectUserBattles(id, type, mode, season);
+
+    res.send({
+        userRecentBattles: userRecentBattles,
+        userRecentBrawlers: userRecentBrawlers,
+        userBattles: userBattles
     });
 });
 

@@ -10,12 +10,17 @@ export default (sequelize, DataTypes) => {
             primaryKey: true,
             allowNull: false,
         },
-        MAP_MD_CD: {
-            type: DataTypes.TINYINT,
+        MAP_ID: {
+            type: DataTypes.CHAR(8),
             primaryKey: true,
             allowNull: false,
         },
         MATCH_TYP: {
+            type: DataTypes.TINYINT,
+            primaryKey: true,
+            allowNull: false,
+        },
+        MATCH_GRD: {
             type: DataTypes.TINYINT,
             primaryKey: true,
             allowNull: false,
@@ -48,6 +53,10 @@ export default (sequelize, DataTypes) => {
 
         UserBrawlerBattles.belongsTo(models.Brawlers, {
             foreignKey: "BRAWLER_ID", sourceKey: "BRAWLER_ID"
+        });
+
+        UserBrawlerBattles.belongsTo(models.Maps, {
+            foreignKey: "MAP_ID", sourceKey: "MAP_ID"
         });
     };
 

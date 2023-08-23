@@ -24,7 +24,7 @@ export default (sequelize, DataTypes) => {
     });
 
     Maps.associate = models => {
-        Maps.hasMany(models.MapRotation, {
+        Maps.hasOne(models.MapRotation, {
             foreignKey: "MAP_ID", sourceKey: "MAP_ID"
         });
 
@@ -33,6 +33,10 @@ export default (sequelize, DataTypes) => {
         });
 
         Maps.hasMany(models.UserBattles, {
+            foreignKey: "MAP_ID", sourceKey: "MAP_ID"
+        });
+
+        Maps.hasMany(models.UserBrawlerBattles, {
             foreignKey: "MAP_ID", sourceKey: "MAP_ID"
         });
 

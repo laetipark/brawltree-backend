@@ -9,6 +9,30 @@ import {
 } from "../models/index.js";
 import {col, fn, literal, Op, where} from "sequelize";
 
+import config from "../config/config.js";
+
+const getQuery = (type, mode) => {
+    const match = {};
+
+    if (type === "7") {
+        match.MATCH_TYP = {
+            [Op.in]: config.typeList
+        }
+    } else {
+        match.MATCH_TYP = type
+    }
+
+    if (mode === "all") {
+        match.MATCH_MD = {
+            [Op.in]: config.modeList
+        }
+    } else {
+        match.MATCH_MD = mode
+    }
+
+    return match;
+};
+
 export class userService {
     static selectUser = async id =>
         await Users.findOne({
@@ -39,36 +63,17 @@ export class userService {
             }
         });
 
-    static selectUserBattleRecordSummary = async (id, type, season) => {
-        const query = {
-            MATCH_TYP: {},
-            MAP_MD_CD: {}
-        };
-
-        if (type === "all") {
-            query.MATCH_TYP = {
-                [Op.in]: [0, 2, 3]
-            };
-            query.MAP_MD_CD = {
-                [Op.in]: [0, 1, 2, 3]
-            };
-        } else if (type === "trophyTriple") {
-            query.MATCH_TYP = 0;
-            query.MAP_MD_CD = 3;
-        } else if (type === "trophyShowdown") {
-            query.MATCH_TYP = 0;
-            query.MAP_MD_CD = {
-                [Op.in]: [1, 2]
-            };
-        } else if (type === "powerSolo") {
-            query.MATCH_TYP = 2;
-            query.MAP_MD_CD = 3;
-        } else if (type === "powerTeam") {
-            query.MATCH_TYP = 3;
-            query.MAP_MD_CD = 3;
-        }
+    static selectUserBattleRecords = async (id, type, mode, season) => {
+        const query = getQuery(type, mode);
 
         const userBattles = [await UserBattles.findAll({
+            include: [
+                {
+                    model: Maps,
+                    required: true,
+                    attributes: []
+                },
+            ],
             attributes: [
                 [fn("DATE_FORMAT", col("MATCH_DT"), "%Y-%m-%d"), "day"],
                 [fn("COUNT", "MATCH_DT"), "value"],
@@ -80,10 +85,17 @@ export class userService {
                     [Op.between]: [season.SEASON_BGN_DT, season.SEASON_END_DT]
                 },
                 MATCH_TYP: query.MATCH_TYP,
-                MAP_MD_CD: query.MAP_MD_CD
+                $where1: where(col("Map.MAP_MD"), query.MATCH_MD)
             },
             group: [fn("DATE_FORMAT", col("MATCH_DT"), "%Y-%m-%d")],
         }), await UserBattles.findAll({
+            include: [
+                {
+                    model: Maps,
+                    required: true,
+                    attributes: []
+                },
+            ],
             attributes: [
                 [fn("DATE_FORMAT", col("MATCH_DT"), "%Y-%m-%d"), "day"],
                 [fn("SUM", literal("CASE WHEN MATCH_TYP NOT IN (4, 5) THEN MATCH_CHG ELSE 0 END")), "value"],
@@ -95,39 +107,20 @@ export class userService {
                     [Op.between]: [season.SEASON_BGN_DT, season.SEASON_END_DT]
                 },
                 MATCH_TYP: query.MATCH_TYP,
-                MAP_MD_CD: query.MAP_MD_CD
+                $where1: where(col("Map.MAP_MD"), query.MATCH_MD)
             },
             group: [fn("DATE_FORMAT", col("MATCH_DT"), "%Y-%m-%d")],
         })];
-
-        const userDailyBattles = await UserBattles.findAll({
-            include: [
-                {
-                    model: Maps,
-                    required: true,
-                    attributes: []
-                },
-            ],
-            attributes: ["MATCH_DT", "BRAWLER_ID", "MATCH_TYP",
-                "MATCH_RNK", "MATCH_RES", [col("Map.MAP_MD"), "MAP_MD"]],
-            where: {
-                USER_id: `#${id}`,
-                PLAYER_ID: `#${id}`,
-                MATCH_DT: {
-                    [Op.between]: [season.SEASON_BGN_DT, season.SEASON_END_DT]
-                },
-                MATCH_TYP: query.MATCH_TYP,
-                MAP_MD_CD: query.MAP_MD_CD,
-            },
-            order: [["MATCH_DT", "DESC"]],
-            limit: 20,
-            raw: true
-        });
 
         const userBrawlers = await UserBrawlerBattles.findAll({
             include: [
                 {
                     model: Brawlers,
+                    required: true,
+                    attributes: []
+                },
+                {
+                    model: Maps,
                     required: true,
                     attributes: []
                 },
@@ -148,7 +141,7 @@ export class userService {
             where: {
                 USER_ID: `#${id}`,
                 MATCH_TYP: query.MATCH_TYP,
-                MAP_MD_CD: query.MAP_MD_CD,
+                $where1: where(col("Map.MAP_MD"), query.MATCH_MD)
             },
             order: [["MATCH_CNT", "DESC"]],
             group: ["BRAWLER_ID", "BRAWLER_NM"],
@@ -156,7 +149,135 @@ export class userService {
             raw: true
         });
 
-        return [userBattles, userBrawlers, userDailyBattles];
+        return [userBattles, userBrawlers];
+    };
+
+    static selectUserBattles = async (id, type, mode, season) => {
+        const query = getQuery(type, mode);
+
+        const userRecentBattles = await UserBattles.findAll({
+            include: [
+                {
+                    model: Brawlers,
+                    required: true,
+                    attributes: []
+                },
+                {
+                    model: Maps,
+                    required: true,
+                    attributes: []
+                },
+            ],
+            attributes: ["MATCH_DT", "MATCH_DUR", "BRAWLER_ID", "MATCH_RES", "MAP_ID",
+                [col("Map.MAP_MD"), "MAP_MD"],[col("Map.MAP_NM"), "MAP_NM"],
+                [col("Brawler.BRAWLER_NM"), "BRAWLER_NM"],
+                [col("Brawler.BRAWLER_CL"), "BRAWLER_CL"]],
+            where: {
+                USER_ID: `#${id}`,
+                PLAYER_ID: `#${id}`,
+                MATCH_DT: {
+                    [Op.between]: [season.SEASON_BGN_DT, season.SEASON_END_DT]
+                },
+                MATCH_TYP: query.MATCH_TYP,
+                $where1: where(col("Map.MAP_MD"), query.MATCH_MD)
+            },
+            order: [["MATCH_DT", "DESC"]],
+            limit: 30,
+            raw: true
+        });
+
+        const counter = {};
+
+        userRecentBattles.forEach(function (item) {
+            const brawlerID = item.BRAWLER_ID;
+            const matchRes = item.MATCH_RES;
+
+            if (!counter[brawlerID]) {
+                counter[brawlerID] = {};
+            }
+
+            if (!counter[brawlerID][matchRes]) {
+                counter[brawlerID][matchRes] = 1;
+            } else {
+                counter[brawlerID][matchRes]++;
+            }
+        });
+
+        const brawlerCounts = Object.keys(counter).map(brawlerID => {
+            const matchResultCounts = counter[brawlerID];
+            const brawlerName = userRecentBattles.find(brawler => brawler.BRAWLER_ID === brawlerID).BRAWLER_NM;
+
+            return {
+                BRAWLER_ID: brawlerID,
+                BRAWLER_NM: brawlerName,
+                MATCH_CNT_RES: matchResultCounts,
+                MATCH_CNT_TOT: Object.values(matchResultCounts).reduce((sum, count) => sum + count, 0)
+            };
+        });
+
+        const userRecentBrawlers = brawlerCounts.sort((a, b) => b.MATCH_CNT_TOT - a.MATCH_CNT_TOT).slice(0, 6);
+
+        const userBattles = await UserBattles.findAll({
+            include: [
+                {
+                    model: Maps,
+                    required: true,
+                    attributes: []
+                },
+            ],
+            attributes:
+                ["USER_ID",
+                    [fn(
+                        "JSON_OBJECT",
+                        "MATCH_DT", col("MATCH_DT"),
+                        "MATCH_DUR", col("MATCH_DUR"),
+                        "MATCH_TYP", col("MATCH_TYP"),
+                        "MAP_MD_CD", col("MAP_MD_CD"),
+                        "MATCH_GRD", col("MATCH_GRD"),
+                        "MATCH_CHG", col("MATCH_CHG")
+                    ), "BATTLE_INFO"
+                    ],
+                    [fn(
+                        "JSON_ARRAYAGG",
+                        fn(
+                            "JSON_OBJECT",
+                            "PLAYER_ID", col("PLAYER_ID"),
+                            "PLAYER_NM", col("PLAYER_NM"),
+                            "PLAYER_TM_NO", col("PLAYER_TM_NO"),
+                            "BRAWLER_ID", col("BRAWLER_ID"),
+                            "BRAWLER_PWR", col("BRAWLER_PWR"),
+                            "BRAWLER_TRP", col("BRAWLER_TRP"),
+                            "MATCH_RNK", col("MATCH_RNK"),
+                            "MATCH_RES", col("MATCH_RES"),
+                            "MATCH_CHG", col("MATCH_CHG")
+                        )
+                    ), "BATTLE_PLAYERS"
+                    ]
+                ],
+            group: ["USER_ID", "MATCH_DT",
+                "MATCH_DUR", "MATCH_TYP",
+                "MAP_MD_CD", "MATCH_GRD", "MATCH_CHG"],
+            where: {
+                USER_ID: `#${id}`,
+                MATCH_DT: {
+                    [Op.between]: [season.SEASON_BGN_DT, season.SEASON_END_DT]
+                },
+                MATCH_TYP: query.MATCH_TYP,
+                $where1: where(col("Map.MAP_MD"), query.MATCH_MD)
+            },
+            order: [["MATCH_DT", "DESC"]],
+            limit: 30,
+            raw: true
+        }).then(result => {
+            return result.map(battle => {
+                return {
+                    BATTLE_INFO: Object.assign(battle.BATTLE_INFO, userRecentBattles.find(item => (battle.BATTLE_INFO.MATCH_DT).slice(0, 19) === item.MATCH_DT)),
+                    BATTLE_PLAYERS: battle.BATTLE_PLAYERS
+                }
+            });
+        });
+
+        return [userRecentBattles, userRecentBrawlers, userBattles];
     };
 
     static selectUserBrawlers = async (userID) => {

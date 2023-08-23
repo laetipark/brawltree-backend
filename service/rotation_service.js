@@ -6,18 +6,6 @@ import rotationPL from "../public/json/power_league.json" assert {type: "json"};
 import config from '../config/config.js';
 import {dateService} from "./date_service.js";
 
-const groupBy = (data, key) =>
-    data.reduce(function (carry, el) {
-        const group = el[key];
-
-        if (carry[group] === undefined) {
-            carry[group] = [];
-        }
-
-        carry[group].push(el);
-        return carry;
-    }, {});
-
 export class rotationService {
 
     /** 전투 맵 데이터베이스에 업데이트 및 추가 */
@@ -48,7 +36,7 @@ export class rotationService {
         });
 
         const powerLeagueMaps = rotationPL
-            .filter(item => item.map_id !== undefined)
+            .filter(item => item.MAP_ID !== undefined)
             .map(item => item.MAP_ID);
 
         trophyLeagueMaps.map(async map => {
@@ -73,7 +61,7 @@ export class rotationService {
                 MAP_ID: {
                     [Op.notIn]: trophyLeagueMaps
                 }
-            }
+            },
         });
 
         await MapRotation.update({
@@ -167,8 +155,8 @@ export class rotationService {
         });
     };
 
-    static selectRotationTL = async () =>
-        await Events.findAll({
+    static selectRotationTL = async () => {
+        const rotationTL = await MapRotation.findAll({
             include: [
                 {
                     model: Maps,
@@ -176,27 +164,40 @@ export class rotationService {
                     attributes: []
                 }
             ],
-            attributes: [
-                "ROTATION_SLT_NO",
-                "ROTATION_BGN_DT",
-                "ROTATION_END_DT",
-                "MAP_ID",
-                "MAP_MDFS",
-                [col("InfoMap.MAP_MD"), "MAP_MD"],
-                [col("InfoMap.MAP_NM"), "MAP_NM"]],
-            order: [["ROTATION_BGN_DT", "DESC"]],
+            attributes: [[col("Map.MAP_MD"), "MAP_MD"]],
+            group: ["MAP_MD"],
+            where: {
+                ROTATION_TL_BOOL: true
+            },
             raw: true
-        }).then(result => {
-            return groupBy(result, "ROTATION_SLT_NO");
         });
 
-    static selectRotationPL = async () =>
-        await Maps.findAll({
-            attributes: ["MAP_ID", "MAP_MD", "MAP_NM"],
+        const modeList = rotationTL.map(map => map.MAP_MD);
+        const filterModeList = config.modeList.filter(mode => modeList.includes(mode));
+        filterModeList.unshift("all");
+        return filterModeList;
+    };
+
+    static selectRotationPL = async () => {
+        const rotationPL = await MapRotation.findAll({
+            include: [
+                {
+                    model: Maps,
+                    required: true,
+                    attributes: []
+                }
+            ],
+            attributes: [[col("Map.MAP_MD"), "MAP_MD"]],
+            group: ["MAP_MD"],
             where: {
                 ROTATION_PL_BOOL: true
-            }
-        }).then(result => {
-            return groupBy(result, "MAP_MD");
+            },
+            raw: true
         });
+
+        const modeList = rotationPL.map(map => map.MAP_MD);
+        const filterModeList = config.modeList.filter(mode => modeList.includes(mode));
+        filterModeList.unshift("all");
+        return filterModeList;
+    };
 }

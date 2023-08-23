@@ -219,10 +219,10 @@ export class authService {
 
     static UpdateUserBattles = async (userID) => {
         const battles = await UserBattles.findAll({
-            attributes: ["BRAWLER_ID", "MAP_MD_CD", "MATCH_TYP",
+            attributes: ["BRAWLER_ID", "MAP_ID", "MATCH_TYP", "MATCH_GRD",
                 [fn("COUNT", literal("*")), "MATCH_CNT"],
                 [fn("COUNT", literal("CASE WHEN MATCH_RES = -1 THEN 1 ELSE NULL END")), "MATCH_VIC_CNT"],
-                [fn("COUNT", literal("CASE WHEN MATCH_RES = 1 THEN 1 ELSE NULL END")), "MATCH_DEF_CNT"]
+                [fn("COUNT", literal("CASE WHEN MATCH_RES = 1 THEN 1 ELSE NULL END")), "MATCH_DEF_CNT"],
             ],
             where: {
                 USER_ID: `#${userID}`,
@@ -231,7 +231,7 @@ export class authService {
                     [Op.in]: [0, 2, 3]
                 }
             },
-            group: ["BRAWLER_ID", "MAP_MD_CD", "MATCH_TYP"],
+            group: ["BRAWLER_ID", "MAP_ID", "MATCH_TYP", "MATCH_GRD"],
             raw: true
         });
 
@@ -239,8 +239,9 @@ export class authService {
             await UserBrawlerBattles.upsert({
                 USER_ID: `#${userID}`,
                 BRAWLER_ID: battle.BRAWLER_ID,
-                MAP_MD_CD: battle.MAP_MD_CD,
+                MAP_ID: battle.MAP_ID,
                 MATCH_TYP: battle.MATCH_TYP,
+                MATCH_GRD: battle.MATCH_GRD,
                 MATCH_CNT: battle.MATCH_CNT,
                 MATCH_VIC_CNT: battle.MATCH_VIC_CNT,
                 MATCH_DEF_CNT: battle.MATCH_DEF_CNT
