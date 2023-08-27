@@ -65,7 +65,8 @@ router.get('/:id/battles/logs', async (req, res) => {
 
 router.get('/:id/brawlers', async (req, res) => {
     const id = req.params.id;
-    const [userBrawlers, userBrawlerItems, userBrawlerGraphs] = await userService.selectUserBrawlers(id);
+    const season = await seasonService.selectRecentSeason();
+    const [userBrawlers, userBrawlerItems, userBrawlerGraphs] = await userService.selectUserBrawlers(id,season);
 
     res.send({
         userBrawlers: userBrawlers,

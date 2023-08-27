@@ -1,4 +1,4 @@
-import {Maps, MapRotation, Seasons} from "../models/index.js";
+import {Seasons} from "../models/index.js";
 
 export class seasonService {
     static checkSeason = async () => {
@@ -72,16 +72,6 @@ export class seasonService {
     static selectRecentSeason = async () => {
         return await Seasons.findOne({
             order: [['SEASON_BGN_DT', 'DESC']]
-        });
-    };
-
-    /** 두 번째로 최근 시즌 불러오기 */
-    static selectSecondRecentSeason = async () => {
-        return await Seasons.findAll({
-            limit: 2,
-            order: [["SEASON_BGN_DT", "DESC"]],
-        }).then(result => {
-            return result[1];
         });
     };
 }

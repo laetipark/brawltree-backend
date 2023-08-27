@@ -168,8 +168,8 @@ export class userService {
                     attributes: []
                 },
             ],
-            attributes: ["MATCH_DT", "MATCH_DUR", "BRAWLER_ID", "MATCH_RES", "MAP_ID",
-                [col("Map.MAP_MD"), "MAP_MD"],[col("Map.MAP_NM"), "MAP_NM"],
+            attributes: ["MATCH_DT", "MATCH_DUR", "BRAWLER_ID", "MATCH_RES", "MAP_ID", "PLAYER_SP_BOOL",
+                [col("Map.MAP_MD"), "MAP_MD"], [col("Map.MAP_NM"), "MAP_NM"],
                 [col("Brawler.BRAWLER_NM"), "BRAWLER_NM"],
                 [col("Brawler.BRAWLER_CL"), "BRAWLER_CL"]],
             where: {
@@ -229,6 +229,7 @@ export class userService {
                 ["USER_ID",
                     [fn(
                         "JSON_OBJECT",
+                        "USER_ID", col("USER_ID"),
                         "MATCH_DT", col("MATCH_DT"),
                         "MATCH_DUR", col("MATCH_DUR"),
                         "MATCH_TYP", col("MATCH_TYP"),
@@ -249,9 +250,9 @@ export class userService {
                             "BRAWLER_TRP", col("BRAWLER_TRP"),
                             "MATCH_RNK", col("MATCH_RNK"),
                             "MATCH_RES", col("MATCH_RES"),
-                            "MATCH_CHG", col("MATCH_CHG")
+                            "PLAYER_SP_BOOL", col("PLAYER_SP_BOOL")
                         )
-                    ), "BATTLE_PLAYERS"
+                    ), "    BATTLE_PLAYERS"
                     ]
                 ],
             group: ["USER_ID", "MATCH_DT",
@@ -280,7 +281,7 @@ export class userService {
         return [userRecentBattles, userRecentBrawlers, userBattles];
     };
 
-    static selectUserBrawlers = async (userID) => {
+    static selectUserBrawlers = async (userID, season) => {
         const brawlers = await Brawlers.findAll({
             include: [
                 {
@@ -353,8 +354,37 @@ export class userService {
             where: {
                 USER_ID: `#${userID}`,
                 PLAYER_ID: `#${userID}`,
+                MATCH_DT: {
+                    [Op.between]: [season.SEASON_BGN_DT, season.SEASON_END_DT]
+                },
                 MATCH_TYP: 0,
-            }
+            },
+            raw: true
+        }).then(result => {
+            const graphJSON = result.map(item => {
+                return {
+                    BRAWLER_ID: item.BRAWLER_ID,
+                    x: item.x,
+                    y: parseInt(item.y) + brawlers.find(brawler => brawler.BRAWLER_ID === item.BRAWLER_ID).TROPHY_BGN
+                };
+            });
+
+            brawlers.map(item => {
+                graphJSON.push({
+                    BRAWLER_ID: item.BRAWLER_ID,
+                    x: season.SEASON_BGN_DT.slice(5, 8) + (parseInt(season.SEASON_BGN_DT.slice(8, 10)) - 1).toString().padStart(2, '0'),
+                    y: brawlers.find(brawler => brawler.BRAWLER_ID === item.BRAWLER_ID).TROPHY_BGN
+                })
+            });
+
+            return graphJSON.sort((a, b) => {
+                if (a.BRAWLER_ID === b.BRAWLER_ID) {
+                    if (a.x < b.x) return -1;
+                    if (a.x > b.x) return 1;
+                    return 0;
+                }
+                return a.BRAWLER_ID - b.BRAWLER_ID;
+            });
         });
 
         return [brawlers, items, graph];
