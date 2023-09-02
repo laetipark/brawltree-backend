@@ -1,8 +1,8 @@
 import express from "express";
-import {authService} from "../service/auth_service.js";
-import {userService} from "../service/user_service.js";
-import {rotationService} from "../service/rotation_service.js";
-import {seasonService} from "../service/season_service.js";
+import {authService} from "../services/auth_service.js";
+import {userService} from "../services/user_service.js";
+import {rotationService} from "../services/rotation_service.js";
+import {seasonService} from "../services/season_service.js";
 
 const router = express.Router();
 

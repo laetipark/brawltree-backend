@@ -47,7 +47,6 @@ export class rotationService {
         });
 
         powerLeagueMaps.map(async map => {
-            console.log(map)
             await MapRotation.upsert({
                 MAP_ID: map,
                 ROTATION_PL_BOOL: true

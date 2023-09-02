@@ -17,17 +17,17 @@ const getQuery = (type, mode) => {
     if (type === "7") {
         match.MATCH_TYP = {
             [Op.in]: config.typeList
-        }
+        };
     } else {
-        match.MATCH_TYP = type
+        match.MATCH_TYP = type;
     }
 
     if (mode === "all") {
         match.MATCH_MD = {
             [Op.in]: config.modeList
-        }
+        };
     } else {
-        match.MATCH_MD = mode
+        match.MATCH_MD = mode;
     }
 
     return match;

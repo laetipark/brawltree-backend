@@ -456,7 +456,7 @@ export class authService {
                                                 PLAYER_SP_BOOL: isStarPlayer,
                                                 BRAWLER_PWR: brawler.power,
                                                 BRAWLER_TRP: brawler.trophies,
-                                            }
+                                            },
                                         }
                                     );
 
@@ -569,44 +569,24 @@ export class authService {
             }
         }
 
-        const newUserLastCheck = new Date();
-        const newUserLastBattle = dateService.getDate(battleLogs?.items[0].battleTime);
+        if (cycle && userLastUpdate.CYCLE_NO === config.scheduleNumber) {
+            console.log("hello");
+            const newUserLastCheck = new Date();
+            const newUserLastBattle = dateService.getDate(battleLogs?.items[0].battleTime);
 
-        await Users.update({
-            USER_LST_CK: newUserLastCheck,
-            USER_LST_BT: newUserLastBattle
-        }, {
-            where: {
-                USER_ID: userTag,
-            },
-        });
+            await Users.update({
+                USER_LST_CK: newUserLastCheck,
+                USER_LST_BT: newUserLastBattle
+            }, {
+                where: {
+                    USER_ID: userTag,
+                },
+            });
 
-        if (cycle && userLastUpdate === config.scheduleNumber) {
-            if (newUserLastCheck.getTime() - newUserLastBattle.getTime() < 20 * 60 * 1000) {
-                console.log("hello!", new Date());
-                const response =
-                    await fetch(`${config.url}/players/%23${userID}/battlelog`, {
-                        method: "GET",
-                        headers: config.headers,
-                    });
-                const battleLogs = await response.json();
-
-                setTimeout(async () => {
-                    console.log("start!", new Date());
-                    await this.insertUserBattles(userID, battleLogs);
-                }, 10 * 60 * 1000);
-            } else {
-                const response =
-                    await fetch(`${config.url}/players/%23${userID}/battlelog`, {
-                        method: "GET",
-                        headers: config.headers,
-                    });
-                const battleLogs = await response.json();
-
-                setTimeout(async () => {
-                    await this.insertUserBattles(userID, battleLogs);
-                }, 20 * 60 * 1000);
-            }
+            setTimeout(async () => {
+                console.log("start");
+                await this.insertUserBattles(userID, true);
+            }, 20 * 60 * 1000);
         }
     };
 }
