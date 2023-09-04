@@ -1,6 +1,7 @@
 import fetch from "node-fetch";
 import {fn, literal, Op} from "sequelize";
 import {
+    sequelize,
     Users,
     UserProfile,
     UserBattles,
@@ -44,7 +45,7 @@ export class authService {
             await this.insertUserProfile(userID);
             await this.UpdateUserBattles(userID);
             if (new Date(new Date(user[0].USER_LST_CK).getTime() + (5 * 60 * 1000)) < new Date()) {
-                await this.insertUserBattles(userID, user[1]);
+                await this.insertUserBattles(userID, false);
             }
         } else {
 
@@ -321,126 +322,144 @@ export class authService {
         const battleLogs = await response.json();
 
         const userTag = `#${userID}`;
-        const userLastUpdate = await Users.findOne({
-            attributes: ["USER_LST_BT", "CYCLE_NO"],
-            where: {
-                USER_ID: userTag
-            }
-        });
+        await sequelize.transaction(async (t) => {
+            const userLastUpdate = await Users.findOne({
+                attributes: ["USER_LST_BT", "CYCLE_NO"],
+                where: {
+                    USER_ID: userTag
+                },
+                transaction: t,
+            });
 
-        const userLastBattleDate = new Date(userLastUpdate.USER_LST_BT);
+            const lastBattleDate = new Date(userLastUpdate.USER_LST_BT);
+            const lastBattleDateResponse = dateService.getDate(battleLogs?.items[0].battleTime);
+            const battles = [];
+            const battlePicksInsert = [];
+            const battlePicksUpdate = [];
+            const battleTrioInsert = [];
+            const battleTrioUpdate = [];
 
-        for (const item of battleLogs?.items) {
-            if (item.event.id !== 0 && item.battle.type !== undefined) {
-                const matchDate = dateService.getDate(item.battleTime);
-                const duration = item.battle.duration != null && item.battle.duration > 0 ? item.battle.duration : 0;
-                const mapID = item.event.id;
-                const typeIndex = typeNameArray.indexOf(item.battle.type);
+            if (lastBattleDate !== lastBattleDateResponse) {
+                for (const item of battleLogs?.items) {
+                    if (item.event.id !== 0 && item.battle.type !== undefined) {
+                        const matchDate = dateService.getDate(item.battleTime);
+                        const duration = item.battle.duration != null && item.battle.duration > 0 ? item.battle.duration : 0;
+                        const mapID = item.event.id;
+                        const typeIndex = typeNameArray.indexOf(item.battle.type);
 
-                const mapModeNumber = config.modeClass.tripleModes.includes(item.event.mode) ? 3 :
-                    config.modeClass.duoModes.includes(item.event.mode) ? 2 : config.modeClass.soloModes.survive.includes(item.event.mode) ? 1 : 0;
-                const matchChange = item.battle.trophyChange !== undefined ? item.battle.trophyChange : 0;
+                        const mapModeNumber = config.modeClass.tripleModes.includes(item.event.mode) ? 3 :
+                            config.modeClass.duoModes.includes(item.event.mode) ? 2 : config.modeClass.soloModes.survive.includes(item.event.mode) ? 1 : 0;
+                        const matchChange = item.battle.trophyChange !== undefined ? item.battle.trophyChange : 0;
 
-                const teams = item.battle.teams !== undefined ?
-                    item.battle.teams : item.battle.players;
-                const currentPlayers = JSON.stringify(teams);
-                const highestTrophies = Math.max(...teams.map(team => {
-                    if ([3, 2].includes(mapModeNumber)) {
-                        return Math.max(...team.map(player => {
-                            return player.brawler.trophies;
+                        const teams = item.battle.teams !== undefined ?
+                            item.battle.teams : item.battle.players;
+                        const currentPlayers = JSON.stringify(teams);
+                        const highestTrophies = Math.max(...teams.map(team => {
+                            if ([3, 2].includes(mapModeNumber)) {
+                                return Math.max(...team.map(player => {
+                                    return player.brawler.trophies;
+                                }));
+                            } else if (mapModeNumber === 0) {
+                                return Math.max(...team.brawlers.map(brawler => {
+                                    return brawler.trophies;
+                                }));
+                            } else {
+                                return team.brawler.trophies;
+                            }
                         }));
-                    } else if (mapModeNumber === 0) {
-                        return Math.max(...team.brawlers.map(brawler => {
-                            return brawler.trophies;
-                        }));
-                    } else {
-                        return team.brawler.trophies;
-                    }
-                }));
 
-                const matchType = await getType(typeIndex, matchChange, highestTrophies, currentPlayers, mapModeNumber);
-                const matchGrade = await getGrade(matchType, highestTrophies);
+                        const matchType = await getType(typeIndex, matchChange, highestTrophies, currentPlayers, mapModeNumber);
+                        const matchGrade = await getGrade(matchType, highestTrophies);
 
-                if (new Date(userLastBattleDate) < matchDate) {
+                        if (new Date(lastBattleDate) < matchDate) {
 
-                    const match = {
-                        result: resultNameArray.indexOf(item.battle.result) - 1,
-                        brawler: 0
-                    };
-                    for (let teamNumber in teams) {
-                        const players = [2, 3].includes(mapModeNumber) ? teams[teamNumber] : teams;
-                        const teamResult = players.map(item => item.tag).includes(userTag) ?
-                            resultNameArray.indexOf(item.battle.result) - 1 : (resultNameArray.indexOf(item.battle.result) - 1) * -1;
+                            const match = {
+                                result: resultNameArray.indexOf(item.battle.result) - 1,
+                                brawler: 0
+                            };
 
-                        if (typeIndex !== 1 && mapModeNumber === 3) {
-                            const trio = [players[0].brawler.id, players[1].brawler.id, players[2].brawler.id].sort();
+                            for (let teamNumber in teams) {
+                                const players = [2, 3].includes(mapModeNumber) ? teams[teamNumber] : teams;
+                                const teamResult = players.map(item => item.tag).includes(userTag) ?
+                                    resultNameArray.indexOf(item.battle.result) - 1 : (resultNameArray.indexOf(item.battle.result) - 1) * -1;
 
-                            const battleTrio = await BattleTrio.findOrCreate({
-                                where: {
-                                    MAP_ID: mapID,
-                                    BRAWLER_1_ID: trio[0],
-                                    BRAWLER_2_ID: trio[1],
-                                    BRAWLER_3_ID: trio[2],
-                                    MATCH_TYP: matchType,
-                                    MATCH_GRD: matchGrade,
-                                },
-                                defaults: {
-                                    MAP_MD: item.event.mode,
-                                    MATCH_CNT: 0,
-                                    MATCH_CNT_VIC: 0,
-                                    MATCH_CNT_DEF: 0,
-                                }
-                            });
+                                if (typeIndex !== 1 && mapModeNumber === 3) {
+                                    const trio = [players[0].brawler.id, players[1].brawler.id, players[2].brawler.id].sort();
 
-                            if (battleTrio[1] === false) {
-                                await BattleTrio.update({
-                                    MATCH_CNT: literal("MATCH_CNT + 1"),
-                                    MATCH_CNT_VIC: literal(`CASE WHEN ${teamResult} = -1 THEN MATCH_CNT_VIC + 1 ELSE MATCH_CNT_VIC END`),
-                                    MATCH_CNT_DEF: literal(`CASE WHEN ${teamResult} = 1 THEN MATCH_CNT_DEF + 1 ELSE MATCH_CNT_DEF END`),
-                                }, {
-                                    where: {
+                                    battleTrioInsert.push({
                                         MAP_ID: mapID,
                                         BRAWLER_1_ID: trio[0],
                                         BRAWLER_2_ID: trio[1],
                                         BRAWLER_3_ID: trio[2],
                                         MATCH_TYP: matchType,
                                         MATCH_GRD: matchGrade,
+                                        MAP_MD: item.event.mode,
+                                        MATCH_CNT: 0,
+                                        MATCH_CNT_VIC: 0,
+                                        MATCH_CNT_DEF: 0,
+                                    });
+
+                                    const trioBrawlers = {
+                                        MAP_ID: mapID,
+                                        BRAWLER_1_ID: trio[0],
+                                        BRAWLER_2_ID: trio[1],
+                                        BRAWLER_3_ID: trio[2],
+                                        MATCH_TYP: matchType,
+                                        MATCH_GRD: matchGrade,
+                                    };
+
+                                    const existingIndex = battleTrioUpdate.findIndex(item => {
+                                        return (
+                                            item.MAP_ID === trioBrawlers.MAP_ID &&
+                                            item.BRAWLER_1_ID === trioBrawlers.BRAWLER_1_ID &&
+                                            item.BRAWLER_2_ID === trioBrawlers.BRAWLER_2_ID &&
+                                            item.BRAWLER_3_ID === trioBrawlers.BRAWLER_3_ID &&
+                                            item.MATCH_TYP === trioBrawlers.MATCH_TYP &&
+                                            item.MATCH_GRD === trioBrawlers.MATCH_GRD
+                                        );
+                                    });
+
+                                    if (existingIndex !== -1) {
+                                        battleTrioUpdate[existingIndex].MATCH_CNT++;
+                                        teamResult === -1 && battleTrioUpdate[existingIndex].MATCH_CNT_VIC++;
+                                        teamResult === 1 && battleTrioUpdate[existingIndex].MATCH_CNT_DEF++;
+                                    } else {
+                                        trioBrawlers.MATCH_CNT = 1;
+                                        trioBrawlers.MATCH_CNT_VIC = teamResult === -1 ? 1 : 0;
+                                        trioBrawlers.MATCH_CNT_DEF = teamResult === 1 ? 1 : 0;
+                                        battleTrioUpdate.push(trioBrawlers); // Add a new entry to the JSON array
                                     }
-                                });
-                            }
-                        }
+                                }
 
-                        for (const playerNumber in players) {
-                            const matchRank = mapModeNumber === 1 ? playerNumber : mapModeNumber === 2 ? teamNumber : -1;
-                            const matchResult = await getResult(teams.length, matchRank, teamResult);
+                                for (const playerNumber in players) {
+                                    const matchRank = mapModeNumber === 1 ? playerNumber : mapModeNumber === 2 ? teamNumber : -1;
+                                    const matchResult = await getResult(teams.length, matchRank, teamResult);
 
-                            if (mapModeNumber === 0) {
-                                for (const brawler of players[playerNumber]?.brawlers) {
+                                    if (mapModeNumber === 0) {
+                                        for (const brawler of players[playerNumber]?.brawlers) {
 
-                                    if (players[playerNumber].tag === userTag) {
-                                        match.result = matchResult;
-                                        match.brawler = brawler.id;
+                                            if (players[playerNumber].tag === userTag) {
+                                                match.result = matchResult;
+                                                match.brawler = brawler.id;
 
-                                        await UserBrawlers.update({
-                                            MATCH_CNT_TL_DL: literal("MATCH_CNT_TL_DL + 1"),
-                                            MATCH_CNT_VIC_TL_DL: literal(`CASE WHEN ${match.result} = -1 THEN MATCH_CNT_VIC_TL_DL + 1 ELSE MATCH_CNT_VIC_TL_DL END`),
-                                            MATCH_CNT_DEF_TL_DL: literal(`CASE WHEN ${match.result} = 1 THEN MATCH_CNT_DEF_TL_DL + 1 ELSE MATCH_CNT_DEF_TL_DL END`),
-                                        }, {
-                                            where: {
-                                                USER_ID: userTag,
-                                                BRAWLER_ID: match.brawler
+                                                await UserBrawlers.update({
+                                                    MATCH_CNT_TL_DL: literal("MATCH_CNT_TL_DL + 1"),
+                                                    MATCH_CNT_VIC_TL_DL: literal(`CASE WHEN ${match.result} = -1 THEN MATCH_CNT_VIC_TL_DL + 1 ELSE MATCH_CNT_VIC_TL_DL END`),
+                                                    MATCH_CNT_DEF_TL_DL: literal(`CASE WHEN ${match.result} = 1 THEN MATCH_CNT_DEF_TL_DL + 1 ELSE MATCH_CNT_DEF_TL_DL END`),
+                                                }, {
+                                                    where: {
+                                                        USER_ID: userTag,
+                                                        BRAWLER_ID: match.brawler
+                                                    },
+                                                    transaction: t,
+                                                });
                                             }
-                                        });
-                                    }
 
-                                    await UserBattles.findOrCreate({
-                                            where: {
+                                            battles.push({
                                                 USER_ID: userTag,
                                                 PLAYER_ID: players[playerNumber].tag,
                                                 BRAWLER_ID: brawler.id,
-                                                MATCH_DT: matchDate
-                                            },
-                                            defaults: {
+                                                MATCH_DT: matchDate,
                                                 MAP_ID: mapID,
                                                 MAP_MD_CD: mapModeNumber,
                                                 MATCH_TYP: matchType,
@@ -456,55 +475,52 @@ export class authService {
                                                 PLAYER_SP_BOOL: isStarPlayer,
                                                 BRAWLER_PWR: brawler.power,
                                                 BRAWLER_TRP: brawler.trophies,
-                                            },
+                                            });
+
+                                            await BattlePicks.findOrCreate({
+                                                where: {
+                                                    MAP_ID: mapID,
+                                                    BRAWLER_ID: brawler.id,
+                                                    MATCH_TYP: matchType,
+                                                    MATCH_GRD: matchGrade,
+                                                },
+                                                defaults: {
+                                                    MAP_MD: item.event.mode,
+                                                    MATCH_CNT: 0,
+                                                    MATCH_CNT_VIC: 0,
+                                                    MATCH_CNT_DEF: 0,
+                                                },
+                                                transaction: t,
+                                            });
+
+                                            await BattlePicks.update({
+                                                MATCH_CNT: literal("MATCH_CNT + 1"),
+                                                MATCH_CNT_VIC: literal(`CASE WHEN ${matchResult} = -1 THEN MATCH_CNT_VIC + 1 ELSE MATCH_CNT_VIC END`),
+                                                MATCH_CNT_DEF: literal(`CASE WHEN ${matchResult} = 1 THEN MATCH_CNT_DEF + 1 ELSE MATCH_CNT_DEF END`),
+                                            }, {
+                                                where: {
+                                                    MAP_ID: mapID,
+                                                    BRAWLER_ID: brawler.id,
+                                                    MATCH_TYP: matchType,
+                                                    MATCH_GRD: matchGrade,
+                                                },
+                                                transaction: t,
+                                            });
                                         }
-                                    );
+                                    } else {
+                                        const isStarPlayer = item.battle.starPlayer !== undefined && item.battle.starPlayer !== null ?
+                                            players[playerNumber].tag === item.battle.starPlayer.tag : 0;
 
-                                    await BattlePicks.findOrCreate({
-                                        where: {
-                                            MAP_ID: mapID,
-                                            BRAWLER_ID: brawler.id,
-                                            MATCH_TYP: matchType,
-                                            MATCH_GRD: matchGrade,
-                                        },
-                                        defaults: {
-                                            MAP_MD: item.event.mode,
-                                            MATCH_CNT: 0,
-                                            MATCH_CNT_VIC: 0,
-                                            MATCH_CNT_DEF: 0,
+                                        if (players[playerNumber].tag === userTag) {
+                                            match.result = matchResult;
+                                            match.brawler = players[playerNumber].brawler.id;
                                         }
-                                    });
 
-                                    await BattlePicks.update({
-                                        MATCH_CNT: literal("MATCH_CNT + 1"),
-                                        MATCH_CNT_VIC: literal(`CASE WHEN ${matchResult} = -1 THEN MATCH_CNT_VIC + 1 ELSE MATCH_CNT_VIC END`),
-                                        MATCH_CNT_DEF: literal(`CASE WHEN ${matchResult} = 1 THEN MATCH_CNT_DEF + 1 ELSE MATCH_CNT_DEF END`),
-                                    }, {
-                                        where: {
-                                            MAP_ID: mapID,
-                                            BRAWLER_ID: brawler.id,
-                                            MATCH_TYP: matchType,
-                                            MATCH_GRD: matchGrade,
-                                        }
-                                    });
-                                }
-                            } else {
-                                const isStarPlayer = item.battle.starPlayer !== undefined && item.battle.starPlayer !== null ?
-                                    players[playerNumber].tag === item.battle.starPlayer.tag : 0;
-
-                                if (players[playerNumber].tag === userTag) {
-                                    match.result = matchResult;
-                                    match.brawler = players[playerNumber].brawler.id;
-                                }
-
-                                await UserBattles.findOrCreate({
-                                        where: {
+                                        battles.push({
                                             USER_ID: userTag,
                                             PLAYER_ID: players[playerNumber].tag,
                                             BRAWLER_ID: players[playerNumber].brawler.id,
-                                            MATCH_DT: matchDate
-                                        },
-                                        defaults: {
+                                            MATCH_DT: matchDate,
                                             MAP_ID: mapID,
                                             MAP_MD_CD: mapModeNumber,
                                             MATCH_TYP: matchType,
@@ -520,73 +536,146 @@ export class authService {
                                             PLAYER_SP_BOOL: isStarPlayer,
                                             BRAWLER_PWR: players[playerNumber].brawler.power,
                                             BRAWLER_TRP: players[playerNumber].brawler.trophies,
+                                        });
+
+                                        battlePicksInsert.push({
+                                            MAP_ID: mapID,
+                                            BRAWLER_ID: players[playerNumber].brawler.id,
+                                            MATCH_TYP: matchType,
+                                            MATCH_GRD: matchGrade,
+                                            MAP_MD: item.event.mode,
+                                            MATCH_CNT: 0,
+                                            MATCH_CNT_VIC: 0,
+                                            MATCH_CNT_DEF: 0,
+                                        });
+
+                                        const picks = {
+                                            MAP_ID: mapID,
+                                            BRAWLER_ID: players[playerNumber].brawler.id,
+                                            MATCH_TYP: matchType,
+                                            MATCH_GRD: matchGrade,
+                                        };
+
+                                        const existingIndex = battlePicksUpdate.findIndex(item => {
+                                            return (
+                                                item.MAP_ID === picks.MAP_ID &&
+                                                item.BRAWLER_ID === picks.BRAWLER_ID &&
+                                                item.MATCH_TYP === picks.MATCH_TYP &&
+                                                item.MATCH_GRD === picks.MATCH_GRD
+                                            );
+                                        });
+
+                                        if (existingIndex !== -1) {
+                                            battlePicksUpdate[existingIndex].MATCH_CNT++;
+                                            matchResult === -1 && battlePicksUpdate[existingIndex].MATCH_CNT_VIC++;
+                                            matchResult === 1 && battlePicksUpdate[existingIndex].MATCH_CNT_DEF++;
+                                        } else {
+                                            picks.MATCH_CNT = 1;
+                                            picks.MATCH_CNT_VIC = matchResult === -1 ? 1 : 0;
+                                            picks.MATCH_CNT_DEF = matchResult === 1 ? 1 : 0;
+                                            battlePicksUpdate.push(picks); // Add a new entry to the JSON array
                                         }
                                     }
-                                );
-
-                                await BattlePicks.findOrCreate({
-                                    where: {
-                                        MAP_ID: mapID,
-                                        BRAWLER_ID: players[playerNumber].brawler.id,
-                                        MATCH_TYP: matchType,
-                                        MATCH_GRD: matchGrade,
-                                    },
-                                    defaults: {
-                                        MAP_MD: item.event.mode,
-                                        MATCH_CNT: 0,
-                                        MATCH_CNT_VIC: 0,
-                                        MATCH_CNT_DEF: 0,
-                                    }
-                                });
-
-                                await BattlePicks.update({
-                                    MATCH_CNT: literal("MATCH_CNT + 1"),
-                                    MATCH_CNT_VIC: literal(`CASE WHEN ${matchResult} = -1 THEN MATCH_CNT_VIC + 1 ELSE MATCH_CNT_VIC END`),
-                                    MATCH_CNT_DEF: literal(`CASE WHEN ${matchResult} = 1 THEN MATCH_CNT_DEF + 1 ELSE MATCH_CNT_DEF END`),
-                                }, {
-                                    where: {
-                                        MAP_ID: mapID,
-                                        BRAWLER_ID: players[playerNumber].brawler.id,
-                                        MATCH_TYP: matchType,
-                                        MATCH_GRD: matchGrade,
-                                    }
-                                });
+                                }
                             }
+                        }
+
+                        if (matchType === 6) {
+                            await UserBattles.update({
+                                MATCH_TYP: matchType
+                            }, {
+                                where: {
+                                    USER_ID: userTag,
+                                    MATCH_DT: matchDate,
+                                },
+                                transaction: t,
+                            });
                         }
                     }
                 }
+            } // battleLogs 탐색 종료
 
-                if (matchType === 6) {
-                    await UserBattles.update({
-                        MATCH_TYP: matchType
-                    }, {
-                        where: {
-                            USER_ID: userTag,
-                            MATCH_DT: matchDate,
-                        },
-                    });
-                }
-            }
-        }
-
-        if (cycle && userLastUpdate.CYCLE_NO === config.scheduleNumber) {
-            console.log("hello");
-            const newUserLastCheck = new Date();
-            const newUserLastBattle = dateService.getDate(battleLogs?.items[0].battleTime);
-
-            await Users.update({
-                USER_LST_CK: newUserLastCheck,
-                USER_LST_BT: newUserLastBattle
-            }, {
-                where: {
-                    USER_ID: userTag,
-                },
+            await UserBattles.bulkCreate(battles, {
+                ignoreDuplicates: true,
+                transaction: t,
             });
 
-            setTimeout(async () => {
-                console.log("start");
-                await this.insertUserBattles(userID, true);
-            }, 20 * 60 * 1000);
-        }
+            await BattlePicks.bulkCreate(battlePicksInsert, {
+                ignoreDuplicates: true,
+                transaction: t,
+            });
+
+            await BattleTrio.bulkCreate(battleTrioInsert, {
+                ignoreDuplicates: true,
+                transaction: t,
+            });
+
+            await Promise.all(battlePicksUpdate.map(pick => {
+                BattlePicks.update({
+                    MATCH_CNT: literal(`MATCH_CNT + ${pick.MATCH_CNT}`),
+                    MATCH_CNT_VIC: literal(`MATCH_CNT_VIC + ${pick.MATCH_CNT_VIC}`),
+                    MATCH_CNT_DEF: literal(`MATCH_CNT_DEF + ${pick.MATCH_CNT_DEF}`),
+                }, {
+                    where: {
+                        MAP_ID: pick.MAP_ID,
+                        BRAWLER_ID: pick.BRAWLER_ID,
+                        MATCH_TYP: pick.MATCH_TYP,
+                        MATCH_GRD: pick.MATCH_GRD,
+                    },
+                    transaction: t,
+                });
+            }));
+
+            await Promise.all(battleTrioUpdate.map(trio => {
+                BattlePicks.update({
+                    MATCH_CNT: literal(`MATCH_CNT + ${trio.MATCH_CNT}`),
+                    MATCH_CNT_VIC: literal(`MATCH_CNT_VIC + ${trio.MATCH_CNT_VIC}`),
+                    MATCH_CNT_DEF: literal(`MATCH_CNT_DEF + ${trio.MATCH_CNT_DEF}`),
+                }, {
+                    where: {
+                        MAP_ID: trio.MAP_ID,
+                        BRAWLER_1_ID: trio.BRAWLER_1_ID,
+                        BRAWLER_2_ID: trio.BRAWLER_2_ID,
+                        BRAWLER_3_ID: trio.BRAWLER_3_ID,
+                        MATCH_TYP: trio.MATCH_TYP,
+                        MATCH_GRD: trio.MATCH_GRD,
+                    },
+                    transaction: t,
+                });
+            }));
+
+            if (cycle) {
+                const newUserLastCheck = new Date();
+                const newUserLastBattle = dateService.getDate(battleLogs?.items[0].battleTime);
+
+                await Users.update({
+                    USER_LST_CK: newUserLastCheck,
+                    USER_LST_BT: newUserLastBattle
+                }, {
+                    where: {
+                        USER_ID: userTag,
+                    },
+                    transaction: t,
+                });
+
+                setTimeout(async () => {
+                    await this.insertUserBattles(userID, true);
+                }, 20 * 60 * 1000);
+            } else {
+                const newUserLastCheck = new Date();
+                const newUserLastBattle = dateService.getDate(battleLogs?.items[0].battleTime);
+
+                await Users.update({
+                    USER_LST_CK: newUserLastCheck,
+                    USER_LST_BT: newUserLastBattle
+                }, {
+                    where: {
+                        USER_ID: userTag,
+                    },
+                    transaction: t,
+                });
+            }
+
+        }); // transaction 종료
     };
 }
