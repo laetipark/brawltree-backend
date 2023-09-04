@@ -16,7 +16,7 @@ import seasons from "./seasons.js";
 
 import config from "../config/config.js";
 
-const sequelize =
+export const sequelize =
     new Sequelize(config.sequelize.database, config.sequelize.username, config.sequelize.password, config.sequelize);
 const db = {}
 db.sequelize = sequelize;

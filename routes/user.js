@@ -10,7 +10,7 @@ router.get('/:id', async (req, res) => {
     const id = req.params.id;
 
     const user = await userService.selectUser(id);
-    await authService.insertUsers(id);
+    console.log("hello", new Date());
     if (user === null || new Date(new Date(user.USER_LST_CK).getTime() + (5 * 60 * 1000)) < new Date()) {
         await authService.insertUsers(id);
     }

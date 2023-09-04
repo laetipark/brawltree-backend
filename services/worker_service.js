@@ -1,6 +1,7 @@
 import {Users} from "../models/index.js";
-import config from "../config/config.js";
 import {authService} from "./auth_service.js";
+
+import config from "../config/config.js";
 
 export class workerService {
     static UserList = [];
@@ -36,10 +37,12 @@ export class workerService {
         };
 
         const processRequests = async users => {
-            for (const user of users) {
-                await makeAPIRequest(user);
-                await new Promise(resolve => setTimeout(resolve, REQUEST_INTERVAL_MS));
-            }
+            await Promise.all(
+                users.map(async user => {
+                    await makeAPIRequest(user);
+                    await new Promise(resolve => setTimeout(resolve, REQUEST_INTERVAL_MS));
+                })
+            );
         };
 
         await Promise.all([

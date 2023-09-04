@@ -8,9 +8,9 @@ import {Users} from "./models/index.js";
 import {col, fn} from "sequelize";
 
 // import {clubService} from "./services/club_service.js";
-import {seasonService} from "./services/season_service.js";
-import {rotationService} from "./services/rotation_service.js";
 import {brawlerService} from "./services/brawler_service.js";
+import {rotationService} from "./services/rotation_service.js";
+import {seasonService} from "./services/season_service.js";
 
 import "./middlewares/pm2_bus.js";
 
@@ -20,7 +20,8 @@ import config from "./config/config.js";
 await sequelizeLoader();
 
 if (config.scheduleNumber === 0) {
-    /*const clubs = await clubService.getClubList();
+    /*
+    const clubs = await clubService.getClubList();
     for (const club of clubs) {
         const clubMembers = await clubService.getClubMembers(club);
 
@@ -35,7 +36,8 @@ if (config.scheduleNumber === 0) {
                 }
             });
         }
-    }*/
+    }
+    */
 
     await expressLoader();
 
@@ -74,7 +76,7 @@ if (config.scheduleNumber === 0) {
 
             if (processList.length > 0) {
                 process.send({
-                    type: `process:msg`,
+                    type: `child:start`,
                     data: {
                         userList: [users.slice(0, chunkSize), users.slice(chunkSize)]
                     }
@@ -82,7 +84,6 @@ if (config.scheduleNumber === 0) {
             } else {
                 console.log("No processes found.");
             }
-
             pm2.disconnect();
         });
     });

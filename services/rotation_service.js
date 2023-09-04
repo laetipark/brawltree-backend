@@ -1,27 +1,12 @@
 import fetch from 'node-fetch';
 import {col, fn, literal, Op} from "sequelize";
 import {Maps, MapRotation, Events} from "../models/index.js";
-import rotationPL from "../public/json/power_league.json" assert {type: "json"};
-
-import config from '../config/config.js';
 import {dateService} from "./date_service.js";
 
+import rotationPL from "../public/json/power_league.json" assert {type: "json"};
+import config from '../config/config.js';
+
 export class rotationService {
-
-    /** 전투 맵 데이터베이스에 업데이트 및 추가 */
-    static updateMaps = async () => {
-        for (const item of mapJSON.maps) {
-            const mapID = item.id;
-            const mapMode = item.mode;
-            const mapName = item.name;
-
-            await Maps.upsert({
-                MAP_ID: mapID,
-                MAP_MD: mapMode,
-                MAP_NM: mapName
-            });
-        }
-    };
 
     static updateRotation = async () => {
         const trophyLeagueMaps = await Events.findAll({

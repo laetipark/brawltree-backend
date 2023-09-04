@@ -1,6 +1,7 @@
-import brawlerJSON from "../public/json/brawlers.json" assert {type: "json"};
-import {Brawlers} from "../models/index.js";
 import fetch from "node-fetch";
+import {Brawlers} from "../models/index.js";
+
+import brawlerJSON from "../public/json/brawlers.json" assert {type: "json"};
 import config from "../config/config.js";
 
 export class brawlerService {

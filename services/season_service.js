@@ -8,7 +8,7 @@ export class seasonService {
         }).then(async result => {
             if (result === null) {
                 await Seasons.create({
-                    id: "10",
+                    SEASON_NO: "10",
                     SEASON_BGN_DT: "2022-01-03T18:00:00",
                     SEASON_END_DT: "2022-03-07T17:50:00",
                 });
