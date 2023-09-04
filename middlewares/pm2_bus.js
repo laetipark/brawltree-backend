@@ -46,7 +46,7 @@ if (isMainThread) {
             console.log('All workers completed:', results);
 
             console.log("main : ", users.slice(chunkSize), chunkSize);
-            workerService.UserList = users.slice(chunkSize * 9);
+            workerService.UserList = users.slice(chunkSize * 19);
             threadNumber++;
             console.log(threadNumber);
 
