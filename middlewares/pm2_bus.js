@@ -12,7 +12,6 @@ const __dirname = path.dirname(__filename);
 // 메인 스레드 코드
 if (isMainThread) {
     let threadNumber = 0;
-    console.log(threadNumber);
 
     pm2.launchBus(async (err, pm2Bus) => {
         pm2Bus.on(`child:start`, async ({data}) => {

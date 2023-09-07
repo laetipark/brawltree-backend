@@ -1,16 +1,16 @@
-import fetch from "node-fetch";
-import {fn, literal, Op} from "sequelize";
+import axios from "axios";
+import {Op} from "sequelize";
 import {
     sequelize,
     Users,
     UserProfile,
     UserBattles,
     UserBrawlers,
-    BattlePicks,
-    BattleTrio,
-    UserBrawlerItems, UserBrawlerBattles
+    UserBrawlerItems,
 } from "../models/index.js";
+
 import {dateService} from "./date_service.js";
+import {battleService} from "./battle_service.js";
 import {seasonService} from "./season_service.js";
 
 import config from "../config/config.js";
@@ -19,17 +19,21 @@ const typeNameArray = ["ranked", "friendly", "soloRanked", "teamRanked", "challe
 const resultNameArray = ["victory", "draw", "defeat"];
 
 export class authService {
+    static userBattles = [];
+    static pendingRequests = [];
+    static maxRequests = 4;
 
     /** 유저 정보 데이터베이스에 추가
      * @param userID 유저 태그
      */
     static insertUsers = async (userID) => {
-        const member = await fetch(`${config.url}/players/%23${userID}`, {
+        const member = await axios({
+            url: `${config.url}/players/%23${userID}`,
             method: "GET",
             headers: config.headers,
-        })
-            .then(res => res.json())
-            .catch(err => console.error(err));
+        }).then(res => {
+            return res.data;
+        }).catch(err => console.error(err));
 
         if (member.tag !== undefined) {
             const user = await Users.findOrCreate({
@@ -43,9 +47,9 @@ export class authService {
             });
 
             await this.insertUserProfile(userID);
-            await this.UpdateUserBattles(userID);
+            await battleService.updateUserBattles(userID);
             if (new Date(new Date(user[0].USER_LST_CK).getTime() + (5 * 60 * 1000)) < new Date()) {
-                await this.insertUserBattles(userID, false);
+                await this.manageUsers(userID, false);
             }
         } else {
 
@@ -57,7 +61,7 @@ export class authService {
      */
     static insertUserProfile = async (userID) => {
         const season = await seasonService.selectRecentSeason();
-        const setLeagueRank = (typeNum, tag, column) => {
+        const getRankPL = (typeNum, tag, column) => {
             return UserBattles.findOne({
                 attributes: ["BRAWLER_TRP"],
                 where: {
@@ -71,7 +75,7 @@ export class authService {
             });
         };
 
-        const setTrophyBegin = (tag, brawlerID, current) => {
+        const getTrophyBegin = (tag, brawlerID, current) => {
             return UserBattles.findOne({
                 attributes: ["BRAWLER_TRP"],
                 where: {
@@ -89,19 +93,20 @@ export class authService {
             });
         };
 
-        const responseMember = await fetch(`${config.url}/players/%23${userID}`, {
+        const responseMember = await axios({
+            url: `${config.url}/players/%23${userID}`,
             method: "GET",
             headers: config.headers,
-        })
-            .then(res => res.json())
-            .catch(err => console.error(err));
+        }).then(res => {
+            return res.data;
+        }).catch(err => console.error(err));
 
         if (responseMember.tag !== undefined) {
             const [soloRankCurrent, teamRankCurrent, soloRankHighest, teamRankHighest] =
-                await Promise.all([setLeagueRank(2, responseMember.tag, "MATCH_DT"),
-                    setLeagueRank(3, responseMember.tag, "MATCH_DT"),
-                    setLeagueRank(2, responseMember.tag, "BRAWLER_TRP"),
-                    setLeagueRank(3, responseMember.tag, "BRAWLER_TRP")]);
+                await Promise.all([getRankPL(2, responseMember.tag, "MATCH_DT"),
+                    getRankPL(3, responseMember.tag, "MATCH_DT"),
+                    getRankPL(2, responseMember.tag, "BRAWLER_TRP"),
+                    getRankPL(3, responseMember.tag, "BRAWLER_TRP")]);
 
             await UserProfile.upsert({
                 USER_ID: responseMember.tag,
@@ -126,7 +131,7 @@ export class authService {
             for (const brawler of brawlerList) {
                 const brawlerID = brawler.id;
                 const brawlerPower = brawler.power;
-                const trophyBegin = await setTrophyBegin(responseMember.tag, brawlerID, brawler.trophies);
+                const trophyBegin = await getTrophyBegin(responseMember.tag, brawlerID, brawler.trophies);
 
                 const userBrawlers = await UserBrawlers.findOrCreate({
                     where: {
@@ -218,43 +223,80 @@ export class authService {
         }
     };
 
-    static UpdateUserBattles = async (userID) => {
-        const battles = await UserBattles.findAll({
-            attributes: ["BRAWLER_ID", "MAP_ID", "MATCH_TYP", "MATCH_GRD",
-                [fn("COUNT", literal("*")), "MATCH_CNT"],
-                [fn("COUNT", literal("CASE WHEN MATCH_RES = -1 THEN 1 ELSE NULL END")), "MATCH_VIC_CNT"],
-                [fn("COUNT", literal("CASE WHEN MATCH_RES = 1 THEN 1 ELSE NULL END")), "MATCH_DEF_CNT"],
-            ],
-            where: {
-                USER_ID: `#${userID}`,
-                PLAYER_ID: `#${userID}`,
-                MATCH_TYP: {
-                    [Op.in]: [0, 2, 3]
-                }
-            },
-            group: ["BRAWLER_ID", "MAP_ID", "MATCH_TYP", "MATCH_GRD"],
-            raw: true
-        });
+    static manageUsers = async (userID, cycle) => {
+        // 요청 정보 생성
+        const requestInfo = {userID, cycle};
 
-        battles.map(async battle => {
-            await UserBrawlerBattles.upsert({
-                USER_ID: `#${userID}`,
-                BRAWLER_ID: battle.BRAWLER_ID,
-                MAP_ID: battle.MAP_ID,
-                MATCH_TYP: battle.MATCH_TYP,
-                MATCH_GRD: battle.MATCH_GRD,
-                MATCH_CNT: battle.MATCH_CNT,
-                MATCH_VIC_CNT: battle.MATCH_VIC_CNT,
-                MATCH_DEF_CNT: battle.MATCH_DEF_CNT
+        if (this.userBattles.length >= this.maxRequests) {
+            // 최대 동시 실행 요청 수를 초과한 경우 대기열에 추가
+            this.pendingRequests.push(requestInfo);
+        } else {
+            // 최대 동시 실행 요청 수 미만이면 바로 실행
+            this.userBattles.push(requestInfo);
+            await this.fetchRequest(requestInfo);
+        }
+    };
+
+    static fetchRequest = async requestInfo => {
+        const {userID, cycle} = requestInfo;
+
+        try {
+            await axios({
+                url: `${config.url}/players/%23${userID}/battlelog`,
+                method: "GET",
+                headers: config.headers,
+            }).then(async res => {
+
+                const battleLogs = res.data;
+                await this.insertUserBattles(battleLogs, userID);
+
+                const newUserLastCheck = new Date();
+                const newUserLastBattle = dateService.getDate(battleLogs?.items[0].battleTime);
+
+                await Users.update({
+                    USER_LST_CK: newUserLastCheck,
+                    USER_LST_BT: newUserLastBattle
+                }, {
+                    where: {
+                        USER_ID: `#${userID}`,
+                    },
+                });
+
+                if (cycle) {
+                    setTimeout(() => {
+                        this.manageUsers(userID, cycle);
+                    }, 20 * 60 * 1000);
+                }
             });
-        });
+        } catch (err) {
+            console.error(err.response?.data);
+            const errorTime = err.response?.status === 404 ? 20 : 0;
+
+            setTimeout(() => {
+                this.manageUsers(userID, cycle);
+            }, (5 + errorTime) * 60 * 1000);
+        } finally {
+            // 요청이 완료되면 다음 요청을 확인하고 실행
+            const index = this.userBattles.indexOf(requestInfo);
+            if (index !== -1) {
+                this.userBattles.splice(index, 1);
+            }
+
+            setTimeout(async () => {
+                const nextRequest = this.pendingRequests.shift();
+                if (nextRequest) {
+                    const {userID, cycle} = nextRequest;
+                    await this.manageUsers(userID, cycle);
+                }
+            }, (Math.floor(Math.random() * 10001) + 60000));
+        }
     };
 
     /** 최신 25개 전투 정보 확인 및 데이터베이스에 추가
+     * @param battleLogs
      * @param userID 유저 태그
-     * @param cycle
      */
-    static insertUserBattles = async (userID, cycle) => {
+    static insertUserBattles = async (battleLogs, userID) => {
         const playersJSON = {teams: ""};
 
         // 게임 타입을 클럽 리그와 일반 게임 & 파워 리그 구분
@@ -314,14 +356,8 @@ export class authService {
             }
         };
 
-        const response =
-            await fetch(`${config.url}/players/%23${userID}/battlelog`, {
-                method: "GET",
-                headers: config.headers,
-            });
-        const battleLogs = await response.json();
-
         const userTag = `#${userID}`;
+
         await sequelize.transaction(async (t) => {
             const userLastUpdate = await Users.findOne({
                 attributes: ["USER_LST_BT", "CYCLE_NO"],
@@ -334,10 +370,6 @@ export class authService {
             const lastBattleDate = new Date(userLastUpdate.USER_LST_BT);
             const lastBattleDateResponse = dateService.getDate(battleLogs?.items[0].battleTime);
             const battles = [];
-            const battlePicksInsert = [];
-            const battlePicksUpdate = [];
-            const battleTrioInsert = [];
-            const battleTrioUpdate = [];
 
             if (lastBattleDate !== lastBattleDateResponse) {
                 for (const item of battleLogs?.items) {
@@ -372,7 +404,6 @@ export class authService {
                         const matchGrade = await getGrade(matchType, highestTrophies);
 
                         if (new Date(lastBattleDate) < matchDate) {
-
                             const match = {
                                 result: resultNameArray.indexOf(item.battle.result) - 1,
                                 brawler: 0
@@ -383,77 +414,12 @@ export class authService {
                                 const teamResult = players.map(item => item.tag).includes(userTag) ?
                                     resultNameArray.indexOf(item.battle.result) - 1 : (resultNameArray.indexOf(item.battle.result) - 1) * -1;
 
-                                if (typeIndex !== 1 && mapModeNumber === 3) {
-                                    const trio = [players[0].brawler.id, players[1].brawler.id, players[2].brawler.id].sort();
-
-                                    battleTrioInsert.push({
-                                        MAP_ID: mapID,
-                                        BRAWLER_1_ID: trio[0],
-                                        BRAWLER_2_ID: trio[1],
-                                        BRAWLER_3_ID: trio[2],
-                                        MATCH_TYP: matchType,
-                                        MATCH_GRD: matchGrade,
-                                        MAP_MD: item.event.mode,
-                                        MATCH_CNT: 0,
-                                        MATCH_CNT_VIC: 0,
-                                        MATCH_CNT_DEF: 0,
-                                    });
-
-                                    const trioBrawlers = {
-                                        MAP_ID: mapID,
-                                        BRAWLER_1_ID: trio[0],
-                                        BRAWLER_2_ID: trio[1],
-                                        BRAWLER_3_ID: trio[2],
-                                        MATCH_TYP: matchType,
-                                        MATCH_GRD: matchGrade,
-                                    };
-
-                                    const existingIndex = battleTrioUpdate.findIndex(item => {
-                                        return (
-                                            item.MAP_ID === trioBrawlers.MAP_ID &&
-                                            item.BRAWLER_1_ID === trioBrawlers.BRAWLER_1_ID &&
-                                            item.BRAWLER_2_ID === trioBrawlers.BRAWLER_2_ID &&
-                                            item.BRAWLER_3_ID === trioBrawlers.BRAWLER_3_ID &&
-                                            item.MATCH_TYP === trioBrawlers.MATCH_TYP &&
-                                            item.MATCH_GRD === trioBrawlers.MATCH_GRD
-                                        );
-                                    });
-
-                                    if (existingIndex !== -1) {
-                                        battleTrioUpdate[existingIndex].MATCH_CNT++;
-                                        teamResult === -1 && battleTrioUpdate[existingIndex].MATCH_CNT_VIC++;
-                                        teamResult === 1 && battleTrioUpdate[existingIndex].MATCH_CNT_DEF++;
-                                    } else {
-                                        trioBrawlers.MATCH_CNT = 1;
-                                        trioBrawlers.MATCH_CNT_VIC = teamResult === -1 ? 1 : 0;
-                                        trioBrawlers.MATCH_CNT_DEF = teamResult === 1 ? 1 : 0;
-                                        battleTrioUpdate.push(trioBrawlers); // Add a new entry to the JSON array
-                                    }
-                                }
-
                                 for (const playerNumber in players) {
                                     const matchRank = mapModeNumber === 1 ? playerNumber : mapModeNumber === 2 ? teamNumber : -1;
                                     const matchResult = await getResult(teams.length, matchRank, teamResult);
 
                                     if (mapModeNumber === 0) {
                                         for (const brawler of players[playerNumber]?.brawlers) {
-
-                                            if (players[playerNumber].tag === userTag) {
-                                                match.result = matchResult;
-                                                match.brawler = brawler.id;
-
-                                                await UserBrawlers.update({
-                                                    MATCH_CNT_TL_DL: literal("MATCH_CNT_TL_DL + 1"),
-                                                    MATCH_CNT_VIC_TL_DL: literal(`CASE WHEN ${match.result} = -1 THEN MATCH_CNT_VIC_TL_DL + 1 ELSE MATCH_CNT_VIC_TL_DL END`),
-                                                    MATCH_CNT_DEF_TL_DL: literal(`CASE WHEN ${match.result} = 1 THEN MATCH_CNT_DEF_TL_DL + 1 ELSE MATCH_CNT_DEF_TL_DL END`),
-                                                }, {
-                                                    where: {
-                                                        USER_ID: userTag,
-                                                        BRAWLER_ID: match.brawler
-                                                    },
-                                                    transaction: t,
-                                                });
-                                            }
 
                                             battles.push({
                                                 USER_ID: userTag,
@@ -475,36 +441,6 @@ export class authService {
                                                 PLAYER_SP_BOOL: isStarPlayer,
                                                 BRAWLER_PWR: brawler.power,
                                                 BRAWLER_TRP: brawler.trophies,
-                                            });
-
-                                            await BattlePicks.findOrCreate({
-                                                where: {
-                                                    MAP_ID: mapID,
-                                                    BRAWLER_ID: brawler.id,
-                                                    MATCH_TYP: matchType,
-                                                    MATCH_GRD: matchGrade,
-                                                },
-                                                defaults: {
-                                                    MAP_MD: item.event.mode,
-                                                    MATCH_CNT: 0,
-                                                    MATCH_CNT_VIC: 0,
-                                                    MATCH_CNT_DEF: 0,
-                                                },
-                                                transaction: t,
-                                            });
-
-                                            await BattlePicks.update({
-                                                MATCH_CNT: literal("MATCH_CNT + 1"),
-                                                MATCH_CNT_VIC: literal(`CASE WHEN ${matchResult} = -1 THEN MATCH_CNT_VIC + 1 ELSE MATCH_CNT_VIC END`),
-                                                MATCH_CNT_DEF: literal(`CASE WHEN ${matchResult} = 1 THEN MATCH_CNT_DEF + 1 ELSE MATCH_CNT_DEF END`),
-                                            }, {
-                                                where: {
-                                                    MAP_ID: mapID,
-                                                    BRAWLER_ID: brawler.id,
-                                                    MATCH_TYP: matchType,
-                                                    MATCH_GRD: matchGrade,
-                                                },
-                                                transaction: t,
                                             });
                                         }
                                     } else {
@@ -537,44 +473,6 @@ export class authService {
                                             BRAWLER_PWR: players[playerNumber].brawler.power,
                                             BRAWLER_TRP: players[playerNumber].brawler.trophies,
                                         });
-
-                                        battlePicksInsert.push({
-                                            MAP_ID: mapID,
-                                            BRAWLER_ID: players[playerNumber].brawler.id,
-                                            MATCH_TYP: matchType,
-                                            MATCH_GRD: matchGrade,
-                                            MAP_MD: item.event.mode,
-                                            MATCH_CNT: 0,
-                                            MATCH_CNT_VIC: 0,
-                                            MATCH_CNT_DEF: 0,
-                                        });
-
-                                        const picks = {
-                                            MAP_ID: mapID,
-                                            BRAWLER_ID: players[playerNumber].brawler.id,
-                                            MATCH_TYP: matchType,
-                                            MATCH_GRD: matchGrade,
-                                        };
-
-                                        const existingIndex = battlePicksUpdate.findIndex(item => {
-                                            return (
-                                                item.MAP_ID === picks.MAP_ID &&
-                                                item.BRAWLER_ID === picks.BRAWLER_ID &&
-                                                item.MATCH_TYP === picks.MATCH_TYP &&
-                                                item.MATCH_GRD === picks.MATCH_GRD
-                                            );
-                                        });
-
-                                        if (existingIndex !== -1) {
-                                            battlePicksUpdate[existingIndex].MATCH_CNT++;
-                                            matchResult === -1 && battlePicksUpdate[existingIndex].MATCH_CNT_VIC++;
-                                            matchResult === 1 && battlePicksUpdate[existingIndex].MATCH_CNT_DEF++;
-                                        } else {
-                                            picks.MATCH_CNT = 1;
-                                            picks.MATCH_CNT_VIC = matchResult === -1 ? 1 : 0;
-                                            picks.MATCH_CNT_DEF = matchResult === 1 ? 1 : 0;
-                                            battlePicksUpdate.push(picks); // Add a new entry to the JSON array
-                                        }
                                     }
                                 }
                             }
@@ -599,83 +497,6 @@ export class authService {
                 ignoreDuplicates: true,
                 transaction: t,
             });
-
-            await BattlePicks.bulkCreate(battlePicksInsert, {
-                ignoreDuplicates: true,
-                transaction: t,
-            });
-
-            await BattleTrio.bulkCreate(battleTrioInsert, {
-                ignoreDuplicates: true,
-                transaction: t,
-            });
-
-            await Promise.all(battlePicksUpdate.map(pick => {
-                BattlePicks.update({
-                    MATCH_CNT: literal(`MATCH_CNT + ${pick.MATCH_CNT}`),
-                    MATCH_CNT_VIC: literal(`MATCH_CNT_VIC + ${pick.MATCH_CNT_VIC}`),
-                    MATCH_CNT_DEF: literal(`MATCH_CNT_DEF + ${pick.MATCH_CNT_DEF}`),
-                }, {
-                    where: {
-                        MAP_ID: pick.MAP_ID,
-                        BRAWLER_ID: pick.BRAWLER_ID,
-                        MATCH_TYP: pick.MATCH_TYP,
-                        MATCH_GRD: pick.MATCH_GRD,
-                    },
-                    transaction: t,
-                });
-            }));
-
-            await Promise.all(battleTrioUpdate.map(trio => {
-                BattlePicks.update({
-                    MATCH_CNT: literal(`MATCH_CNT + ${trio.MATCH_CNT}`),
-                    MATCH_CNT_VIC: literal(`MATCH_CNT_VIC + ${trio.MATCH_CNT_VIC}`),
-                    MATCH_CNT_DEF: literal(`MATCH_CNT_DEF + ${trio.MATCH_CNT_DEF}`),
-                }, {
-                    where: {
-                        MAP_ID: trio.MAP_ID,
-                        BRAWLER_1_ID: trio.BRAWLER_1_ID,
-                        BRAWLER_2_ID: trio.BRAWLER_2_ID,
-                        BRAWLER_3_ID: trio.BRAWLER_3_ID,
-                        MATCH_TYP: trio.MATCH_TYP,
-                        MATCH_GRD: trio.MATCH_GRD,
-                    },
-                    transaction: t,
-                });
-            }));
-
-            if (cycle) {
-                const newUserLastCheck = new Date();
-                const newUserLastBattle = dateService.getDate(battleLogs?.items[0].battleTime);
-
-                await Users.update({
-                    USER_LST_CK: newUserLastCheck,
-                    USER_LST_BT: newUserLastBattle
-                }, {
-                    where: {
-                        USER_ID: userTag,
-                    },
-                    transaction: t,
-                });
-
-                setTimeout(async () => {
-                    await this.insertUserBattles(userID, true);
-                }, 20 * 60 * 1000);
-            } else {
-                const newUserLastCheck = new Date();
-                const newUserLastBattle = dateService.getDate(battleLogs?.items[0].battleTime);
-
-                await Users.update({
-                    USER_LST_CK: newUserLastCheck,
-                    USER_LST_BT: newUserLastBattle
-                }, {
-                    where: {
-                        USER_ID: userTag,
-                    },
-                    transaction: t,
-                });
-            }
-
         }); // transaction 종료
     };
 }

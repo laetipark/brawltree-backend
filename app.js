@@ -15,6 +15,7 @@ import {seasonService} from "./services/season_service.js";
 import "./middlewares/pm2_bus.js";
 
 import config from "./config/config.js";
+import {battleService} from "./services/battle_service.js";
 
 // Express 서버를 하나의 워커 프로세스에서 실행
 await sequelizeLoader();
@@ -50,6 +51,8 @@ if (config.scheduleNumber === 0) {
 
     await cron.schedule("5 0 0-23/1 * * *", async () => {
         await brawlerService.insertBrawler();
+        await battleService.updateBattleTrio();
+        await battleService.updateBattlePicks();
     });
 
     const users = await Users.findAll({

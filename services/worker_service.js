@@ -7,7 +7,7 @@ export class workerService {
     static UserList = [];
 
     static fetchUsers = async () => {
-        const REQUEST_INTERVAL_MS = 1000; // 1초에 한 번씩 요청
+        const REQUEST_INTERVAL_MS = 20000; // 20초에 한 번씩 요청
 
         const getUserLists = (users) => {
             const chunkSize = Math.ceil(users.length / 10);
@@ -30,19 +30,17 @@ export class workerService {
                     },
                 });
 
-                await authService.insertUserBattles(user, true);
+                await authService.manageUsers(user, true);
             } catch (error) {
                 return null;
             }
         };
 
         const processRequests = async users => {
-            await Promise.all(
-                users.map(async user => {
-                    await makeAPIRequest(user);
-                    await new Promise(resolve => setTimeout(resolve, REQUEST_INTERVAL_MS));
-                })
-            );
+            for (const user of users) {
+                await makeAPIRequest(user);
+                await new Promise(resolve => setTimeout(resolve, REQUEST_INTERVAL_MS));
+            }
         };
 
         await Promise.all([

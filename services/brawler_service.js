@@ -1,4 +1,4 @@
-import fetch from "node-fetch";
+import axios from "axios";
 import {Brawlers} from "../models/index.js";
 
 import brawlerJSON from "../public/json/brawlers.json" assert {type: "json"};
@@ -6,12 +6,13 @@ import config from "../config/config.js";
 
 export class brawlerService {
     static insertBrawler = async () => {
-        const brawlers = await fetch(`${config.url}/brawlers`, {
+        const brawlers = await axios({
+            url: `${config.url}/brawlers`,
             method: "GET",
             headers: config.headers,
         }).then(res => {
-            return res.json();
-        });
+            return res.data;
+        }).catch(err => console.error(err));
 
         for (const i in brawlers.items) {
             await Brawlers.upsert({

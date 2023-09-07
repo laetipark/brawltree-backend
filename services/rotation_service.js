@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import {col, fn, literal, Op} from "sequelize";
 import {Maps, MapRotation, Events} from "../models/index.js";
 import {dateService} from "./date_service.js";
@@ -67,12 +66,13 @@ export class rotationService {
     };
 
     static insertRotation = async () => {
-        const responseEvent = await fetch(`${config.url}/events/rotation`, {
+        const responseEvent = await axios({
+            url: `${config.url}/events/rotation`,
             method: 'GET',
             headers: config.headers,
-        })
-            .then(res => res.json())
-            .catch(err => console.error(err));
+        }).then(res => {
+            return res.data;
+        }).catch(err => console.error(err));
 
         for (const item of responseEvent) {
             const mapID = item.event.id;
