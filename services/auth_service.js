@@ -23,19 +23,23 @@ export class authService {
     static pendingRequests = [];
     static maxRequests = 4;
 
-    /** 유저 정보 데이터베이스에 추가
-     * @param userID 유저 태그
-     */
-    static insertUsers = async (userID) => {
-        const member = await axios({
+    static fetchUserRequest = async (userID) => {
+        return await axios({
             url: `${config.url}/players/%23${userID}`,
             method: "GET",
             headers: config.headers,
         }).then(res => {
             return res.data;
         }).catch(err => console.error(err));
+    };
 
-        if (member.tag !== undefined) {
+    /** 유저 정보 데이터베이스에 추가
+     * @param userID 유저 태그
+     */
+    static insertUsers = async (userID) => {
+        const user = this.fetchUserRequest(userID);
+
+        if (user.tag !== undefined) {
             const user = await Users.findOrCreate({
                 where: {
                     USER_ID: `#${userID}`,
@@ -46,7 +50,7 @@ export class authService {
                 }
             });
 
-            await this.insertUserProfile(userID);
+            await this.updateUserProfile(user);
             await battleService.updateUserBattles(userID);
             if (new Date(new Date(user[0].USER_LST_CK).getTime() + (5 * 60 * 1000)) < new Date()) {
                 await this.manageUsers(userID, false);
@@ -57,9 +61,9 @@ export class authService {
     };
 
     /** 멤버 기록과 소유 브롤러 정보 데이터베이스에 추가
-     * @param userID 멤버 태그
+     * @param user 멤버 json
      */
-    static insertUserProfile = async (userID) => {
+    static updateUserProfile = async (user) => {
         const season = await seasonService.selectRecentSeason();
         const getRankPL = (typeNum, tag, column) => {
             return UserBattles.findOne({
@@ -93,133 +97,114 @@ export class authService {
             });
         };
 
-        const responseMember = await axios({
-            url: `${config.url}/players/%23${userID}`,
-            method: "GET",
-            headers: config.headers,
-        }).then(res => {
-            return res.data;
-        }).catch(err => console.error(err));
-
-        if (responseMember.tag !== undefined) {
+        if (user.tag !== undefined) {
             const [soloRankCurrent, teamRankCurrent, soloRankHighest, teamRankHighest] =
-                await Promise.all([getRankPL(2, responseMember.tag, "MATCH_DT"),
-                    getRankPL(3, responseMember.tag, "MATCH_DT"),
-                    getRankPL(2, responseMember.tag, "BRAWLER_TRP"),
-                    getRankPL(3, responseMember.tag, "BRAWLER_TRP")]);
+                await Promise.all([getRankPL(2, user.tag, "MATCH_DT"),
+                    getRankPL(3, user.tag, "MATCH_DT"),
+                    getRankPL(2, user.tag, "BRAWLER_TRP"),
+                    getRankPL(3, user.tag, "BRAWLER_TRP")]);
 
-            await UserProfile.upsert({
-                USER_ID: responseMember.tag,
-                USER_NM: responseMember.name,
-                USER_PRFL: responseMember.icon.id,
-                CLUB_ID: responseMember.club.tag,
-                CLUB_NM: responseMember.club.name,
-                TROPHY_CUR: responseMember.trophies,
-                TROPHY_HGH: responseMember.highestTrophies,
-                VICTORY_TRP: responseMember["3vs3Victories"],
-                VICTORY_DUO: responseMember.duoVictories,
-                BRAWLER_RNK_25: responseMember.brawlers.filter((brawler) => brawler.rank >= 25).length,
-                BRAWLER_RNK_30: responseMember.brawlers.filter((brawler) => brawler.rank >= 30).length,
-                BRAWLER_RNK_35: responseMember.brawlers.filter((brawler) => brawler.rank >= 35).length,
-                PL_SL_CUR: soloRankCurrent,
-                PL_SL_HGH: soloRankHighest,
-                PL_TM_CUR: teamRankCurrent,
-                PL_TM_HGH: teamRankHighest,
-            });
-
-            const brawlerList = responseMember.brawlers;
-            for (const brawler of brawlerList) {
+            const brawlers = [];
+            const brawlerItems = [];
+            const brawlerItemIDs = [];
+            user.brawlers.map(async brawler => {
                 const brawlerID = brawler.id;
                 const brawlerPower = brawler.power;
-                const trophyBegin = await getTrophyBegin(responseMember.tag, brawlerID, brawler.trophies);
+                const trophyBegin = await getTrophyBegin(user.tag, brawlerID, brawler.trophies);
 
-                const userBrawlers = await UserBrawlers.findOrCreate({
-                    where: {
-                        USER_ID: responseMember.tag,
-                        BRAWLER_ID: brawlerID,
-                    },
-                    defaults: {
-                        BRAWLER_PWR: brawlerPower,
-                        TROPHY_BGN: trophyBegin,
-                        TROPHY_CUR: brawler.trophies,
-                        TROPHY_HGH: brawler.highestTrophies,
-                        TROPHY_RNK: brawler.rank,
-                    },
+                brawlers.push({
+                    USER_ID: user.tag,
+                    BRAWLER_ID: brawlerID,
+                    BRAWLER_PWR: brawlerPower,
+                    TROPHY_BGN: trophyBegin,
+                    TROPHY_CUR: brawler.trophies,
+                    TROPHY_HGH: brawler.highestTrophies,
+                    TROPHY_RNK: brawler.rank,
                 });
-
-                if (userBrawlers[1] === false) {
-                    await UserBrawlers.upsert({
-                        USER_ID: responseMember.tag,
-                        BRAWLER_ID: brawlerID,
-                        BRAWLER_PWR: brawlerPower,
-                        TROPHY_BGN: trophyBegin,
-                        TROPHY_CUR: brawler.trophies,
-                        TROPHY_HGH: brawler.highestTrophies,
-                        TROPHY_RNK: brawler.rank
-                    });
-                }
 
                 const gears = brawler.gears;
                 const starPowers = brawler.starPowers;
                 const gadgets = brawler.gadgets;
 
-                await UserBrawlerItems.destroy({
-                    where: {
-                        USER_ID: responseMember.tag,
-                        BRAWLER_ID: brawlerID,
-                        [Op.or]: [
-                            {
-                                ITEM_K: "gear",
-                                ITEM_ID: {
-                                    [Op.notIn]: gears.map(gear => gear.id)
-                                }
-                            },
-                            {
-                                ITEM_K: "starPower",
-                                ITEM_ID: {
-                                    [Op.notIn]: starPowers.map(starPower => starPower.id)
-                                }
-                            },
-                            {
-                                ITEM_K: "gadget",
-                                ITEM_ID: {
-                                    [Op.notIn]: gadgets.map(gadget => gadget.id)
-                                }
-                            }
-                        ]
-                    }
-                });
-
                 gears.map(async gear => {
-                    await UserBrawlerItems.upsert({
-                        USER_ID: responseMember.tag,
+                    brawlerItems.push({
+                        USER_ID: user.tag,
                         BRAWLER_ID: brawlerID,
                         ITEM_ID: gear.id,
                         ITEM_K: "gear",
                         ITEM_NM: gear.name,
                     });
+                    brawlerItemIDs.push(gear.id);
                 });
 
                 starPowers.map(async starPower => {
-                    await UserBrawlerItems.upsert({
-                        USER_ID: responseMember.tag,
+                    brawlerItems.push({
+                        USER_ID: user.tag,
                         BRAWLER_ID: brawlerID,
                         ITEM_ID: starPower.id,
                         ITEM_K: "starPower",
                         ITEM_NM: starPower.name,
                     });
+                    brawlerItemIDs.push(starPower.id);
                 });
 
                 gadgets.map(async gadget => {
-                    await UserBrawlerItems.upsert({
-                        USER_ID: responseMember.tag,
+                    brawlerItems.push({
+                        USER_ID: user.tag,
                         BRAWLER_ID: brawlerID,
                         ITEM_ID: gadget.id,
                         ITEM_K: "gadget",
                         ITEM_NM: gadget.name,
                     });
+                    brawlerItemIDs.push(gadget.id);
                 });
-            }
+            });
+
+            await sequelize.transaction(async (t) => {
+                await UserProfile.upsert({
+                    USER_ID: user.tag,
+                    USER_NM: user.name,
+                    USER_PRFL: user.icon.id,
+                    CLUB_ID: user.club.tag,
+                    CLUB_NM: user.club.name,
+                    TROPHY_CUR: user.trophies,
+                    TROPHY_HGH: user.highestTrophies,
+                    VICTORY_TRP: user["3vs3Victories"],
+                    VICTORY_DUO: user.duoVictories,
+                    BRAWLER_RNK_25: user.brawlers.filter((brawler) => brawler.rank >= 25).length,
+                    BRAWLER_RNK_30: user.brawlers.filter((brawler) => brawler.rank >= 30).length,
+                    BRAWLER_RNK_35: user.brawlers.filter((brawler) => brawler.rank >= 35).length,
+                    PL_SL_CUR: soloRankCurrent,
+                    PL_SL_HGH: soloRankHighest,
+                    PL_TM_CUR: teamRankCurrent,
+                    PL_TM_HGH: teamRankHighest,
+                }, {
+                    transaction: t
+                });
+
+                await UserBrawlers.bulkCreate(brawlers, {
+                    ignoreDuplicates: true,
+                    updateOnDuplicate: [
+                        "BRAWLER_PWR", "TROPHY_BGN",
+                        "TROPHY_CUR", "TROPHY_HGH", "TROPHY_RNK",
+                    ],
+                    transaction: t
+                });
+                await UserBrawlerItems.bulkCreate(brawlerItems, {
+                    ignoreDuplicates: true,
+                    transaction: t
+                });
+
+                await UserBrawlerItems.destroy({
+                    where: {
+                        USER_ID: user.tag,
+                        ITEM_ID: {
+                            [Op.notIn]: brawlerItemIDs
+                        }
+                    },
+                    transaction: t
+                });
+            }); // transaction 종료
         }
     };
 
@@ -233,11 +218,11 @@ export class authService {
         } else {
             // 최대 동시 실행 요청 수 미만이면 바로 실행
             this.userBattles.push(requestInfo);
-            await this.fetchRequest(requestInfo);
+            await this.fetchBattleRequest(requestInfo);
         }
     };
 
-    static fetchRequest = async requestInfo => {
+    static fetchBattleRequest = async requestInfo => {
         const {userID, cycle} = requestInfo;
 
         try {
@@ -495,7 +480,7 @@ export class authService {
 
             await UserBattles.bulkCreate(battles, {
                 ignoreDuplicates: true,
-                transaction: t,
+                transaction: t
             });
         }); // transaction 종료
     };

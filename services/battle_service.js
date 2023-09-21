@@ -1,5 +1,7 @@
-import {sequelize, BattlePicks, BattleTrio, Maps, UserBattles, UserBrawlerBattles} from "../models/index.js";
+import {sequelize, BrawlerStats, BattleTrio, Maps, UserBattles, UserBrawlerBattles} from "../models/index.js";
 import {col, fn, literal, Op} from "sequelize";
+import {seasonService} from "./season_service.js";
+import fs from "fs";
 
 export class battleService {
     static updateBattleTrio = async () => {
@@ -27,7 +29,7 @@ export class battleService {
                     SUM(CASE WHEN MATCH_RES = 1 THEN 1 ELSE 0 END) AS MATCH_CNT_DEF
                 FROM
                     brawl_tree.USER_BATTLES AS UserBattles
-                RIGHT OUTER JOIN MAPS AS Maps ON
+                RIGHT OUTER JOIN brawl_tree.MAPS AS Maps ON
                     UserBattles.MAP_ID = Maps.MAP_ID
                 WHERE
                     MAP_MD_CD = 3
@@ -67,12 +69,13 @@ export class battleService {
         });
 
         await BattleTrio.bulkCreate(battleTrios, {
+            ignoreDuplicates: true,
             updateOnDuplicate: ["MATCH_CNT", "MATCH_CNT_VIC", "MATCH_CNT_DEF"],
         });
     };
 
-    static updateBattlePicks = async () => {
-        const battlePicks = await UserBattles.findAll({
+    static updateBrawlerStats = async () => {
+        const brawlerStats = await UserBattles.findAll({
             include: [
                 {
                     model: Maps,
@@ -96,10 +99,11 @@ export class battleService {
                 }
             },
             group: ["BRAWLER_ID", "MAP_ID", "MATCH_TYP", "MATCH_GRD", "MAP_MD"],
-            raw: true
+            raw: true,
         });
 
-        await BattlePicks.bulkCreate(battlePicks, {
+        await BrawlerStats.bulkCreate(brawlerStats, {
+            ignoreDuplicates: true,
             updateOnDuplicate: ["MATCH_CNT", "MATCH_CNT_VIC", "MATCH_CNT_DEF"],
         });
     };
@@ -108,8 +112,8 @@ export class battleService {
         const battles = await UserBattles.findAll({
             attributes: ["BRAWLER_ID", "MAP_ID", "MATCH_TYP", "MATCH_GRD",
                 [fn("COUNT", literal("*")), "MATCH_CNT"],
-                [fn("COUNT", literal("CASE WHEN MATCH_RES = -1 THEN 1 ELSE NULL END")), "MATCH_VIC_CNT"],
-                [fn("COUNT", literal("CASE WHEN MATCH_RES = 1 THEN 1 ELSE NULL END")), "MATCH_DEF_CNT"],
+                [fn("COUNT", literal("CASE WHEN MATCH_RES = -1 THEN 1 ELSE NULL END")), "MATCH_CNT_VIC"],
+                [fn("COUNT", literal("CASE WHEN MATCH_RES = 1 THEN 1 ELSE NULL END")), "MATCH_CNT_DEF"],
             ],
             where: {
                 USER_ID: `#${userID}`,
@@ -120,19 +124,45 @@ export class battleService {
             },
             group: ["BRAWLER_ID", "MAP_ID", "MATCH_TYP", "MATCH_GRD"],
             raw: true
-        });
-
-        battles.map(async battle => {
-            await UserBrawlerBattles.upsert({
-                USER_ID: `#${userID}`,
-                BRAWLER_ID: battle.BRAWLER_ID,
-                MAP_ID: battle.MAP_ID,
-                MATCH_TYP: battle.MATCH_TYP,
-                MATCH_GRD: battle.MATCH_GRD,
-                MATCH_CNT: battle.MATCH_CNT,
-                MATCH_VIC_CNT: battle.MATCH_VIC_CNT,
-                MATCH_DEF_CNT: battle.MATCH_DEF_CNT
+        }).then(result => {
+            return result.map(battle => {
+                return {
+                    USER_ID: `#${userID}`,
+                    BRAWLER_ID: battle.BRAWLER_ID,
+                    MAP_ID: battle.MAP_ID,
+                    MATCH_TYP: battle.MATCH_TYP,
+                    MATCH_GRD: battle.MATCH_GRD,
+                    MATCH_CNT: battle.MATCH_CNT,
+                    MATCH_CNT_VIC: battle.MATCH_CNT_VIC,
+                    MATCH_CNT_DEF: battle.MATCH_CNT_DEF
+                };
             });
         });
+
+        await UserBrawlerBattles.bulkCreate(battles, {
+            ignoreDuplicates: true,
+            updateOnDuplicate: ["MATCH_CNT", "MATCH_CNT_VIC", "MATCH_CNT_DEF"],
+        });
     };
+
+    /** 이전 시즌 전투 기록 백업 */
+    /*static backupBattles = async (season) => {
+        await UserBattles.findAll({
+            where: {
+                MATCH_DT: {
+                    [Op.lt]: season.SEASON_BGN_DT
+                }
+            },
+            raw: true
+        }).then(async (result) => {
+            fs.writeFileSync(`./backup/battle-${Date.now()}.json`, JSON.stringify(result));
+            await UserBattles.destroy({
+                where: {
+                    MATCH_DT: {
+                        [Op.lt]: season.SEASON_BGN_DT
+                    }
+                }
+            });
+        });
+    };*/
 }

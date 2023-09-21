@@ -133,7 +133,7 @@ export class userService {
                     , 2
                 ), "MATCH_PCK_R"],
                 [fn("ROUND",
-                    literal("SUM(`MATCH_VIC_CNT`) * 100 / SUM(`MATCH_VIC_CNT` + `MATCH_DEF_CNT`)")
+                    literal("SUM(`MATCH_CNT_VIC`) * 100 / SUM(`MATCH_CNT_VIC` + `MATCH_CNT_DEF`)")
                     , 2
                 ), "MATCH_VIC_R"],
                 [col("Brawler.BRAWLER_NM"), "BRAWLER_NM"],
@@ -312,8 +312,8 @@ export class userService {
                 ), "MATCH_PCK_R_TL"],
                 [fn("ROUND",
                     fn("IFNULL",
-                        literal("SUM(CASE WHEN `UserBrawlerBattles`.`MATCH_TYP` = 0 THEN `UserBrawlerBattles`.`MATCH_VIC_CNT` ELSE 0 END) * 100 / " +
-                            "SUM(CASE WHEN `UserBrawlerBattles`.`MATCH_TYP` = 0 THEN `UserBrawlerBattles`.`MATCH_VIC_CNT` + `UserBrawlerBattles`.`MATCH_DEF_CNT` ELSE 0 END)")
+                        literal("SUM(CASE WHEN `UserBrawlerBattles`.`MATCH_TYP` = 0 THEN `UserBrawlerBattles`.`MATCH_CNT_VIC` ELSE 0 END) * 100 / " +
+                            "SUM(CASE WHEN `UserBrawlerBattles`.`MATCH_TYP` = 0 THEN `UserBrawlerBattles`.`MATCH_CNT_VIC` + `UserBrawlerBattles`.`MATCH_CNT_DEF` ELSE 0 END)")
                         , 0)
                     , 2
                 ), "MATCH_VIC_R_TL"],
@@ -326,8 +326,8 @@ export class userService {
                 ), "MATCH_PCK_R_PL"],
                 [fn("ROUND",
                     fn("IFNULL",
-                        literal("SUM(CASE WHEN `UserBrawlerBattles`.`MATCH_TYP` in (2, 3) THEN `UserBrawlerBattles`.`MATCH_VIC_CNT` ELSE 0 END) * 100 / " +
-                            "SUM(CASE WHEN `UserBrawlerBattles`.`MATCH_TYP` = 0 THEN `UserBrawlerBattles`.`MATCH_VIC_CNT` + `UserBrawlerBattles`.`MATCH_DEF_CNT` ELSE 0 END)")
+                        literal("SUM(CASE WHEN `UserBrawlerBattles`.`MATCH_TYP` in (2, 3) THEN `UserBrawlerBattles`.`MATCH_CNT_VIC` ELSE 0 END) * 100 / " +
+                            "SUM(CASE WHEN `UserBrawlerBattles`.`MATCH_TYP` = 0 THEN `UserBrawlerBattles`.`MATCH_CNT_VIC` + `UserBrawlerBattles`.`MATCH_CNT_DEF` ELSE 0 END)")
                         , 0)
                     , 2
                 ), "MATCH_VIC_R_PL"],
@@ -365,7 +365,7 @@ export class userService {
                 return {
                     BRAWLER_ID: item.BRAWLER_ID,
                     x: item.x,
-                    y: parseInt(item.y) + brawlers.find(brawler => brawler.BRAWLER_ID === item.BRAWLER_ID).TROPHY_BGN
+                    y: parseInt(item.y) + brawlers.find(brawler => brawler.BRAWLER_ID === item.BRAWLER_ID)?.TROPHY_BGN || 0
                 };
             });
 

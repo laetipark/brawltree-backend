@@ -1,9 +1,22 @@
-import {col, fn, literal, Op} from "sequelize";
+import axios from "axios";
+import {col, fn, literal, Op, where} from "sequelize";
 import {Maps, MapRotation, Events} from "../models/index.js";
 import {dateService} from "./date_service.js";
 
 import rotationPL from "../public/json/power_league.json" assert {type: "json"};
 import config from '../config/config.js';
+
+const groupBy = (data, key) =>
+    data.reduce(function (carry, el) {
+        const group = el[key];
+
+        if (carry[group] === undefined) {
+            carry[group] = [];
+        }
+
+        carry[group].push(el);
+        return carry;
+    }, {});
 
 export class rotationService {
 
@@ -139,7 +152,7 @@ export class rotationService {
         });
     };
 
-    static selectRotationTL = async () => {
+    static selectModeTL = async () => {
         const rotationTL = await MapRotation.findAll({
             include: [
                 {
@@ -150,10 +163,7 @@ export class rotationService {
             ],
             attributes: [[col("Map.MAP_MD"), "MAP_MD"]],
             group: ["MAP_MD"],
-            where: {
-                ROTATION_TL_BOOL: true
-            },
-            raw: true
+            raw: true,
         });
 
         const modeList = rotationTL.map(map => map.MAP_MD);
@@ -162,7 +172,7 @@ export class rotationService {
         return filterModeList;
     };
 
-    static selectRotationPL = async () => {
+    static selectModePL = async () => {
         const rotationPL = await MapRotation.findAll({
             include: [
                 {
@@ -184,4 +194,65 @@ export class rotationService {
         filterModeList.unshift("all");
         return filterModeList;
     };
+
+    static selectRotationTL = async () => {
+        const beginDate = new Date(new Date(
+            new Date().getFullYear(),
+            new Date().getMonth(),
+            (new Date().getDate() - 1)
+        ).getTime());
+
+        return await MapRotation.findAll({
+            include: [
+                {
+                    model: Maps,
+                    required: true,
+                    attributes: []
+                },
+                {
+                    model: Events,
+                    required: true,
+                    attributes: []
+                }
+            ],
+            attributes: [
+                [col("Events.ROTATION_SLT_NO"), "ROTATION_SLT_NO"],
+                [col("Events.ROTATION_BGN_DT"), "ROTATION_BGN_DT"],
+                [col("Events.ROTATION_END_DT"), "ROTATION_END_DT"],
+                [col("Events.MAP_ID"), "MAP_ID"],
+                [col("Events.MAP_MDFS"), "MAP_MDFS"],
+                [col("Map.MAP_MD"), "MAP_MD"],
+                [col("Map.MAP_NM"), "MAP_NM"]],
+            order: [["ROTATION_BGN_DT", "DESC"]],
+            where: {
+                $where: where(col("Events.ROTATION_BGN_DT"), {
+                    [Op.gte]: beginDate
+                }),
+                ROTATION_TL_BOOL: true,
+            },
+            raw: true
+        }).then(result => {
+            return groupBy(result, "ROTATION_SLT_NO");
+        });
+    }
+    static selectRotationPL = async () =>
+        await MapRotation.findAll({
+            include: [
+                {
+                    model: Maps,
+                    required: true,
+                    attributes: []
+                },
+            ],
+            attributes: [
+                [col("Map.MAP_ID"), "MAP_ID"],
+                [col("Map.MAP_MD"), "MAP_MD"],
+                [col("Map.MAP_NM"), "MAP_NM"]
+            ],
+            where: {
+                ROTATION_PL_BOOL: true
+            }
+        }).then(result => {
+            return groupBy(result, "MAP_MD");
+        });
 }

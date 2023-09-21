@@ -40,6 +40,10 @@ export default (sequelize, DataTypes) => {
     });
 
     UserBrawlers.associate = models => {
+        UserBrawlers.belongsTo(models.Users, {
+            foreignKey: "USER_ID", sourceKey: "USER_ID"
+        });
+
         UserBrawlers.belongsTo(models.UserProfile, {
             foreignKey: "USER_ID", sourceKey: "USER_ID"
         });

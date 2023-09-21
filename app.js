@@ -5,7 +5,7 @@ import sequelizeLoader from "./loaders/sequelize.js";
 import cron from "node-cron";
 
 import {Users} from "./models/index.js";
-import {col, fn} from "sequelize";
+import {col, fn, literal} from "sequelize";
 
 // import {clubService} from "./services/club_service.js";
 import {brawlerService} from "./services/brawler_service.js";
@@ -49,11 +49,16 @@ if (config.scheduleNumber === 0) {
         await rotationService.deleteRotation();
     });
 
-    await cron.schedule("5 0 0-23/1 * * *", async () => {
+    await cron.schedule("5 * 0-23/1 * * *", async () => {
         await brawlerService.insertBrawler();
         await battleService.updateBattleTrio();
-        await battleService.updateBattlePicks();
+        await battleService.updateBrawlerStats();
     });
+
+    /*await cron.schedule('0 17 * * 1', async () => {
+        const season = await seasonService.selectRecentSeason();
+        await battleService.backupBattles(season);
+    });*/
 
     const users = await Users.findAll({
         attributes: [[fn("REPLACE", col("USER_ID"), "#", ""), "USER_ID"]],
@@ -70,24 +75,48 @@ if (config.scheduleNumber === 0) {
             process.exit(1);
         }
 
-        pm2.list((err, processList) => {
-            if (err) {
-                console.error(err);
-                pm2.disconnect();
-                return;
-            }
-
-            if (processList.length > 0) {
-                process.send({
-                    type: `child:start`,
-                    data: {
-                        userList: [users.slice(0, chunkSize), users.slice(chunkSize)]
-                    }
-                });
-            } else {
-                console.log("No processes found.");
-            }
+        if (err) {
+            console.error(err);
             pm2.disconnect();
+            return;
+        }
+
+        process.send({
+            type: `child:start`,
+            data: {
+                userList: [users.slice(0, chunkSize), users.slice(chunkSize)]
+            }
+        });
+
+        pm2.disconnect();
+    });
+
+    await cron.schedule("5 0-59/10 * * * *", async () => {
+        const cycle = await Users.findOne({
+            attributes: [
+                [fn("COUNT", literal("CASE WHEN CYCLE_NO = 1 THEN 1 ELSE NULL END")), "PROCESS_1"],
+                [fn("COUNT", literal("CASE WHEN CYCLE_NO = 2 THEN 1 ELSE NULL END")), "PROCESS_2"],
+            ],
+            raw: true
+        });
+
+        const emptyCycle = await Users.findAll({
+            attributes: [[fn("REPLACE", col("USER_ID"), "#", ""), "USER_ID"]],
+            where: {
+                CYCLE_NO: null
+            }
+        }).then(result => {
+            return result.map(item => item.USER_ID);
+        });
+
+        process.send({
+            type: `child:update`,
+            data: {
+                scheduleNumber: cycle.PROCESS_1 < cycle.PROCESS_2 ? 1 : 2,
+                userList: emptyCycle
+            }
         });
     });
+
+    await battleService.updateBrawlerStats();
 }

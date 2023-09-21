@@ -1,12 +1,12 @@
 export default (sequelize, DataTypes) => {
-    const BattlePicks = sequelize.define("BattlePicks", {
-        MAP_ID: {
-            type: DataTypes.CHAR(8),
+    const UserFriends = sequelize.define("UserFriends", {
+        USER_ID: {
+            type: DataTypes.STRING(12),
             primaryKey: true,
             allowNull: false,
         },
-        BRAWLER_ID: {
-            type: DataTypes.CHAR(8),
+        FRIEND_ID: {
+            type: DataTypes.STRING(12),
             primaryKey: true,
             allowNull: false,
         },
@@ -22,6 +22,11 @@ export default (sequelize, DataTypes) => {
         },
         MAP_MD: {
             type: DataTypes.STRING(12),
+            primaryKey: true,
+            allowNull: false,
+        },
+        FRIEND_NM: {
+            type: DataTypes.STRING(30),
             allowNull: false,
         },
         MATCH_CNT: {
@@ -36,24 +41,32 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: true,
         },
+        FRIEND_PT: {
+            type: DataTypes.FLOAT,
+            allowNull: true,
+        }
     }, {
         charset: "utf8mb4",
         collate: "utf8mb4_unicode_ci",
-        tableName: "BATTLE_PICKS",
+        tableName: "USER_FRIENDS",
         timestamps: false,
         underscore: false,
         paranoid: false,
     });
 
-    BattlePicks.associate = models => {
-        BattlePicks.belongsTo(models.Maps, {
-            foreignKey: "MAP_ID", sourceKey: "MAP_ID"
+    UserFriends.associate = models => {
+        UserFriends.belongsTo(models.Users, {
+            foreignKey: "USER_ID", sourceKey: "USER_ID"
         });
 
-        BattlePicks.belongsTo(models.Brawlers, {
-            foreignKey: "BRAWLER_ID", sourceKey: "BRAWLER_ID"
+        UserFriends.belongsTo(models.UserProfile, {
+            foreignKey: "USER_ID", sourceKey: "USER_ID"
+        });
+
+        UserFriends.belongsTo(models.UserProfile, {
+            foreignKey: "USER_ID", sourceKey: "FRIEND_ID"
         });
     };
 
-    return BattlePicks;
+    return UserFriends;
 };

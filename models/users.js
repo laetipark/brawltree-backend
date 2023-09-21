@@ -38,6 +38,22 @@ export default (sequelize, DataTypes) => {
         Users.hasOne(models.UserProfile, {
             foreignKey: "USER_ID", sourceKey: "USER_ID"
         });
+
+        Users.hasMany(models.UserBattles, {
+            foreignKey: "USER_ID", sourceKey: "USER_ID"
+        });
+
+        Users.hasMany(models.UserBrawlers, {
+            foreignKey: "USER_ID", sourceKey: "USER_ID"
+        });
+
+        Users.hasMany(models.UserRecords, {
+            foreignKey: "USER_ID", sourceKey: "USER_ID"
+        });
+
+        Users.hasMany(models.UserFriends, {
+            foreignKey: "USER_ID", sourceKey: "USER_ID"
+        });
     };
 
     return Users;

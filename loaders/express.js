@@ -1,3 +1,4 @@
+import redis from "redis"
 import express from "express";
 
 import morgan from "morgan";
@@ -5,8 +6,10 @@ import cors from "cors";
 
 import cookieParser from "cookie-parser";
 import session from "express-session";
+import RedisStore from "connect-redis";
 
 import index from "../routes/index.js";
+import blossom from "../routes/blossom.js";
 import user from "../routes/user.js";
 import brawlers from "../routes/brawlers.js";
 import events from "../routes/events.js";
@@ -18,9 +21,8 @@ import config from "../config/config.js";
 
 export default async () => {
     const app = express();
-    app.get('/', (req, res) => {
-        res.send('<h1>Hello Express!</h1>');
-    });
+    const client = redis.createClient(config.redisPort);
+    const redisStore = new RedisStore({client});
 
     app.use(cors({
         credentials: true,
@@ -42,6 +44,7 @@ export default async () => {
 
     // routes
     app.use("/", index);
+    app.use("/blossom", blossom);
     app.use("/brawlian", user);
     app.use("/brawlers", brawlers);
     app.use("/maps", maps);
@@ -60,6 +63,7 @@ export default async () => {
 
     app.use(cookieParser(process.env.COOKIE_SECRET));
     app.use(session({
+        store: redisStore,
         resave: false,
         saveUninitialized: false,
         secret: process.env.COOKIE_SECRET,

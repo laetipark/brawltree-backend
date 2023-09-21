@@ -40,7 +40,7 @@ export default (sequelize, DataTypes) => {
             foreignKey: "MAP_ID", sourceKey: "MAP_ID"
         });
 
-        Maps.hasMany(models.BattlePicks, {
+        Maps.hasMany(models.BrawlerStats, {
             foreignKey: "MAP_ID", sourceKey: "MAP_ID"
         });
     };

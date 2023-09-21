@@ -35,6 +35,10 @@ export default (sequelize, DataTypes) => {
         Events.belongsTo(models.Maps, {
             foreignKey: "MAP_ID", sourceKey: "MAP_ID"
         });
+
+        Events.belongsTo(models.MapRotation, {
+            foreignKey: "MAP_ID", sourceKey: "MAP_ID"
+        });
     };
 
     return Events;

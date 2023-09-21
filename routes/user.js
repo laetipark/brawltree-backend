@@ -1,4 +1,5 @@
 import express from "express";
+
 import {authService} from "../services/auth_service.js";
 import {userService} from "../services/user_service.js";
 import {rotationService} from "../services/rotation_service.js";
@@ -6,7 +7,7 @@ import {seasonService} from "../services/season_service.js";
 
 const router = express.Router();
 
-router.get('/:id', async (req, res) => {
+router.get("/:id", async (req, res) => {
     const id = req.params.id;
 
     const user = await userService.selectUser(id);
@@ -19,7 +20,7 @@ router.get('/:id', async (req, res) => {
     });
 });
 
-router.get('/:id/profile', async (req, res) => {
+router.get("/:id/profile", async (req, res) => {
     const id = req.params.id;
     const userProfile = await userService.selectUserProfile(id);
 
@@ -28,15 +29,15 @@ router.get('/:id/profile', async (req, res) => {
     });
 });
 
-router.get('/:id/battles/summary', async (req, res) => {
+router.get("/:id/battles/summary", async (req, res) => {
     const id = req.params.id;
     const {type} = req.query;
     const {mode} = req.query;
 
     const season = await seasonService.selectRecentSeason();
     const [userBattles, userBrawlers] = await userService.selectUserBattleRecords(id, type, mode, season);
-    const rotationTL = await rotationService.selectRotationTL();
-    const rotationPL = await rotationService.selectRotationPL();
+    const rotationTL = await rotationService.selectModeTL();
+    const rotationPL = await rotationService.selectModePL();
 
     res.send({
         userBattles: userBattles,
@@ -47,7 +48,7 @@ router.get('/:id/battles/summary', async (req, res) => {
     });
 });
 
-router.get('/:id/battles/logs', async (req, res) => {
+router.get("/:id/battles/logs", async (req, res) => {
     const id = req.params.id;
     const {type} = req.query;
     const {mode} = req.query;
@@ -62,10 +63,10 @@ router.get('/:id/battles/logs', async (req, res) => {
     });
 });
 
-router.get('/:id/brawlers', async (req, res) => {
+router.get("/:id/brawlers", async (req, res) => {
     const id = req.params.id;
     const season = await seasonService.selectRecentSeason();
-    const [userBrawlers, userBrawlerItems, userBrawlerGraphs] = await userService.selectUserBrawlers(id,season);
+    const [userBrawlers, userBrawlerItems, userBrawlerGraphs] = await userService.selectUserBrawlers(id, season);
 
     res.send({
         userBrawlers: userBrawlers,
@@ -73,6 +74,5 @@ router.get('/:id/brawlers', async (req, res) => {
         userBrawlerGraphs: userBrawlerGraphs
     });
 });
-
 
 export default router;

@@ -68,7 +68,7 @@ export default (sequelize, DataTypes) => {
     });
 
     Brawlers.associate = models => {
-        Brawlers.hasMany(models.BattlePicks, {
+        Brawlers.hasMany(models.BrawlerStats, {
             foreignKey: "BRAWLER_ID", sourceKey: "BRAWLER_ID"
         });
 

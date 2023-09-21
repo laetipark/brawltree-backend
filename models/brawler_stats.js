@@ -1,16 +1,11 @@
 export default (sequelize, DataTypes) => {
-    const UserBrawlerBattles = sequelize.define("UserBrawlerBattles", {
-        USER_ID: {
-            type: DataTypes.STRING(12),
-            primaryKey: true,
-            allowNull: false,
-        },
-        BRAWLER_ID: {
+    const BrawlerStats = sequelize.define("BrawlerStats", {
+        MAP_ID: {
             type: DataTypes.CHAR(8),
             primaryKey: true,
             allowNull: false,
         },
-        MAP_ID: {
+        BRAWLER_ID: {
             type: DataTypes.CHAR(8),
             primaryKey: true,
             allowNull: false,
@@ -25,6 +20,10 @@ export default (sequelize, DataTypes) => {
             primaryKey: true,
             allowNull: false,
         },
+        MAP_MD: {
+            type: DataTypes.STRING(12),
+            allowNull: false,
+        },
         MATCH_CNT: {
             type: DataTypes.INTEGER,
             allowNull: true,
@@ -36,29 +35,25 @@ export default (sequelize, DataTypes) => {
         MATCH_CNT_DEF: {
             type: DataTypes.INTEGER,
             allowNull: true,
-        }
+        },
     }, {
         charset: "utf8mb4",
         collate: "utf8mb4_unicode_ci",
-        tableName: "USER_BRAWLER_BATTLES",
+        tableName: "BRAWLER_STATS",
         timestamps: false,
         underscore: false,
         paranoid: false,
     });
 
-    UserBrawlerBattles.associate = models => {
-        UserBrawlerBattles.belongsTo(models.UserProfile, {
-            foreignKey: "USER_ID", sourceKey: "USER_ID"
-        });
-
-        UserBrawlerBattles.belongsTo(models.Brawlers, {
-            foreignKey: "BRAWLER_ID", sourceKey: "BRAWLER_ID"
-        });
-
-        UserBrawlerBattles.belongsTo(models.Maps, {
+    BrawlerStats.associate = models => {
+        BrawlerStats.belongsTo(models.Maps, {
             foreignKey: "MAP_ID", sourceKey: "MAP_ID"
+        });
+
+        BrawlerStats.belongsTo(models.Brawlers, {
+            foreignKey: "BRAWLER_ID", sourceKey: "BRAWLER_ID"
         });
     };
 
-    return UserBrawlerBattles;
+    return BrawlerStats;
 };

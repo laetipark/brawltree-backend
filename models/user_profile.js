@@ -82,7 +82,20 @@ export default (sequelize, DataTypes) => {
         UserProfile.hasMany(models.UserBattles, {
             foreignKey: "USER_ID", sourceKey: "USER_ID"
         });
+
         UserProfile.hasMany(models.UserBrawlers, {
+            foreignKey: "USER_ID", sourceKey: "USER_ID"
+        });
+
+        UserProfile.hasMany(models.UserFriends, {
+            foreignKey: "USER_ID", sourceKey: "USER_ID"
+        });
+
+        UserProfile.hasMany(models.UserFriends, {
+            foreignKey: "FRIEND_ID", sourceKey: "USER_ID"
+        });
+
+        UserProfile.hasMany(models.UserRecords, {
             foreignKey: "USER_ID", sourceKey: "USER_ID"
         });
     };
