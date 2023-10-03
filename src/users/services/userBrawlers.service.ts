@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Brawlers } from '../../brawlers/entities/brawlers.entity';
-import {
-  UserBrawlerItems,
-} from '../entities/userBrawlers.entity';
-import { UserBattles } from '../entities/users.entity';
-import { SeasonsEntity } from '../../seasons/seasons.entity';
+import { UserBattles } from '~/users/entities/users.entity';
+import { UserBrawlerItems } from '~/users/entities/userBrawlers.entity';
+import { Brawlers } from '~/brawlers/entities/brawlers.entity';
+import { Seasons } from '~/seasons/seasons.entity';
 
 @Injectable()
 export class UserBrawlersService {
@@ -19,7 +18,7 @@ export class UserBrawlersService {
     private userBrawlerItems: Repository<UserBrawlerItems>,
   ) {}
 
-  async findUserBrawlers(id: string, season: SeasonsEntity) {
+  async findUserBrawlers(id: string, season: Seasons) {
     const brawlers = await this.brawlers
       .createQueryBuilder('b')
       .select('b.BRAWLER_ID', 'BRAWLER_ID')

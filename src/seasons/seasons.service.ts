@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
-import { SeasonsEntity } from './seasons.entity';
+import { Seasons } from './seasons.entity';
 
 import { CreateSeasonsDto } from './create-season.dto';
 
 @Injectable()
 export class SeasonsService {
   constructor(
-    @InjectRepository(SeasonsEntity)
-    private seasonsRepository: Repository<SeasonsEntity>,
+    @InjectRepository(Seasons)
+    private seasonsRepository: Repository<Seasons>,
   ) {}
 
-  async checkSeason(): Promise<SeasonsEntity> {
+  async checkSeason(): Promise<Seasons> {
     return this.seasonsRepository
       .findOne({
         order: {
@@ -105,7 +105,7 @@ export class SeasonsService {
     }
   }
 
-  async findSeason(): Promise<SeasonsEntity> {
+  async findSeason(): Promise<Seasons> {
     return await this.seasonsRepository
       .find({
         take: 1,

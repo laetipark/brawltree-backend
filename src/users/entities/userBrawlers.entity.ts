@@ -8,8 +8,8 @@ import {
   Relation,
 } from 'typeorm';
 import { Users } from './users.entity';
-import { Brawlers } from '../../brawlers/entities/brawlers.entity';
-import {Maps} from "../../maps/entities/maps.entity";
+import { Brawlers } from '~/brawlers/entities/brawlers.entity';
+import { Maps } from '~/maps/entities/maps.entity';
 
 abstract class Common {
   @PrimaryGeneratedColumn()

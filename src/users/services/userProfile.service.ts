@@ -1,14 +1,15 @@
 import { Injectable, Param } from '@nestjs/common';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
-import { UserBattles, UserProfile } from '../entities/users.entity';
+import { UserBattles, UserProfile } from '~/users/entities/users.entity';
 import {
   UserBrawlerItems,
   UserBrawlers,
-} from '../entities/userBrawlers.entity';
-import { SeasonsEntity } from '../../seasons/seasons.entity';
-import { CreateUserBrawlersDto } from '../dto/create-userBrawlers.dto';
+} from '~/users/entities/userBrawlers.entity';
+import { Seasons } from '~/seasons/seasons.entity';
+
+import { CreateUserBrawlersDto } from '~/users/dto/create-userBrawlers.dto';
 
 @Injectable()
 export class UserProfileService {
@@ -31,7 +32,7 @@ export class UserProfileService {
     });
   }
 
-  async updateUserProfile(user: any, season: SeasonsEntity) {
+  async updateUserProfile(user: any, season: Seasons) {
     const getRankPL = async (tag: string, typeNum: number, column: string) => {
       return await this.userBattles
         .createQueryBuilder('ub')

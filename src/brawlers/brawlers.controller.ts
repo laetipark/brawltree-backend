@@ -1,6 +1,8 @@
 import { Controller, Get, HttpCode } from '@nestjs/common';
-import { BrawlersService } from './brawlers.service';
+
 import { Brawlers } from './entities/brawlers.entity';
+
+import { BrawlersService } from './brawlers.service';
 
 @Controller('brawler')
 export class BrawlersController {

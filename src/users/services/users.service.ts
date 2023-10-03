@@ -1,10 +1,11 @@
 import { Repository } from 'typeorm';
+
 import { Body, Injectable, Param } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Users } from '~/users/entities/users.entity';
 
 import { CreateUsersDto } from '../dto/create-users.dto';
 
-import { Users } from '../entities/users.entity';
 import { HttpService } from '@nestjs/axios';
 
 import { catchError, firstValueFrom, map, of } from 'rxjs';

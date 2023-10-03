@@ -8,7 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Events } from './events.entity';
-import { UserBrawlerBattles } from '../../users/entities/userBrawlers.entity';
+import { UserBrawlerBattles } from '~/users/entities/userBrawlers.entity';
 
 abstract class Common {
   @PrimaryColumn()
@@ -36,7 +36,7 @@ export class Maps extends Common {
 
 @Entity({ name: 'MAP_ROTATION' })
 export class MapRotation extends Common {
-  @PrimaryColumn()
+  @Column()
   ROTATION_TL_BOOL: boolean;
 
   @Column()

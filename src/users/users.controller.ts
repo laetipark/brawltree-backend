@@ -9,17 +9,17 @@ import {
 } from '@nestjs/common';
 import { Users } from './entities/users.entity';
 import { UsersService } from './services/users.service';
-import { SeasonsService } from '../seasons/seasons.service';
 import { UserProfile } from './entities/users.entity';
 import { UserProfileService } from './services/userProfile.service';
 import { UserBattlesService } from './services/userBattles.service';
 import { UserBrawlersService } from './services/userBrawlers.service';
-import { RotationService } from '../maps/services/rotation.service';
+import { EventsService } from '~/maps/services/events.service';
+import { SeasonsService } from '~/seasons/seasons.service';
 
 @Controller('brawlian')
 export class UsersController {
   constructor(
-    private rotationService: RotationService,
+    private rotationService: EventsService,
     private usersService: UsersService,
     private userProfileService: UserProfileService,
     private userBattlesService: UserBattlesService,

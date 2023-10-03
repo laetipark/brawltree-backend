@@ -1,14 +1,12 @@
 {
-  "name": "nest-typescript-starter",
+  "name": "brawltree-backend",
   "private": true,
   "version": "1.0.0",
-  "description": "Nest TypeScript starter repository",
-  "license": "MIT",
+  "description": "Plant Brawl Tree",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
-    "dev": "pm2 start ecosystem.config.cjs --env production",
+    "start": "pm2 start ecosystem.config.cjs --env production",
     "start:dev": " cross-env NODE_ENV=development nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": " cross-env NODE_ENV=production node dist/main",
@@ -60,6 +58,10 @@
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.1.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/laetipark/brawltree-backend.git"
   },
   "jest": {
     "moduleFileExtensions": [

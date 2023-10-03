@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-
 import { UsersModule } from './users/users.module';
-
-import { ConfigModule } from '@nestjs/config';
-import GameConfig from './config/app.config';
-import DatabaseConfig from './config/database.config';
 import { BlossomModule } from './blossom/blossom.module';
 import { MapsModule } from './maps/maps.module';
 import { BrawlersModule } from './brawlers/brawlers.module';
+
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { ConfigModule } from '@nestjs/config';
 import { GameConfigService } from './config/gameConfig.service';
+import GameConfig from './config/app.config';
+import DatabaseConfig from './config/database.config';
 
 @Module({
   imports: [

@@ -4,9 +4,10 @@ import {
   PrimaryColumn,
   Column,
   ManyToOne,
-  JoinColumn, Relation,
+  JoinColumn,
+  Relation,
 } from 'typeorm';
-import { Users } from '../users/entities/users.entity';
+import { Users } from '~/users/entities/users.entity';
 
 abstract class Common {
   @PrimaryGeneratedColumn()

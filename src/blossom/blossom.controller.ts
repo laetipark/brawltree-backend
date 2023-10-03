@@ -1,13 +1,14 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
+
 import { BlossomService } from './blossom.service';
-import { SeasonsService } from '../seasons/seasons.service';
-import { RotationService } from '../maps/services/rotation.service';
+import { EventsService } from '~/maps/services/events.service';
+import { SeasonsService } from '~/seasons/seasons.service';
 
 @Controller('blossom')
 export class BlossomController {
   constructor(
     private blossomService: BlossomService,
-    private rotationService: RotationService,
+    private rotationService: EventsService,
     private seasonService: SeasonsService,
   ) {}
 
@@ -24,11 +25,6 @@ export class BlossomController {
   @Get('/main/season')
   async selectSeasonSummary() {
     return await this.blossomService.findSeasonSummary();
-  }
-
-  @Get('/main/rotation')
-  async selectRotationSummary() {
-    return await this.rotationService.findRotationTL();
   }
 
   @Get('/main/brawlers')

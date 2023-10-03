@@ -5,11 +5,13 @@ import {
   OneToMany,
   Relation,
 } from 'typeorm';
-import { UserBattles } from '../../users/entities/users.entity';
+import { BrawlerStats } from './stats.entity';
+import { UserBattles } from '~/users/entities/users.entity';
 import {
-  UserBrawlerBattles, UserBrawlerItems,
   UserBrawlers,
-} from '../../users/entities/userBrawlers.entity';
+  UserBrawlerBattles,
+  UserBrawlerItems,
+} from '~/users/entities/userBrawlers.entity';
 
 @Entity({ name: 'BRAWLERS' })
 export class Brawlers {
@@ -54,6 +56,9 @@ export class Brawlers {
 
   @Column()
   BRAWLER_GDG2_NM: string;
+
+  @OneToMany(() => BrawlerStats, (brawler) => brawler.brawler)
+  brawlerStats: Relation<BrawlerStats[]>;
 
   @OneToMany(() => UserBattles, (battle) => battle.brawler)
   userBattles: Relation<UserBattles[]>;

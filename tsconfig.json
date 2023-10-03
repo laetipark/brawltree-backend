@@ -12,6 +12,29 @@
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "paths": {
+      "~/config/*": [
+        "./src/config/*"
+      ],
+      "~/blossom/*": [
+        "./src/blossom/*"
+      ],
+      "~/brawlers/*": [
+        "./src/brawlers/*"
+      ],
+      "~/date/*": [
+        "./src/date/*"
+      ],
+      "~/maps/*": [
+        "./src/maps/*"
+      ],
+      "~/seasons/*": [
+        "./src/seasons/*"
+      ],
+      "~/users/*": [
+        "./src/users/*"
+      ]
+    }
   }
 }

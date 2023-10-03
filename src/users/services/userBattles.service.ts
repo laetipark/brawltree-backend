@@ -1,17 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Users } from '~/users/entities/users.entity';
+import { UserBattles } from '~/users/entities/users.entity';
+import { Maps } from '~/maps/entities/maps.entity';
+import { Seasons } from '~/seasons/seasons.entity';
 
-import { UserBattles } from '../entities/users.entity';
 import { HttpService } from '@nestjs/axios';
-import { catchError, firstValueFrom, map, of } from 'rxjs';
-import { DateService } from '../../date/date.service';
-import { Users } from '../entities/users.entity';
 import { UsersService } from './users.service';
-import { GameConfigService } from '../../config/gameConfig.service';
-import { SeasonsEntity } from '../../seasons/seasons.entity';
-import { UserBrawlerBattles } from '../entities/userBrawlers.entity';
-import { Maps } from '../../maps/entities/maps.entity';
+import { DateService } from '~/date/date.service';
+import { UserBrawlerBattles } from '~/users/entities/userBrawlers.entity';
+
+import { GameConfigService } from '~/config/gameConfig.service';
+
+import { catchError, firstValueFrom, map, of } from 'rxjs';
 
 const typeNameArray = [
   'ranked',
@@ -114,7 +116,7 @@ export class UserBattlesService {
         ),
       );
     } catch (err) {
-      console.error(err.response?.data);
+      Logger.error(err.response?.data);
       const errorTime = err.response?.status === 404 ? 20 : 0;
 
       setTimeout(() => {
@@ -401,7 +403,7 @@ export class UserBattlesService {
     id: string,
     type: string,
     mode: string,
-    season: SeasonsEntity,
+    season: Seasons,
   ) {
     const query = await this.getQuery(type, mode);
 
@@ -488,7 +490,7 @@ export class UserBattlesService {
     id: string,
     type: string,
     mode: string,
-    season: SeasonsEntity,
+    season: Seasons,
   ) {
     const query = await this.getQuery(type, mode);
 

@@ -8,9 +8,9 @@ import {
   JoinColumn,
   Relation,
 } from 'typeorm';
-import { UserFriends, UserRecords } from '../../blossom/blossom.entity';
 import { UserBrawlers } from './userBrawlers.entity';
-import { Brawlers } from '../../brawlers/entities/brawlers.entity';
+import { UserFriends, UserRecords } from '~/blossom/blossom.entity';
+import { Brawlers } from '~/brawlers/entities/brawlers.entity';
 
 abstract class Common {
   @PrimaryColumn()

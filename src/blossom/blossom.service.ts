@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
+
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserBattles, Users } from '../users/entities/users.entity';
 import { Repository } from 'typeorm';
+import { Maps } from '~/maps/entities/maps.entity';
+import { BrawlerStats } from '~/brawlers/entities/stats.entity';
+import { Users, UserBattles } from '~/users/entities/users.entity';
 import { UserFriends, UserRecords } from './blossom.entity';
-import { BrawlerStats } from '../brawlers/entities/stats.entity';
-import { GameConfigService } from '../config/gameConfig.service';
-import {Maps} from "../maps/entities/maps.entity";
+
+import { GameConfigService } from '~/config/gameConfig.service';
 
 @Injectable()
 export class BlossomService {

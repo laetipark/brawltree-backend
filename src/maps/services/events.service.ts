@@ -1,23 +1,14 @@
 import { Injectable } from '@nestjs/common';
+
 import { InjectRepository } from '@nestjs/typeorm';
-import { MapRotation } from '../entities/maps.entity';
 import { Repository } from 'typeorm';
-import { GameConfigService } from '../../config/gameConfig.service';
+import { MapRotation, Maps } from '~/maps/entities/maps.entity';
+import { Events } from '~/maps/entities/events.entity';
 
-const groupBy = (data: any[], key: string) =>
-  data.reduce((carry, el) => {
-    const group = el[key];
-
-    if (carry[group] === undefined) {
-      carry[group] = [];
-    }
-
-    carry[group].push(el);
-    return carry;
-  }, {});
+import { GameConfigService } from '~/config/gameConfig.service';
 
 @Injectable()
-export class RotationService {
+export class EventsService {
   constructor(
     @InjectRepository(MapRotation)
     private mapRotation: Repository<MapRotation>,
@@ -58,15 +49,35 @@ export class RotationService {
     return filterModeList;
   }
 
-  async findRotationTL() {
-    const beginDate = new Date(
-      new Date(
-        new Date().getFullYear(),
-        new Date().getMonth(),
-        new Date().getDate() - 1,
-      ).getTime(),
-    );
+  async findRotationTLDaily(): Promise<Events[]> {
+    return await this.mapRotation
+      .createQueryBuilder('mr')
+      .select('e.ROTATION_SLT_NO', 'ROTATION_SLT_NO')
+      .addSelect('e.ROTATION_BGN_DT', 'ROTATION_BGN_DT')
+      .addSelect('e.ROTATION_END_DT', 'ROTATION_END_DT')
+      .addSelect('e.MAP_ID', 'MAP_ID')
+      .addSelect('e.MAP_MDFS', 'MAP_MDFS')
+      .addSelect('m.MAP_NM', 'MAP_NM')
+      .addSelect('m.MAP_MD', 'MAP_MD')
+      .innerJoin('mr.map', 'm')
+      .innerJoin('mr.events', 'e')
+      .where((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('e.ROTATION_SLT_NO', 'ROTATION_SLT_NO')
+          .addSelect('MAX(e.ROTATION_BGN_DT)', 'ROTATION_BGN_DT')
+          .from(Events, 'e')
+          .groupBy('e.ROTATION_SLT_NO')
+          .getQuery();
+        return '(e.ROTATION_SLT_NO, e.ROTATION_BGN_DT) IN ' + subQuery;
+      })
+      .andWhere('mr.ROTATION_TL_BOOL = TRUE')
+      .orderBy('ROTATION_SLT_NO', 'ASC')
+      .addOrderBy('ROTATION_BGN_DT', 'DESC')
+      .getRawMany();
+  }
 
+  async findRotationTLNext(): Promise<Events[]> {
     return await this.mapRotation
       .createQueryBuilder('mr')
       .select('e.ROTATION_SLT_NO', 'ROTATION_SLT_NO')
@@ -78,28 +89,31 @@ export class RotationService {
       .addSelect('m.MAP_NM', 'MAP_NM')
       .innerJoin('mr.map', 'm')
       .innerJoin('mr.events', 'e')
-      .where('e.ROTATION_BGN_DT <= :begin', {
-        begin: beginDate,
+      .where((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('e.ROTATION_SLT_NO', 'ROTATION_SLT_NO')
+          .addSelect('MIN(e.ROTATION_BGN_DT)', 'ROTATION_BGN_DT')
+          .from(Events, 'e')
+          .groupBy('e.ROTATION_SLT_NO')
+          .getQuery();
+        return '(e.ROTATION_SLT_NO, e.ROTATION_BGN_DT) IN ' + subQuery;
       })
       .andWhere('mr.ROTATION_TL_BOOL = TRUE')
-      .orderBy('ROTATION_BGN_DT', 'DESC')
-      .getRawMany()
-      .then((result) => {
-        return groupBy(result, 'ROTATION_SLT_NO');
-      });
+      .orderBy('ROTATION_SLT_NO', 'ASC')
+      .addOrderBy('ROTATION_BGN_DT', 'DESC')
+      .getRawMany();
   }
 
-  async findRotationPL() {
+  async findRotationPL(): Promise<Maps[]> {
     return await this.mapRotation
       .createQueryBuilder('mr')
       .select('m.MAP_ID', 'MAP_ID')
       .addSelect('m.MAP_MD', 'MAP_MD')
       .addSelect('m.MAP_NM', 'MAP_NM')
-      .innerJoin('mr.maps', 'm')
+      .innerJoin('mr.map', 'm')
       .where('ROTATION_PL_BOOL = TRUE')
-      .getRawMany()
-      .then((result) => {
-        return groupBy(result, 'MAP_MD');
-      });
+      .orderBy('m.MAP_MD', 'ASC')
+      .getRawMany();
   }
 }

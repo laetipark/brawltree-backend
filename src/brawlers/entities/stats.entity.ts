@@ -1,4 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, PrimaryColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  PrimaryColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  Relation,
+} from 'typeorm';
+import { Brawlers } from '~/brawlers/entities/brawlers.entity';
 
 abstract class Common {
   @PrimaryGeneratedColumn()
@@ -57,4 +66,8 @@ export class BrawlerStats extends Common {
 
   @Column()
   MATCH_CNT_DEF: number;
+
+  @ManyToOne(() => Brawlers, (brawler) => brawler.brawlerStats)
+  @JoinColumn({ name: 'BRAWLER_ID', referencedColumnName: 'BRAWLER_ID' })
+  brawler: Relation<Brawlers>;
 }

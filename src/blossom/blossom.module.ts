@@ -1,28 +1,32 @@
 import { Module } from '@nestjs/common';
-import { BlossomService } from './blossom.service';
-import { BlossomController } from './blossom.controller';
-import { Users } from '../users/entities/users.entity';
-import { UsersService } from '../users/services/users.service';
-import { UserProfileService } from '../users/services/userProfile.service';
-import { UserBattlesService } from '../users/services/userBattles.service';
-import { SeasonsService } from '../seasons/seasons.service';
-import { HttpModule, HttpService } from '@nestjs/axios';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { HttpModule } from '@nestjs/axios';
+
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserBattles, UserProfile } from '../users/entities/users.entity';
+import { MapRotation } from '~/maps/entities/maps.entity';
+import { Events } from '~/maps/entities/events.entity';
+import { BrawlerStats } from '~/brawlers/entities/stats.entity';
+import { Users } from '~/users/entities/users.entity';
+import { UserBattles, UserProfile } from '~/users/entities/users.entity';
 import {
+  UserBrawlers,
   UserBrawlerBattles,
   UserBrawlerItems,
-  UserBrawlers,
-} from '../users/entities/userBrawlers.entity';
-import { SeasonsEntity } from '../seasons/seasons.entity';
-import { BrawlerStats } from '../brawlers/entities/stats.entity';
+} from '~/users/entities/userBrawlers.entity';
 import { UserRecords, UserFriends } from './blossom.entity';
-import { GameConfigService } from '../config/gameConfig.service';
-import { DateService } from '../date/date.service';
-import { RotationService } from '../maps/services/rotation.service';
-import {MapRotation} from "../maps/entities/maps.entity";
-import {Events} from "../maps/entities/events.entity";
+import { Seasons } from '~/seasons/seasons.entity';
+
+import { BlossomController } from './blossom.controller';
+
+import { BlossomService } from './blossom.service';
+import { EventsService } from '~/maps/services/events.service';
+import { DateService } from '~/date/date.service';
+import { UsersService } from '~/users/services/users.service';
+import { UserProfileService } from '~/users/services/userProfile.service';
+import { UserBattlesService } from '~/users/services/userBattles.service';
+import { SeasonsService } from '~/seasons/seasons.service';
+
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { GameConfigService } from '~/config/gameConfig.service';
 
 @Module({
   imports: [
@@ -46,13 +50,13 @@ import {Events} from "../maps/entities/events.entity";
       UserBrawlerItems,
       UserRecords,
       UserFriends,
-      SeasonsEntity,
+      Seasons,
     ]),
   ],
   controllers: [BlossomController],
   providers: [
     BlossomService,
-    RotationService,
+    EventsService,
     UsersService,
     UserProfileService,
     UserBattlesService,

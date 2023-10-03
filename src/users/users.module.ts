@@ -1,28 +1,30 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-
-import { UsersService } from './services/users.service';
-import { UsersController } from './users.controller';
-import { Users } from './entities/users.entity';
 import { HttpModule } from '@nestjs/axios';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Users } from './entities/users.entity';
 import { UserProfile, UserBattles } from './entities/users.entity';
 import {
   UserBrawlerBattles,
   UserBrawlerItems,
   UserBrawlers,
 } from './entities/userBrawlers.entity';
-import { SeasonsService } from '../seasons/seasons.service';
-import { SeasonsEntity } from '../seasons/seasons.entity';
+import { MapRotation, Maps } from '~/maps/entities/maps.entity';
+import { Events } from '~/maps/entities/events.entity';
+import { Brawlers } from '~/brawlers/entities/brawlers.entity';
+import { SeasonsService } from '~/seasons/seasons.service';
+import { Seasons } from '~/seasons/seasons.entity';
+
+import { UsersController } from './users.controller';
+
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { UsersService } from './services/users.service';
 import { UserProfileService } from './services/userProfile.service';
 import { UserBattlesService } from './services/userBattles.service';
-import { DateService } from '../date/date.service';
-import { MapRotation, Maps } from '../maps/entities/maps.entity';
-import { Events } from '../maps/entities/events.entity';
-import { GameConfigService } from '../config/gameConfig.service';
 import { UserBrawlersService } from './services/userBrawlers.service';
-import { Brawlers } from '../brawlers/entities/brawlers.entity';
-import { RotationService } from '../maps/services/rotation.service';
+import { EventsService } from '~/maps/services/events.service';
+import { DateService } from '~/date/date.service';
+import { GameConfigService } from '~/config/gameConfig.service';
 
 @Module({
   imports: [
@@ -42,7 +44,7 @@ import { RotationService } from '../maps/services/rotation.service';
       UserBrawlers,
       UserBrawlerBattles,
       UserBrawlerItems,
-      SeasonsEntity,
+      Seasons,
       Maps,
       MapRotation,
       Events,
@@ -50,7 +52,7 @@ import { RotationService } from '../maps/services/rotation.service';
   ],
   controllers: [UsersController],
   providers: [
-    RotationService,
+    EventsService,
     UsersService,
     UserProfileService,
     UserBattlesService,
