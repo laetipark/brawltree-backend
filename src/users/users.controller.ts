@@ -7,7 +7,6 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Users } from './entities/users.entity';
 import { UsersService } from './services/users.service';
 import { UserProfile } from './entities/users.entity';
 import { UserProfileService } from './services/userProfile.service';
@@ -19,7 +18,7 @@ import { SeasonsService } from '~/seasons/seasons.service';
 @Controller('brawlian')
 export class UsersController {
   constructor(
-    private rotationService: EventsService,
+    private eventsService: EventsService,
     private usersService: UsersService,
     private userProfileService: UserProfileService,
     private userBattlesService: UserBattlesService,
@@ -29,7 +28,11 @@ export class UsersController {
 
   @Get('/:id')
   @HttpCode(200)
-  async selectUser(@Param('id') id: string): Promise<Users> {
+  async selectUser(
+    @Param('id') id: string,
+    @Query('type') type: string,
+    @Query('mode') mode: string,
+  ) {
     const user = await this.usersService.findUser(id);
 
     if (
@@ -39,7 +42,32 @@ export class UsersController {
     ) {
       await this.insertUser(id, user);
     }
-    return user || (await this.usersService.findUser(id));
+
+    const season = await this.seasonsService.findSeason();
+    const rotationTL = await this.eventsService.findModeTL();
+    const rotationPL = await this.eventsService.findModePL();
+    const [battlesSummary, brawlersSummary] =
+      await this.userBattlesService.findUserBattles(id, type, mode, season);
+    const [recentBattles, recentBrawlers, battles] =
+      await this.userBattlesService.findUserBattleLogs(id, type, mode, season);
+    const [brawlers, brawlerItems, brawlerGraphs] =
+      await this.userBrawlersService.findUserBrawlers(id, season);
+
+    return {
+      user: user || (await this.usersService.findUser(id)),
+      profile: await this.userProfileService.findUserProfile(id),
+      rotationTL: rotationTL,
+      rotationPL: rotationPL,
+      battlesSummary: battlesSummary,
+      brawlersSummary: brawlersSummary,
+      recentBattles: recentBattles,
+      recentBrawlers: recentBrawlers,
+      battles: battles,
+      brawlers: brawlers,
+      brawlerItems: brawlerItems,
+      brawlerGraphs: brawlerGraphs,
+      season: season,
+    };
   }
 
   @Get('/:id/profile')
@@ -52,13 +80,13 @@ export class UsersController {
   @HttpCode(200)
   async selectUserBrawlers(@Param('id') id: string) {
     const season = await this.seasonsService.findSeason();
-    const [userBrawlers, userBrawlerItems, userBrawlerGraphs] =
+    const [brawlers, brawlerItems, brawlerGraphs] =
       await this.userBrawlersService.findUserBrawlers(id, season);
 
     return {
-      userBrawlers: userBrawlers,
-      userBrawlerItems: userBrawlerItems,
-      userBrawlerGraphs: userBrawlerGraphs,
+      brawlers: brawlers,
+      brawlerItems: brawlerItems,
+      brawlerGraphs: brawlerGraphs,
     };
   }
 
@@ -70,16 +98,16 @@ export class UsersController {
     @Query('mode') mode: string,
   ) {
     const season = await this.seasonsService.findSeason();
-    const [userBattles, userBrawlers] =
+    const [battlesSummary, brawlersSummary] =
       await this.userBattlesService.findUserBattles(id, type, mode, season);
-    const rotationTL = await this.rotationService.findModeTL();
-    const rotationPL = await this.rotationService.findModePL();
+    const rotationTL = await this.eventsService.findModeTL();
+    const rotationPL = await this.eventsService.findModePL();
 
     return {
-      userBattles: userBattles,
-      userBrawlers: userBrawlers,
       rotationTL: rotationTL,
       rotationPL: rotationPL,
+      battlesSummary: battlesSummary,
+      brawlersSummary: brawlersSummary,
       season: season,
     };
   }
@@ -92,13 +120,13 @@ export class UsersController {
     @Query('mode') mode: string,
   ) {
     const season = await this.seasonsService.findSeason();
-    const [userRecentBattles, userRecentBrawlers, userBattles] =
+    const [recentBattles, recentBrawlers, battles] =
       await this.userBattlesService.findUserBattleLogs(id, type, mode, season);
 
     return {
-      userRecentBattles: userRecentBattles,
-      userRecentBrawlers: userRecentBrawlers,
-      userBattles: userBattles,
+      recentBattles: recentBattles,
+      recentBrawlers: recentBrawlers,
+      battles: battles,
     };
   }
 
@@ -128,6 +156,6 @@ export class UsersController {
   async updateUser(@Param('id') id: string, user: any) {
     const season = await this.seasonsService.findSeason();
     await this.userProfileService.updateUserProfile(user, season);
-    await this.userBattlesService.getUserBattles({ userID: id, cycle: false });
+    await this.userBattlesService.getUserBattles(id);
   }
 }

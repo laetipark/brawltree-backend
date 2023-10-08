@@ -27,10 +27,6 @@ const resultNameArray = ['victory', 'draw', 'defeat'];
 
 @Injectable()
 export class UserBattlesService {
-  private battleStacks = [];
-  private pendingRequests = [];
-  private maxRequests = 4;
-
   constructor(
     @InjectRepository(Users)
     private users: Repository<Users>,
@@ -65,23 +61,7 @@ export class UserBattlesService {
     return match;
   }
 
-  async manageUsers(userID: string, cycle: boolean) {
-    // 요청 정보 생성
-    const requestInfo = { userID, cycle };
-
-    if (this.battleStacks.length >= this.maxRequests) {
-      // 최대 동시 실행 요청 수를 초과한 경우 대기열에 추가
-      this.pendingRequests.push(requestInfo);
-    } else {
-      // 최대 동시 실행 요청 수 미만이면 바로 실행
-      this.battleStacks.push(requestInfo);
-      await this.getUserBattles(requestInfo);
-    }
-  }
-
-  async getUserBattles(request: any) {
-    const { userID, cycle } = request;
-
+  async getUserBattles(userID: string) {
     try {
       await firstValueFrom(
         this.httpService.get(`players/%23${userID}/battlelog`).pipe(
@@ -103,12 +83,6 @@ export class UserBattlesService {
               })
               .where('USER_ID = :id', { id: `#${userID}` })
               .execute();
-
-            if (cycle) {
-              setTimeout(() => {
-                this.manageUsers(userID, cycle);
-              }, 20 * 60 * 1000);
-            }
           }),
           catchError((e) => {
             return of(e);
@@ -117,25 +91,6 @@ export class UserBattlesService {
       );
     } catch (err) {
       Logger.error(err.response?.data);
-      const errorTime = err.response?.status === 404 ? 20 : 0;
-
-      setTimeout(() => {
-        this.manageUsers(userID, cycle);
-      }, (5 + errorTime) * 60 * 1000);
-    } finally {
-      // 요청이 완료되면 다음 요청을 확인하고 실행
-      const index = this.battleStacks.indexOf(request);
-      if (index !== -1) {
-        this.battleStacks.splice(index, 1);
-      }
-
-      setTimeout(async () => {
-        const nextRequest = this.pendingRequests.shift();
-        if (nextRequest) {
-          const { userID, cycle } = nextRequest;
-          await this.manageUsers(userID, cycle);
-        }
-      }, Math.floor(Math.random() * 10001) + 60000);
     }
   }
 
@@ -494,7 +449,7 @@ export class UserBattlesService {
   ) {
     const query = await this.getQuery(type, mode);
 
-    const userRecentBattles = await this.userBattles
+    const recentBattles = await this.userBattles
       .createQueryBuilder('ub')
       .select('ub.MATCH_DT', 'MATCH_DT')
       .addSelect('ub.MATCH_DUR', 'MATCH_DUR')
@@ -527,7 +482,7 @@ export class UserBattlesService {
 
     const counter = {};
 
-    userRecentBattles.forEach(function (item) {
+    recentBattles.forEach(function (item) {
       const brawlerID = item.BRAWLER_ID;
       const matchRes = item.MATCH_RES;
 
@@ -544,7 +499,7 @@ export class UserBattlesService {
 
     const brawlerCounts = Object.keys(counter).map((brawlerID) => {
       const matchResultCounts = counter[brawlerID];
-      const brawlerName = userRecentBattles.find(
+      const brawlerName = recentBattles.find(
         (brawler) => brawler.BRAWLER_ID === brawlerID,
       ).BRAWLER_NM;
 
@@ -559,7 +514,7 @@ export class UserBattlesService {
       };
     });
 
-    const userRecentBrawlers = brawlerCounts
+    const recentBrawlers = brawlerCounts
       .sort(
         (
           a: {
@@ -578,7 +533,7 @@ export class UserBattlesService {
       )
       .slice(0, 6);
 
-    const userBattles = await this.userBattles
+    const battles = await this.userBattles
       .createQueryBuilder('ub')
       .select('ub.USER_ID', 'USER_ID')
       .addSelect(
@@ -628,14 +583,14 @@ export class UserBattlesService {
       .addGroupBy('ub.MATCH_GRD')
       .addGroupBy('ub.MATCH_CHG')
       .orderBy('ub.MATCH_DT', 'DESC')
-      .take(30)
+      .limit(30)
       .getRawMany()
       .then((result) => {
         return result.map((battle) => {
           return {
             BATTLE_INFO: Object.assign(
               battle.BATTLE_INFO,
-              userRecentBattles.find(
+              recentBattles.find(
                 (item) =>
                   new Date(battle.BATTLE_INFO.MATCH_DT).toString() ===
                   new Date(item.MATCH_DT).toString(),
@@ -646,6 +601,6 @@ export class UserBattlesService {
         });
       });
 
-    return [userRecentBattles, userRecentBrawlers, userBattles];
+    return [recentBattles, recentBrawlers, battles];
   }
 }

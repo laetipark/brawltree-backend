@@ -90,6 +90,7 @@ export class UserBrawlersService {
       .addSelect('DATE_FORMAT(ub.MATCH_DT, "%m-%d")', 'x')
       .addSelect(
         'SUM(ub.MATCH_CHG) OVER(PARTITION BY ub.BRAWLER_ID ORDER BY DATE(ub.MATCH_DT))',
+        'y',
       )
       .where('ub.USER_ID = :id AND PLAYER_ID = :id', {
         id: `#${id}`,
