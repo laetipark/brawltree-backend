@@ -25,7 +25,7 @@ export class BlossomService {
     private configService: GameConfigService,
   ) {}
 
-  async findMemberSummary() {
+  async findMembersSummary() {
     return await this.users
       .createQueryBuilder('u')
       .select('COUNT(up.USER_ID)', 'MEMBER_CNT')
@@ -109,8 +109,8 @@ export class BlossomService {
   async findMemberTable() {
     return await this.users
       .createQueryBuilder('u')
-      .select('up.USER_ID', 'USER_ID')
-      .addSelect('up.USER_NM', 'USER_NM')
+      .select('u.USER_ID', 'USER_ID')
+      .addSelect('u.USER_CR_NM', 'USER_NM')
       .addSelect('up.USER_PRFL', 'USER_PRFL')
       .addSelect('up.TROPHY_CUR', 'TROPHY_CUR')
       .addSelect('up.TROPHY_CUR', 'TROPHY_CUR')
@@ -125,8 +125,8 @@ export class BlossomService {
   async findBrawlerTable(brawler: string) {
     return await this.users
       .createQueryBuilder('u')
-      .select('up.USER_ID', 'USER_ID')
-      .addSelect('up.USER_NM', 'USER_NM')
+      .select('u.USER_ID', 'USER_ID')
+      .addSelect('u.USER_CR_NM', 'USER_NM')
       .addSelect('up.USER_PRFL', 'USER_PRFL')
       .addSelect('ubr.BRAWLER_ID', 'BRAWLER_ID')
       .addSelect('ubr.TROPHY_CUR', 'TROPHY_CUR')
@@ -137,6 +137,7 @@ export class BlossomService {
       .andWhere('ubr.BRAWLER_ID = :brawler', {
         brawler: brawler,
       })
+      .orderBy('ubr.TROPHY_CUR', 'DESC')
       .getRawMany();
   }
 
@@ -152,7 +153,7 @@ export class BlossomService {
       .addSelect('up.USER_NM', 'USER_NM')
       .addSelect('up.USER_PRFL', 'USER_PRFL')
       .addSelect('COUNT(DISTINCT ub.MATCH_DT)', 'MATCH_CNT')
-      .addSelect('SUM(DISTINCT ub.MATCH_CHG)', 'MATCH_CHG')
+      .addSelect('SUM(ub.MATCH_CHG)', 'MATCH_CHG')
       .innerJoin('u.userProfile', 'up')
       .innerJoin('u.userBattles', 'ub')
       .innerJoin(Maps, 'm', 'ub.MAP_ID = m.MAP_ID')
@@ -195,40 +196,6 @@ export class BlossomService {
       .groupBy('up.USER_ID')
       .orderBy('MATCH_CNT', 'DESC')
       .getRawMany();
-  }
-
-  async findMemberBattles(id: string, beginDate: Date, endDate: Date) {
-    return await this.userBattles
-      .createQueryBuilder('ub')
-      .select('ub.BRAWLER_ID', 'BRAWLER_ID')
-      .addSelect('ub.MATCH_DT', 'MATCH_DT')
-      .addSelect('ub.MATCH_TYP', 'MATCH_TYP')
-      .addSelect('ub.MATCH_RNK', 'MATCH_RNK')
-      .addSelect('ub.MATCH_DT', 'MATCH_DT')
-      .addSelect('m.MAP_MD', 'MAP_MD')
-      .innerJoin(Maps, 'm', 'ub.MAP_ID = m.MAP_ID')
-      .where('ub.USER_ID = :id AND PLAYER_ID = :id', {
-        id: `#${id}`,
-      })
-      .andWhere('ub.MATCH_DT BETWEEN :begin AND :end', {
-        begin: beginDate,
-        end: endDate,
-      })
-      .orderBy('MATCH_DT', 'DESC')
-      .getRawMany()
-      .then((result) => {
-        return result.reduce((acc, current) => {
-          if (
-            acc.findIndex(
-              ({ MATCH_DT }) =>
-                JSON.stringify(MATCH_DT) === JSON.stringify(current.MATCH_DT),
-            ) === -1
-          ) {
-            acc.push(current);
-          }
-          return acc;
-        }, []);
-      });
   }
 
   async findMemberSeasonRecords(id: string) {
@@ -356,59 +323,5 @@ export class BlossomService {
           };
         });
       });
-  }
-
-  async findMemberBattleLogs(id: string, beginDate: Date, endDate: Date) {
-    return await this.userBattles
-      .createQueryBuilder('ub')
-      .select('ub.USER_ID', 'USER_ID')
-      .addSelect(
-        'JSON_OBJECT(' +
-          '"MATCH_DT", ub.MATCH_DT,' +
-          '"MATCH_DUR", ub.MATCH_DUR,' +
-          '"MAP_ID", ub.MAP_ID,' +
-          '"MATCH_TYP_RAW", ub.MATCH_TYP_RAW,' +
-          '"MATCH_TYP", ub.MATCH_TYP,' +
-          '"MAP_MD_CD", ub.MAP_MD_CD,' +
-          '"MATCH_GRD", ub.MATCH_GRD,' +
-          '"MATCH_CHG", ub.MATCH_CHG,' +
-          '"MAP_MD", m.MAP_MD,' +
-          '"MAP_NM", m.MAP_NM)',
-        'BATTLE_INFO',
-      )
-      .addSelect(
-        'JSON_ARRAYAGG(' +
-          'JSON_OBJECT(' +
-          '"PLAYER_ID", ub.PLAYER_ID,' +
-          '"PLAYER_NM", ub.PLAYER_NM,' +
-          '"PLAYER_TM_NO", ub.PLAYER_TM_NO,' +
-          '"BRAWLER_ID", ub.BRAWLER_ID,' +
-          '"BRAWLER_PWR", ub.BRAWLER_PWR,' +
-          '"BRAWLER_TRP", ub.BRAWLER_TRP,' +
-          '"MATCH_RNK", ub.MATCH_RNK,' +
-          '"MATCH_RES", ub.MATCH_RES,' +
-          '"MATCH_CHG", ub.MATCH_CHG))',
-        'BATTLE_PLAYERS',
-      )
-      .innerJoin(Maps, 'm', 'ub.MAP_ID = m.MAP_ID')
-      .where('ub.USER_ID = :id', {
-        id: `#${id}`,
-      })
-      .andWhere('ub.MATCH_DT BETWEEN :begin AND :end', {
-        begin: beginDate,
-        end: endDate,
-      })
-      .groupBy('ub.USER_ID')
-      .addGroupBy('ub.MATCH_DT')
-      .addGroupBy('ub.MATCH_DUR')
-      .addGroupBy('ub.MAP_MD_CD')
-      .addGroupBy('ub.MAP_ID')
-      .addGroupBy('ub.MATCH_TYP')
-      .addGroupBy('ub.MATCH_TYP_RAW')
-      .addGroupBy('ub.MATCH_GRD')
-      .addGroupBy('ub.MATCH_CHG')
-      .addGroupBy('m.MAP_MD')
-      .orderBy('ub.MATCH_DT', 'DESC')
-      .getRawMany();
   }
 }

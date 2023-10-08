@@ -8,41 +8,36 @@ import { SeasonsService } from '~/seasons/seasons.service';
 export class BlossomController {
   constructor(
     private blossomService: BlossomService,
-    private rotationService: EventsService,
+    private eventsService: EventsService,
     private seasonService: SeasonsService,
   ) {}
 
-  @Get('/main/members')
-  async selectMembersSummary() {
-    return await this.blossomService.findMemberSummary();
+  @Get('/main')
+  async selectMain() {
+    const [brawlersTL, brawlersPL] =
+      await this.blossomService.findBrawlerSummary();
+
+    return {
+      members: await this.blossomService.findMembersSummary(),
+      battles: await this.blossomService.findBattlesSummary(),
+      season: await this.blossomService.findSeasonSummary(),
+      events: await this.eventsService.findRotationTLDaily(),
+      brawlersTL: brawlersTL,
+      brawlersPL: brawlersPL,
+    };
   }
 
-  @Get('/main/battles')
-  async selectBattlesSummary() {
-    return await this.blossomService.findBattlesSummary();
-  }
-
-  @Get('/main/season')
-  async selectSeasonSummary() {
-    return await this.blossomService.findSeasonSummary();
-  }
-
-  @Get('/main/brawlers')
-  async selectBrawlersSummary() {
-    return await this.blossomService.findBrawlerSummary();
-  }
-
-  @Get('/members/table')
+  @Get('/members')
   async selectMembersTable() {
     return await this.blossomService.findMemberTable();
   }
 
-  @Get('/brawlers/table')
+  @Get('/brawlers')
   async selectBrawlersTable(@Query('brawler') brawler: string) {
     return await this.blossomService.findBrawlerTable(brawler);
   }
 
-  @Get('/battles/table')
+  @Get('/battles')
   async selectBattlesTable(
     @Query('date') date: Date,
     @Query('type') type: string,
@@ -51,8 +46,8 @@ export class BlossomController {
     const nextDate = new Date(new Date(date).getTime() + 1000 * 60 * 60 * 24);
 
     return {
-      gameModesTL: await this.rotationService.findModeTL(),
-      gameModesPL: await this.rotationService.findModePL(),
+      rotationTL: await this.eventsService.findModeTL(),
+      rotationPL: await this.eventsService.findModePL(),
       members: await this.blossomService.findBattlesTable(
         date,
         nextDate,
@@ -63,56 +58,23 @@ export class BlossomController {
     };
   }
 
-  @Get('/season/table')
+  @Get('/season')
   async selectSeasonTable(
     @Query('type') type: string,
     @Query('mode') mode: string,
   ) {
     return {
-      gameModesTL: await this.rotationService.findModeTL(),
-      gameModesPL: await this.rotationService.findModePL(),
+      rotationTL: await this.eventsService.findModeTL(),
+      rotationPL: await this.eventsService.findModePL(),
       members: await this.blossomService.findSeasonTable(type, mode),
-      season: await this.seasonService.findSeason(),
     };
   }
 
-  @Get('/member/:id/battles')
-  async selectMemberBattles(
-    @Param('id') id: string,
-    @Query('date') date: Date,
-  ) {
-    const nextDate = new Date(new Date(date).getTime() + 1000 * 60 * 60 * 24);
-
+  @Get('/members/:id')
+  async selectMember(@Param('id') id: string, @Query('date') date: Date) {
     return {
-      battles: await this.blossomService.findMemberBattles(id, date, nextDate),
-      season: await this.seasonService.findSeason(),
-    };
-  }
-
-  @Get('/member/:id/friends')
-  async selectMemberFriends(@Param('id') id: string) {
-    return await this.blossomService.findMemberFriends(id);
-  }
-
-  @Get('/member/:id/season')
-  async selectMemberSeasonRecords(@Param('id') id: string) {
-    return await this.blossomService.findMemberSeasonRecords(id);
-  }
-
-  @Get('/battles/:id')
-  async selectMemberBattleLogs(
-    @Param('id') id: string,
-    @Query('date') date: Date,
-  ) {
-    const nextDate = new Date(new Date(date).getTime() + 1000 * 60 * 60 * 24);
-
-    return {
-      battles: await this.blossomService.findMemberBattleLogs(
-        id,
-        date,
-        nextDate,
-      ),
-      season: await this.seasonService.findSeason(),
+      friends: await this.blossomService.findMemberFriends(id),
+      seasonRecords: await this.blossomService.findMemberSeasonRecords(id),
     };
   }
 }
