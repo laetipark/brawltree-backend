@@ -1,9 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
 
-import { Maps } from './entities/maps.entity';
-import { Events } from './entities/events.entity';
+import { Maps } from '../entities/maps.entity';
+import { Events } from '../entities/events.entity';
 
-import { EventsService } from './services/events.service';
+import { EventsService } from '../services/events.service';
 
 @Controller('events')
 export class EventsController {

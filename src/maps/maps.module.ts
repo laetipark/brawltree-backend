@@ -5,8 +5,8 @@ import { Maps, MapRotation } from './entities/maps.entity';
 import { Events } from './entities/events.entity';
 import { Brawlers } from '~/brawlers/entities/brawlers.entity';
 
-import { MapsController } from './maps.controller';
-import { EventsController } from './events.controller';
+import { MapsController } from './controllers/maps.controller';
+import { EventsController } from './controllers/events.controller';
 
 import { EventsService } from './services/events.service';
 import { AppConfigService } from '~/configs/app-config.service';
