@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Brawlers } from './entities/brawlers.entity';
-import { BrawlerStats } from './entities/stats.entity';
+import { BrawlerStats } from './entities/brawler-stats.entity';
 
 @Injectable()
 export class BrawlersService {
@@ -21,18 +21,18 @@ export class BrawlersService {
   async findTotalBrawlerStats() {
     return await this.brawlerStats
       .createQueryBuilder('bs')
-      .select('bs.BRAWLER_ID', 'BRAWLER_ID')
-      .addSelect('bs.MATCH_TYP', 'MATCH_TYP')
+      .select('bs.brawlerID', 'brawlerID')
+      .addSelect('bs.matchType', 'matchType')
       .addSelect(
-        'SUM(bs.MATCH_CNT) * 100 / SUM(SUM(bs.MATCH_CNT)) OVER(PARTITION BY bs.MATCH_TYP)',
-        'MATCH_CNT_RATE',
+        'SUM(bs.matchCount) * 100 / SUM(SUM(bs.matchCount)) OVER(PARTITION BY bs.matchType)',
+        'pickRate',
       )
       .addSelect(
-        'SUM(bs.MATCH_CNT_VIC) * 100 / (SUM(bs.MATCH_CNT_VIC) + SUM(bs.MATCH_CNT_DEF))',
-        'MATCH_CNT_VIC_RATE',
+        'SUM(bs.victoryCount) * 100 / (SUM(bs.victoryCount) + SUM(bs.defeatCount))',
+        'victoryRate',
       )
-      .groupBy('bs.BRAWLER_ID')
-      .addGroupBy('bs.MATCH_TYP')
+      .groupBy('bs.brawlerID')
+      .addGroupBy('bs.matchType')
       .getRawMany();
   }
 }

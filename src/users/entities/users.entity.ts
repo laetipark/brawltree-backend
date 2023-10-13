@@ -8,31 +8,50 @@ import {
   JoinColumn,
   Relation,
 } from 'typeorm';
-import { UserBrawlers } from './userBrawlers.entity';
-import { UserFriends, UserRecords } from '~/blossom/blossom.entity';
+import { SoftDeleteEntity } from '~/database/entities/base.entity';
+import { UserBrawlers } from './user-brawlers.entity';
+import { UserFriends, UserRecords } from '~/blossom/entities/blossom.entity';
 import { Brawlers } from '~/brawlers/entities/brawlers.entity';
+import { CreateUsersDto } from '~/users/dto/create-users.dto';
 
-abstract class Common {
-  @PrimaryColumn()
-  USER_ID: string;
+abstract class Common extends SoftDeleteEntity {
+  @PrimaryColumn({
+    name: 'USER_ID',
+    type: 'varchar',
+    length: 12,
+  })
+  userID: string;
 }
 
 @Entity({ name: 'USERS' })
 export class Users extends Common {
-  @Column()
-  USER_LST_CK: Date;
+  @Column({
+    name: 'USER_LST_BT',
+  })
+  lastBattleAt: Date;
 
-  @Column()
-  USER_LST_BT: Date;
+  @Column({
+    name: 'USER_CR',
+    type: 'varchar',
+    length: 10,
+    nullable: true,
+  })
+  crew: string;
 
-  @Column()
-  USER_CR: string;
+  @Column({
+    name: 'USER_CR_NM',
+    type: 'varchar',
+    length: 30,
+    nullable: true,
+  })
+  crewName: string;
 
-  @Column()
-  USER_CR_NM: string;
-
-  @Column()
-  CYCLE_NO: number;
+  @Column({
+    name: 'CYCLE_NO',
+    type: 'tinyint',
+    nullable: true,
+  })
+  cycleNumber: number;
 
   @OneToOne(() => UserProfile)
   @JoinColumn({ name: 'USER_ID' })
@@ -50,79 +69,131 @@ export class Users extends Common {
   @OneToMany(() => UserFriends, (friend) => friend.user)
   userFriends: Relation<UserFriends[]>;
 
-  /*@CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
-                            USER_C_AT: Date;
-                        
-                            @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)", onUpdate: "CURRENT_TIMESTAMP(6)" })
-                            USER_U_AT: Date;
-                        
-                            @DeleteDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
-                            USER_D_AT: Date;
-                        
-                            @BeforeInsert()
-                            insertCreated() {
-                                this.USER_C_AT = new Date(
-                                    moment().format("YYYY-MM-DD HH:mm:ss")
-                                );
-                                this.USER_U_AT = new Date(
-                                    moment().format("YYYY-MM-DD HH:mm:ss")
-                                );
-                            }
-                        
-                            @BeforeUpdate()
-                            insertUpdated() {
-                                this.USER_U_AT = new Date(
-                                    moment().format("YYYY-MM-DD HH:mm:ss")
-                                );
-                            }*/
+  static from(createUsersDto: CreateUsersDto) {
+    const user = new CreateUsersDto();
+    user.userID = createUsersDto.userID;
+    user.lastBattleAt = createUsersDto.lastBattleAt;
+    user.crew = createUsersDto.crew;
+    user.crewName = createUsersDto.crewName;
+
+    return user;
+  }
 }
 
 @Entity({ name: 'USER_PROFILE' })
 export class UserProfile extends Common {
-  @Column()
-  USER_NM: string;
+  @Column({
+    name: 'USER_NM',
+    type: 'varchar',
+    length: 30,
+  })
+  name: string;
 
-  @Column()
-  USER_PRFL: string;
+  @Column({
+    name: 'USER_PRFL',
+    length: 8,
+  })
+  profile: string;
 
-  @Column()
-  CLUB_ID: string;
+  @Column({
+    name: 'CLUB_ID',
+    type: 'varchar',
+    length: 12,
+    nullable: true,
+  })
+  clubID: string;
 
-  @Column()
-  CLUB_NM: string;
+  @Column({
+    name: 'CLUB_NM',
+    type: 'varchar',
+    length: 30,
+    nullable: true,
+  })
+  clubName: string;
 
-  @Column()
-  TROPHY_CUR: number;
+  @Column({
+    name: 'TROPHY_CUR',
+    type: 'int',
+    unsigned: true,
+  })
+  currentTrophies: number;
 
-  @Column()
-  TROPHY_HGH: number;
+  @Column({
+    name: 'TROPHY_HGH',
+    type: 'int',
+    unsigned: true,
+  })
+  highestTrophies: number;
 
-  @Column()
-  VICTORY_TRP: number;
+  @Column({
+    name: 'VICTORY_TRP',
+    type: 'int',
+    unsigned: true,
+  })
+  tripleVictories: number;
 
-  @Column()
-  VICTORY_DUO: number;
+  @Column({
+    name: 'VICTORY_DUO',
+    type: 'int',
+    unsigned: true,
+  })
+  duoVictories: number;
 
-  @Column()
-  BRAWLER_RNK_25: number;
+  @Column({
+    name: 'BRAWLER_RNK_25',
+    type: 'smallint',
+    unsigned: true,
+    default: () => 0,
+  })
+  rank25Brawlers: number;
 
-  @Column()
-  BRAWLER_RNK_30: number;
+  @Column({
+    name: 'BRAWLER_RNK_30',
+    type: 'smallint',
+    unsigned: true,
+    default: () => 0,
+  })
+  rank30Brawlers: number;
 
-  @Column()
-  BRAWLER_RNK_35: number;
+  @Column({
+    name: 'BRAWLER_RNK_35',
+    type: 'smallint',
+    unsigned: true,
+    default: () => 0,
+  })
+  rank35Brawlers: number;
 
-  @Column()
-  PL_SL_CUR: number;
+  @Column({
+    name: 'PL_SL_CUR',
+    type: 'tinyint',
+    unsigned: true,
+    default: () => 0,
+  })
+  currentSoloPL: number;
 
-  @Column()
-  PL_SL_HGH: number;
+  @Column({
+    name: 'PL_SL_HGH',
+    type: 'tinyint',
+    unsigned: true,
+    default: () => 0,
+  })
+  highestSoloPL: number;
 
-  @Column()
-  PL_TM_CUR: number;
+  @Column({
+    name: 'PL_TM_CUR',
+    type: 'tinyint',
+    unsigned: true,
+    default: () => 0,
+  })
+  currentTeamPL: number;
 
-  @Column()
-  PL_TM_HGH: number;
+  @Column({
+    name: 'PL_TM_HGH',
+    type: 'tinyint',
+    unsigned: true,
+    default: () => 0,
+  })
+  highestTeamPL: number;
 
   @OneToOne(() => Users)
   @JoinColumn({ name: 'USER_ID' })
@@ -131,65 +202,122 @@ export class UserProfile extends Common {
 
 @Entity({ name: 'USER_BATTLES' })
 export class UserBattles extends Common {
-  @PrimaryColumn()
-  PLAYER_ID: string;
+  @PrimaryColumn({
+    name: 'PLAYER_ID',
+    type: 'varchar',
+    length: 12,
+  })
+  playerID: string;
 
-  @PrimaryColumn()
-  BRAWLER_ID: string;
+  @PrimaryColumn({
+    name: 'BRAWLER_ID',
+    length: 8,
+  })
+  brawlerID: string;
 
-  @PrimaryColumn()
-  MATCH_DT: Date;
+  @PrimaryColumn({
+    name: 'MATCH_DT',
+  })
+  matchDate: Date;
 
-  @Column()
-  MAP_ID: string;
+  @Column({
+    name: 'MAP_ID',
+    length: 8,
+  })
+  mapID: string;
 
-  @Column()
-  MAP_MD_CD: number;
+  @Column({
+    name: 'MAP_MD_CD',
+    type: 'tinyint',
+  })
+  modeCode: number;
 
-  @Column()
-  MATCH_TYP: number;
+  @Column({
+    name: 'MATCH_TYP',
+    type: 'tinyint',
+  })
+  matchType: number;
 
-  @Column()
-  MATCH_TYP_RAW: number;
+  @Column({
+    name: 'MATCH_TYP_RAW',
+    type: 'tinyint',
+  })
+  matchTypeRaw: number;
 
-  @Column()
-  MATCH_GRD: number;
+  @Column({
+    name: 'MATCH_GRD',
+    type: 'tinyint',
+  })
+  matchGrade: number;
 
-  @Column()
-  MATCH_DUR: number;
+  @Column({
+    name: 'MATCH_DUR',
+    type: 'tinyint',
+    unsigned: true,
+    nullable: true,
+  })
+  duration: number;
 
-  @Column()
-  MATCH_RNK: number;
+  @Column({
+    name: 'MATCH_RNK',
+    type: 'tinyint',
+  })
+  matchRank: number;
 
-  @Column()
-  MATCH_RES: number;
+  @Column({
+    name: 'MATCH_RES',
+    type: 'tinyint',
+  })
+  matchResult: number;
 
-  @Column()
-  MATCH_CHG: number;
+  @Column({
+    name: 'MATCH_CHG',
+    type: 'tinyint',
+  })
+  matchChange: number;
 
-  @Column()
-  MATCH_CHG_RAW: number;
+  @Column({
+    name: 'MATCH_CHG_RAW',
+    type: 'tinyint',
+  })
+  matchChangeRaw: number;
 
-  @Column()
-  PLAYER_NM: string;
+  @Column({
+    name: 'PLAYER_NM',
+    type: 'varchar',
+    length: 30,
+  })
+  playerName: string;
 
-  @Column()
-  PLAYER_TM_NO: number;
+  @Column({
+    name: 'PLAYER_TM_NO',
+    type: 'tinyint',
+  })
+  teamNumber: number;
 
-  @Column()
-  PLAYER_SP_BOOL: boolean;
+  @Column({
+    name: 'PLAYER_SP_BOOL',
+    nullable: true,
+  })
+  isStarPlayer: boolean;
 
-  @Column()
-  BRAWLER_PWR: number;
+  @Column({
+    name: 'BRAWLER_PWR',
+    type: 'tinyint',
+  })
+  brawlerPower: number;
 
-  @Column()
-  BRAWLER_TRP: number;
+  @Column({
+    name: 'BRAWLER_TRP',
+    type: 'smallint',
+  })
+  brawlerTrophies: number;
 
   @ManyToOne(() => Users, (user) => user.userBattles)
-  @JoinColumn({ name: 'USER_ID', referencedColumnName: 'USER_ID' })
+  @JoinColumn({ name: 'USER_ID', referencedColumnName: 'userID' })
   user: Relation<Users>;
 
   @ManyToOne(() => Brawlers, (brawler) => brawler.userBattles)
-  @JoinColumn({ name: 'BRAWLER_ID', referencedColumnName: 'BRAWLER_ID' })
+  @JoinColumn({ name: 'BRAWLER_ID', referencedColumnName: 'brawlerID' })
   brawler: Relation<Brawlers>;
 }

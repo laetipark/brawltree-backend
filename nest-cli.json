@@ -6,11 +6,11 @@
     "deleteOutDir": true,
     "assets": [
       {
-        "include": "./config/env/.development.env",
+        "include": "./configs/env/.development.env",
         "outDir": "./dist/"
       },
       {
-        "include": "./config/env/.production.env",
+        "include": "./configs/env/.production.env",
         "outDir": "./dist/"
       }
     ]

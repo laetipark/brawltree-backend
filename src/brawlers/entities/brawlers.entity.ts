@@ -1,61 +1,111 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToMany,
-  Relation,
-} from 'typeorm';
-import { BrawlerStats } from './stats.entity';
+import { Entity, PrimaryColumn, Column, OneToMany, Relation } from 'typeorm';
+import { BaseEntity } from '~/database/entities/base.entity';
+import { BrawlerStats } from './brawler-stats.entity';
 import { UserBattles } from '~/users/entities/users.entity';
 import {
   UserBrawlers,
   UserBrawlerBattles,
   UserBrawlerItems,
-} from '~/users/entities/userBrawlers.entity';
+} from '~/users/entities/user-brawlers.entity';
 
 @Entity({ name: 'BRAWLERS' })
-export class Brawlers {
-  @PrimaryGeneratedColumn()
-  BRAWLER_ID: string;
+export class Brawlers extends BaseEntity {
+  @PrimaryColumn({
+    name: 'BRAWLER_ID',
+    length: 8,
+  })
+  brawlerID: string;
 
-  @Column()
-  BRAWLER_NM: string;
+  @Column({
+    name: 'BRAWLER_NM',
+    type: 'varchar',
+    length: 20,
+  })
+  name: string;
 
-  @Column()
-  BRAWLER_RRT: string;
+  @Column({
+    name: 'BRAWLER_RRT',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  rarity: string;
 
-  @Column()
-  BRAWLER_CL: string;
+  @Column({
+    name: 'BRAWLER_RL',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  role: string;
 
-  @Column()
-  BRAWLER_GNDR: string;
+  @Column({
+    name: 'BRAWLER_GNDR',
+    type: 'varchar',
+    length: 10,
+    nullable: true,
+  })
+  gender: string;
 
-  @Column()
-  BRAWLER_ICN: string;
+  @Column({
+    name: 'BRAWLER_ICN',
+    type: 'varchar',
+    length: 40,
+    nullable: true,
+  })
+  icon: string;
 
-  @Column()
-  BRAWLER_SP1_ID: string;
+  @Column({
+    name: 'BRAWLER_SP1_ID',
+    length: 8,
+  })
+  starPowerID1: string;
 
-  @Column()
-  BRAWLER_SP1_NM: string;
+  @Column({
+    name: 'BRAWLER_SP1_NM',
+    type: 'varchar',
+    length: 30,
+  })
+  starPowerName1: string;
 
-  @Column()
-  BRAWLER_SP2_ID: string;
+  @Column({
+    name: 'BRAWLER_SP2_ID',
+    length: 8,
+  })
+  starPowerID2: string;
 
-  @Column()
-  BRAWLER_SP2_NM: string;
+  @Column({
+    name: 'BRAWLER_SP2_NM',
+    type: 'varchar',
+    length: 30,
+  })
+  starPowerName2: string;
 
-  @Column()
-  BRAWLER_GDG1_ID: string;
+  @Column({
+    name: 'BRAWLER_GDG1_ID',
+    length: 8,
+  })
+  gadgetID1: string;
 
-  @Column()
-  BRAWLER_GDG1_NM: string;
+  @Column({
+    name: 'BRAWLER_GDG1_NM',
+    type: 'varchar',
+    length: 30,
+  })
+  gadgetName1: string;
 
-  @Column()
-  BRAWLER_GDG2_ID: string;
+  @Column({
+    name: 'BRAWLER_GDG2_ID',
+    length: 8,
+  })
+  gadgetID2: string;
 
-  @Column()
-  BRAWLER_GDG2_NM: string;
+  @Column({
+    name: 'BRAWLER_GDG2_NM',
+    type: 'varchar',
+    length: 30,
+  })
+  gadgetName2: string;
 
   @OneToMany(() => BrawlerStats, (brawler) => brawler.brawler)
   brawlerStats: Relation<BrawlerStats[]>;

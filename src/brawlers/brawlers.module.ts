@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BrawlerStats } from './entities/stats.entity';
+import { BrawlerStats } from './entities/brawler-stats.entity';
 import { Brawlers } from './entities/brawlers.entity';
 
 import { BrawlersController } from './brawlers.controller';

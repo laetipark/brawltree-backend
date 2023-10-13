@@ -3,11 +3,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Maps } from '~/maps/entities/maps.entity';
-import { BrawlerStats } from '~/brawlers/entities/stats.entity';
+import { BrawlerStats } from '~/brawlers/entities/brawler-stats.entity';
 import { Users, UserBattles } from '~/users/entities/users.entity';
-import { UserFriends, UserRecords } from './blossom.entity';
+import { UserFriends, UserRecords } from './entities/blossom.entity';
 
-import { GameConfigService } from '~/config/gameConfig.service';
+import { AppConfigService } from '~/configs/app-config.service';
 
 @Injectable()
 export class BlossomService {
@@ -22,16 +22,16 @@ export class BlossomService {
     private userRecords: Repository<UserRecords>,
     @InjectRepository(UserFriends)
     private userFriends: Repository<UserFriends>,
-    private configService: GameConfigService,
+    private configService: AppConfigService,
   ) {}
 
   async findMembersSummary() {
     return await this.users
       .createQueryBuilder('u')
-      .select('COUNT(up.USER_ID)', 'MEMBER_CNT')
-      .addSelect('SUM(up.TROPHY_CUR)', 'TROPHY_CUR_TOT')
+      .select('COUNT(up.userID)', 'MEMBER_CNT')
+      .addSelect('SUM(up.currentTrophies)', 'currentTrophies_TOT')
       .innerJoin('u.userProfile', 'up')
-      .where('u.USER_CR IN ("Blossom", "Team")')
+      .where('u.crew IN ("Blossom", "Team")')
       .getRawOne();
   }
 
@@ -49,21 +49,21 @@ export class BlossomService {
 
     return await this.userBattles
       .createQueryBuilder('ub')
-      .select('COUNT(DISTINCT ub.MATCH_DT)', 'MATCH_CNT_TOT')
+      .select('COUNT(DISTINCT ub.matchDate)', 'matchCount')
       .innerJoin('ub.user', 'u')
-      .where('ub.MATCH_DT BETWEEN :begin AND :end', {
+      .where('ub.matchDate BETWEEN :begin AND :end', {
         begin: beginDate,
         end: endDate,
       })
-      .andWhere('ub.USER_ID = ub.PLAYER_ID')
-      .andWhere('u.USER_CR IN ("Blossom", "Team")')
+      .andWhere('ub.userID = ub.playerID')
+      .andWhere('u.crew IN ("Blossom", "Team")')
       .getRawOne();
   }
 
   async findSeasonSummary() {
     return await this.userRecords
       .createQueryBuilder('ur')
-      .select('SUM(ur.MATCH_CNT)', 'MATCH_CNT')
+      .select('SUM(ur.matchCount)', 'matchCount')
       .getRawOne();
   }
 
@@ -71,37 +71,37 @@ export class BlossomService {
     return [
       await this.brawlerStats
         .createQueryBuilder('bs')
-        .select('bs.BRAWLER_ID', 'BRAWLER_ID')
+        .select('bs.brawlerID', 'brawlerID')
         .addSelect(
-          'SUM(bs.MATCH_CNT) * 100 / SUM(SUM(bs.MATCH_CNT)) OVER()',
-          'MATCH_CNT_TL_RATE',
+          'SUM(bs.matchCount) * 100 / SUM(SUM(bs.matchCount)) OVER()',
+          'trophyLeaguePickRate',
         )
         .addSelect(
-          'SUM(bs.MATCH_CNT_VIC) * 100 / (SUM(bs.MATCH_CNT_VIC) + SUM(bs.MATCH_CNT_DEF))',
-          'MATCH_CNT_VIC_TL_RATE',
+          'SUM(bs.victoryCount) * 100 / (SUM(bs.victoryCount) + SUM(bs.defeatCount))',
+          'trophyLeagueVictoryRate',
         )
-        .where('bs.MATCH_TYP = 0')
-        .groupBy('bs.BRAWLER_ID')
-        .orderBy('MATCH_CNT_TL_RATE', 'DESC')
-        .addOrderBy('MATCH_CNT_VIC_TL_RATE', 'DESC')
-        .take(10)
+        .where('bs.matchType = 0')
+        .groupBy('bs.brawlerID')
+        .orderBy('trophyLeaguePickRate', 'DESC')
+        .addOrderBy('trophyLeagueVictoryRate', 'DESC')
+        .limit(10)
         .getRawMany(),
       await this.brawlerStats
         .createQueryBuilder('bs')
-        .select('bs.BRAWLER_ID', 'BRAWLER_ID')
+        .select('bs.brawlerID', 'brawlerID')
         .addSelect(
-          'SUM(bs.MATCH_CNT) * 100 / SUM(SUM(bs.MATCH_CNT)) OVER()',
-          'MATCH_CNT_PL_RATE',
+          'SUM(bs.matchCount) * 100 / SUM(SUM(bs.matchCount)) OVER()',
+          'powerLeaguePickRate',
         )
         .addSelect(
-          'SUM(bs.MATCH_CNT_VIC) * 100 / (SUM(bs.MATCH_CNT_VIC) + SUM(bs.MATCH_CNT_DEF))',
-          'MATCH_CNT_VIC_PL_RATE',
+          'SUM(bs.victoryCount) * 100 / (SUM(bs.victoryCount) + SUM(bs.defeatCount))',
+          'powerLeagueVictoryRate',
         )
-        .where('bs.MATCH_TYP IN (2, 3)')
-        .groupBy('bs.BRAWLER_ID')
-        .orderBy('MATCH_CNT_PL_RATE', 'DESC')
-        .addOrderBy('MATCH_CNT_VIC_PL_RATE', 'DESC')
-        .take(10)
+        .where('bs.matchType IN (2, 3)')
+        .groupBy('bs.brawlerID')
+        .orderBy('powerLeaguePickRate', 'DESC')
+        .addOrderBy('powerLeagueVictoryRate', 'DESC')
+        .limit(10)
         .getRawMany(),
     ];
   }
@@ -109,35 +109,35 @@ export class BlossomService {
   async findMemberTable() {
     return await this.users
       .createQueryBuilder('u')
-      .select('u.USER_ID', 'USER_ID')
-      .addSelect('u.USER_CR_NM', 'USER_NM')
-      .addSelect('up.USER_PRFL', 'USER_PRFL')
-      .addSelect('up.TROPHY_CUR', 'TROPHY_CUR')
-      .addSelect('up.TROPHY_CUR', 'TROPHY_CUR')
-      .addSelect('up.PL_SL_CUR', 'PL_SL_CUR')
-      .addSelect('up.PL_TM_CUR', 'PL_TM_CUR')
+      .select('u.userID', 'userID')
+      .addSelect('u.crewName', 'name')
+      .addSelect('up.profile', 'profile')
+      .addSelect('up.currentTrophies', 'currentTrophies')
+      .addSelect('up.currentTrophies', 'currentTrophies')
+      .addSelect('up.currentSoloPL', 'currentSoloPL')
+      .addSelect('up.currentTeamPL', 'currentTeamPL')
       .innerJoin('u.userProfile', 'up')
-      .where('u.USER_CR IN ("Blossom", "Team")')
-      .orderBy('up.TROPHY_CUR', 'DESC')
+      .where('u.crew IN ("Blossom", "Team")')
+      .orderBy('up.currentTrophies', 'DESC')
       .getRawMany();
   }
 
   async findBrawlerTable(brawler: string) {
     return await this.users
       .createQueryBuilder('u')
-      .select('u.USER_ID', 'USER_ID')
-      .addSelect('u.USER_CR_NM', 'USER_NM')
-      .addSelect('up.USER_PRFL', 'USER_PRFL')
-      .addSelect('ubr.BRAWLER_ID', 'BRAWLER_ID')
-      .addSelect('ubr.TROPHY_CUR', 'TROPHY_CUR')
-      .addSelect('ubr.TROPHY_HGH', 'TROPHY_HGH')
+      .select('u.userID', 'userID')
+      .addSelect('u.crewName', 'name')
+      .addSelect('up.profile', 'profile')
+      .addSelect('ubr.brawlerID', 'brawlerID')
+      .addSelect('ubr.currentTrophies', 'currentTrophies')
+      .addSelect('ubr.highestTrophies', 'highestTrophies')
       .innerJoin('u.userProfile', 'up')
       .innerJoin('u.userBrawlers', 'ubr')
-      .where('u.USER_CR IN ("Blossom", "Team")')
-      .andWhere('ubr.BRAWLER_ID = :brawler', {
+      .where('u.crew IN ("Blossom", "Team")')
+      .andWhere('ubr.brawlerID = :brawler', {
         brawler: brawler,
       })
-      .orderBy('ubr.TROPHY_CUR', 'DESC')
+      .orderBy('ubr.currentTrophies', 'DESC')
       .getRawMany();
   }
 
@@ -149,95 +149,95 @@ export class BlossomService {
   ) {
     return await this.users
       .createQueryBuilder('u')
-      .select('up.USER_ID', 'USER_ID')
-      .addSelect('up.USER_NM', 'USER_NM')
-      .addSelect('up.USER_PRFL', 'USER_PRFL')
-      .addSelect('COUNT(DISTINCT ub.MATCH_DT)', 'MATCH_CNT')
-      .addSelect('SUM(ub.MATCH_CHG)', 'MATCH_CHG')
+      .select('u.userID', 'userID')
+      .addSelect('u.crewName', 'name')
+      .addSelect('up.profile', 'profile')
+      .addSelect('COUNT(DISTINCT ub.matchDate)', 'matchCount')
+      .addSelect('SUM(ub.matchChange)', 'matchChange')
       .innerJoin('u.userProfile', 'up')
       .innerJoin('u.userBattles', 'ub')
-      .innerJoin(Maps, 'm', 'ub.MAP_ID = m.MAP_ID')
-      .where('u.USER_CR IN ("Blossom", "Team")')
-      .andWhere('m.MAP_MD IN (:modes)', {
+      .innerJoin(Maps, 'm', 'ub.mapID = m.mapID')
+      .where('u.crew IN ("Blossom", "Team")')
+      .andWhere('m.mode IN (:modes)', {
         modes: mode !== 'all' ? mode : await this.configService.getModeList(),
       })
-      .andWhere('ub.USER_ID = ub.PLAYER_ID')
-      .andWhere('ub.MATCH_DT BETWEEN :begin AND :end', {
+      .andWhere('ub.userID = ub.playerID')
+      .andWhere('ub.matchDate BETWEEN :begin AND :end', {
         begin: beginDate,
         end: endDate,
       })
-      .andWhere('ub.MATCH_TYP IN (:types)', {
+      .andWhere('ub.matchType IN (:types)', {
         types: type !== '7' ? type : await this.configService.getTypeList(),
       })
-      .groupBy('up.USER_ID')
-      .orderBy('MATCH_CNT', 'DESC')
+      .groupBy('up.userID')
+      .orderBy('matchCount', 'DESC')
       .getRawMany();
   }
 
   async findSeasonTable(type: string, mode: string) {
     return await this.users
       .createQueryBuilder('u')
-      .select('up.USER_ID', 'USER_ID')
-      .addSelect('up.USER_NM', 'USER_NM')
-      .addSelect('up.USER_PRFL', 'USER_PRFL')
-      .addSelect('SUM(ur.MATCH_CNT)', 'MATCH_CNT')
-      .addSelect('SUM(ur.MATCH_CHG)', 'MATCH_CHG')
-      .addSelect('SUM(uf.MATCH_CNT)', 'MATCH_CNT')
+      .select('u.userID', 'userID')
+      .addSelect('u.crewName', 'name')
+      .addSelect('up.profile', 'profile')
+      .addSelect('SUM(ur.matchCount)', 'matchCount')
+      .addSelect('SUM(ur.matchChange)', 'matchChange')
+      .addSelect('SUM(uf.friendPoints)', 'friendPoints')
       .innerJoin('u.userProfile', 'up')
       .leftJoin('u.userRecords', 'ur')
       .leftJoin('u.userFriends', 'uf')
-      .where('u.USER_CR IN ("Blossom", "Team")')
-      .where('ur.MAP_MD IN (:modes)', {
+      .where('u.crew IN ("Blossom", "Team")')
+      .where('ur.mode IN (:modes)', {
         modes: mode !== 'all' ? [mode] : await this.configService.getModeList(),
       })
-      .andWhere('ur.MATCH_TYP IN (:types)', {
+      .andWhere('ur.matchType IN (:types)', {
         types: type !== '7' ? [type] : await this.configService.getTypeList(),
       })
-      .groupBy('up.USER_ID')
-      .orderBy('MATCH_CNT', 'DESC')
+      .groupBy('up.userID')
+      .orderBy('matchCount', 'DESC')
       .getRawMany();
   }
 
   async findMemberSeasonRecords(id: string) {
     return await this.userRecords
       .createQueryBuilder('ur')
-      .select('ur.MATCH_TYP', 'MATCH_TYP')
-      .addSelect('ur.MATCH_GRD', 'MATCH_GRD')
-      .addSelect('ur.MAP_MD', 'MAP_MD')
-      .addSelect('ur.MATCH_CNT', 'MATCH_CNT')
-      .addSelect('ur.MATCH_CNT_VIC', 'MATCH_CNT_VIC')
-      .addSelect('ur.MATCH_CNT_DEF', 'MATCH_CNT_DEF')
+      .select('ur.matchType', 'matchType')
+      .addSelect('ur.matchGrade', 'matchGrade')
+      .addSelect('ur.mode', 'mode')
+      .addSelect('ur.matchCount', 'matchCount')
+      .addSelect('ur.victoryCount', 'victoryCount')
+      .addSelect('ur.defeatCount', 'defeatCount')
       .addSelect(
-        'ROUND(ur.MATCH_CNT_VIC * 100 / SUM(ur.MATCH_CNT_VIC + ur.MATCH_CNT_DEF), 2)',
-        'MATCH_VIC_R',
+        'ROUND(ur.victoryCount * 100 / SUM(ur.victoryCount + ur.defeatCount), 2)',
+        'victoryRate',
       )
-      .where('ur.USER_ID = :id', {
+      .where('ur.userID = :id', {
         id: `#${id}`,
       })
-      .groupBy('ur.MATCH_TYP')
-      .addGroupBy('ur.MATCH_GRD')
-      .addGroupBy('ur.MAP_MD')
+      .groupBy('ur.matchType')
+      .addGroupBy('ur.matchGrade')
+      .addGroupBy('ur.mode')
       .getRawMany()
       .then((data: any[]) => {
         const totalData = [];
         data.forEach((item) => {
-          const { MATCH_TYP, MATCH_CNT, MATCH_CNT_VIC, MATCH_CNT_DEF } = item;
-          if (!totalData[MATCH_TYP]) {
-            totalData[MATCH_TYP] = {
-              MATCH_TYP,
-              MATCH_CNT: 0,
-              MATCH_CNT_VIC: 0,
-              MATCH_CNT_DEF: 0,
+          const { matchType, matchCount, victoryCount, defeatCount } = item;
+          if (!totalData[matchType]) {
+            totalData[matchType] = {
+              matchType,
+              matchCount: 0,
+              victoryCount: 0,
+              defeatCount: 0,
             };
           }
-          totalData[MATCH_TYP].MATCH_CNT += MATCH_CNT;
-          totalData[MATCH_TYP].MATCH_CNT_VIC += MATCH_CNT_VIC;
-          totalData[MATCH_TYP].MATCH_CNT_DEF += MATCH_CNT_DEF;
+          totalData[matchType].matchCount += matchCount;
+          totalData[matchType].victoryCount += victoryCount;
+          totalData[matchType].defeatCount += defeatCount;
         });
 
         const keyData = data.reduce(function (result, current) {
-          result[current.MATCH_TYP] = result[current.MATCH_TYP] || [];
-          result[current.MATCH_TYP].push(current);
+          result[current.matchType] = result[current.matchType] || [];
+          result[current.matchType].push(current);
           return result;
         }, {});
         const keys = Object.keys(keyData);
@@ -245,10 +245,10 @@ export class BlossomService {
         return keys.map((key) => {
           return {
             ...totalData[key],
-            MATCH_VIC_R:
-              (totalData[key].MATCH_CNT_VIC * 100) /
-              (totalData[key].MATCH_CNT_VIC + totalData[key].MATCH_CNT_DEF),
-            MATCH_L: keyData[key],
+            victoryRate:
+              (totalData[key].victoryCount * 100) /
+              (totalData[key].victoryCount + totalData[key].defeatCount),
+            matchList: keyData[key],
           };
         });
       });
@@ -257,58 +257,58 @@ export class BlossomService {
   async findMemberFriends(id: string) {
     return await this.userFriends
       .createQueryBuilder('uf')
-      .select('uf.FRIEND_ID', 'FRIEND_ID')
-      .addSelect('uf.MATCH_TYP', 'MATCH_TYP')
-      .addSelect('uf.MATCH_GRD', 'MATCH_GRD')
-      .addSelect('uf.MAP_MD', 'MAP_MD')
-      .addSelect('uf.FRIEND_NM', 'FRIEND_NM')
-      .addSelect('uf.MATCH_CNT', 'MATCH_CNT')
-      .addSelect('uf.MATCH_CNT_VIC', 'MATCH_CNT_VIC')
-      .addSelect('uf.MATCH_CNT_DEF', 'MATCH_CNT_DEF')
+      .select('uf.friendID', 'friendID')
+      .addSelect('uf.matchType', 'matchType')
+      .addSelect('uf.matchGrade', 'matchGrade')
+      .addSelect('uf.mode', 'mode')
+      .addSelect('uf.name', 'name')
+      .addSelect('uf.matchCount', 'matchCount')
+      .addSelect('uf.victoryCount', 'victoryCount')
+      .addSelect('uf.defeatCount', 'defeatCount')
       .addSelect(
-        'ROUND(uf.MATCH_CNT_VIC * 100 / SUM(uf.MATCH_CNT_VIC + uf.MATCH_CNT_DEF), 2)',
-        'MATCH_VIC_R',
+        'ROUND(uf.victoryCount * 100 / SUM(uf.victoryCount + uf.defeatCount), 2)',
+        'victoryRate',
       )
-      .addSelect('ROUND(uf.FRIEND_PT, 2)', 'FRIEND_PT')
-      .where('uf.USER_ID = :id', {
+      .addSelect('ROUND(uf.friendPoints, 2)', 'friendPoints')
+      .where('uf.userID = :id', {
         id: `#${id}`,
       })
-      .groupBy('uf.FRIEND_ID')
-      .addGroupBy('uf.MATCH_TYP')
-      .addGroupBy('uf.MATCH_GRD')
-      .addGroupBy('uf.MAP_MD')
-      .addGroupBy('uf.FRIEND_NM')
+      .groupBy('uf.friendID')
+      .addGroupBy('uf.matchType')
+      .addGroupBy('uf.matchGrade')
+      .addGroupBy('uf.mode')
+      .addGroupBy('uf.name')
       .getRawMany()
       .then((data: any[]) => {
         const totalData = [];
         data.forEach((item) => {
           const {
-            FRIEND_ID,
-            FRIEND_NM,
-            MATCH_CNT,
-            MATCH_CNT_VIC,
-            MATCH_CNT_DEF,
-            FRIEND_PT,
+            friendID,
+            name,
+            matchCount,
+            victoryCount,
+            defeatCount,
+            friendPoints,
           } = item;
-          if (!totalData[FRIEND_ID]) {
-            totalData[FRIEND_ID] = {
-              FRIEND_ID,
-              FRIEND_NM,
-              MATCH_CNT: 0,
-              MATCH_CNT_VIC: 0,
-              MATCH_CNT_DEF: 0,
-              FRIEND_PT: 0,
+          if (!totalData[friendID]) {
+            totalData[friendID] = {
+              friendID,
+              name,
+              matchCount: 0,
+              victoryCount: 0,
+              defeatCount: 0,
+              friendPoints: 0,
             };
           }
-          totalData[FRIEND_ID].MATCH_CNT += MATCH_CNT;
-          totalData[FRIEND_ID].MATCH_CNT_VIC += MATCH_CNT_VIC;
-          totalData[FRIEND_ID].MATCH_CNT_DEF += MATCH_CNT_DEF;
-          totalData[FRIEND_ID].FRIEND_PT += FRIEND_PT;
+          totalData[friendID].matchCount += matchCount;
+          totalData[friendID].victoryCount += victoryCount;
+          totalData[friendID].defeatCount += defeatCount;
+          totalData[friendID].friendPoints += friendPoints;
         });
 
         const keyData = data.reduce(function (result, current) {
-          result[current.FRIEND_ID] = result[current.FRIEND_ID] || [];
-          result[current.FRIEND_ID].push(current);
+          result[current.friendID] = result[current.friendID] || [];
+          result[current.friendID].push(current);
           return result;
         }, {});
         const keys = Object.keys(keyData);
@@ -316,10 +316,10 @@ export class BlossomService {
         return keys.map((key) => {
           return {
             ...totalData[key],
-            MATCH_VIC_R:
-              (totalData[key].MATCH_CNT_VIC * 100) /
-              (totalData[key].MATCH_CNT_VIC + totalData[key].MATCH_CNT_DEF),
-            MATCH_L: keyData[key],
+            victoryRate:
+              (totalData[key].victoryCount * 100) /
+              (totalData[key].victoryCount + totalData[key].defeatCount),
+            matchList: keyData[key],
           };
         });
       });

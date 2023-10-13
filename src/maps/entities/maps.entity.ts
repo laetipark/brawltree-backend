@@ -7,21 +7,33 @@ import {
   Relation,
   JoinColumn,
 } from 'typeorm';
+import { BaseEntity } from '~/database/entities/base.entity';
 import { Events } from './events.entity';
-import { UserBrawlerBattles } from '~/users/entities/userBrawlers.entity';
+import { UserBrawlerBattles } from '~/users/entities/user-brawlers.entity';
 
-abstract class Common {
-  @PrimaryColumn()
-  MAP_ID: string;
+abstract class Common extends BaseEntity {
+  @PrimaryColumn({
+    name: 'MAP_ID',
+    length: 8,
+  })
+  mapID: string;
 }
 
 @Entity({ name: 'MAPS' })
 export class Maps extends Common {
-  @Column()
-  MAP_MD: string;
+  @Column({
+    name: 'MAP_MD',
+    type: 'varchar',
+    length: 12,
+  })
+  mode: string;
 
-  @Column()
-  MAP_NM: string;
+  @Column({
+    name: 'MAP_NM',
+    type: 'varchar',
+    length: 30,
+  })
+  name: string;
 
   @OneToOne(() => MapRotation)
   @JoinColumn({ name: 'MAP_ID' })
@@ -35,12 +47,22 @@ export class Maps extends Common {
 }
 
 @Entity({ name: 'MAP_ROTATION' })
-export class MapRotation extends Common {
-  @Column()
-  ROTATION_TL_BOOL: boolean;
+export class MapRotation {
+  @PrimaryColumn({
+    name: 'MAP_ID',
+    length: 8,
+  })
+  mapID: string;
 
-  @Column()
-  ROTATION_PL_BOOL: boolean;
+  @Column({
+    name: 'ROTATION_TL_BOOL',
+  })
+  isTrophyLeague: boolean;
+
+  @Column({
+    name: 'ROTATION_PL_BOOL',
+  })
+  isPowerLeague: boolean;
 
   @OneToOne(() => Maps)
   @JoinColumn({ name: 'MAP_ID' })

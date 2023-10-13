@@ -11,22 +11,38 @@ import { MapRotation } from './maps.entity';
 
 @Entity({ name: 'EVENTS' })
 export class Events {
-  @PrimaryGeneratedColumn()
-  ROTATION_SLT_NO: number;
+  @PrimaryGeneratedColumn({
+    name: 'ROTATION_SLT_NO',
+    type: 'tinyint',
+    unsigned: true,
+  })
+  slotNumber: number;
 
-  @PrimaryColumn()
-  ROTATION_BGN_DT: Date;
+  @PrimaryColumn({
+    name: 'ROTATION_BGN_DT',
+  })
+  beginDate: Date;
 
-  @Column()
-  ROTATION_END_DT: Date;
+  @Column({
+    name: 'ROTATION_END_DT',
+  })
+  endDate: Date;
 
-  @Column()
-  MAP_ID: string;
+  @Column({
+    name: 'MAP_ID',
+    length: 8,
+  })
+  mapID: string;
 
-  @Column()
-  MAP_MDFS: string;
+  @Column({
+    name: 'MAP_MDFS',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
+  modifiers: string;
 
   @ManyToOne(() => MapRotation, (mapRotation) => mapRotation.events)
-  @JoinColumn({ name: 'MAP_ID', referencedColumnName: 'MAP_ID' })
+  @JoinColumn({ name: 'MAP_ID', referencedColumnName: 'mapID' })
   mapRotation: Relation<MapRotation>;
 }

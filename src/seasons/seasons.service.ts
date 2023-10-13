@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Seasons } from './seasons.entity';
+import { Seasons } from './entities/seasons.entity';
 
-import { CreateSeasonsDto } from './create-season.dto';
+import { CreateSeasonsDto } from './dto/create-season.dto';
 
 @Injectable()
 export class SeasonsService {
@@ -17,15 +17,15 @@ export class SeasonsService {
     return this.seasonsRepository
       .findOne({
         order: {
-          SEASON_BGN_DT: 'DESC',
+          beginDate: 'DESC',
         },
       })
       .then(async (result) => {
         if (result === null) {
           const seasonData: CreateSeasonsDto = {
-            SEASON_NO: 10,
-            SEASON_BGN_DT: new Date('2022-01-03T18:00:00'),
-            SEASON_END_DT: new Date('2022-03-07T17:50:00'),
+            seasonNumber: 10,
+            beginDate: new Date('2022-01-03T18:00:00'),
+            endDate: new Date('2022-03-07T17:50:00'),
           };
 
           const season = this.seasonsRepository.create(seasonData);
@@ -39,16 +39,16 @@ export class SeasonsService {
   async updateSeason() {
     const recentSeason = await this.checkSeason();
 
-    if (Date.now() > new Date(recentSeason.SEASON_END_DT).getTime()) {
-      const id = recentSeason.SEASON_NO + 1;
+    if (Date.now() > new Date(recentSeason.endDate).getTime()) {
+      const id = recentSeason.seasonNumber + 1;
       const beginDate = new Date(
-        new Date(recentSeason.SEASON_BGN_DT).setMonth(
-          new Date(recentSeason.SEASON_BGN_DT).getMonth() + 2,
+        new Date(recentSeason.beginDate).setMonth(
+          new Date(recentSeason.beginDate).getMonth() + 2,
         ),
       );
       const endDate = new Date(
-        new Date(recentSeason.SEASON_END_DT).setMonth(
-          new Date(recentSeason.SEASON_END_DT).getMonth() + 2,
+        new Date(recentSeason.endDate).setMonth(
+          new Date(recentSeason.endDate).getMonth() + 2,
         ),
       );
       const newDate = {
@@ -91,9 +91,9 @@ export class SeasonsService {
       }
 
       const seasonData: CreateSeasonsDto = {
-        SEASON_NO: id,
-        SEASON_BGN_DT: newDate.beginDate,
-        SEASON_END_DT: newDate.endDate,
+        seasonNumber: id,
+        beginDate: newDate.beginDate,
+        endDate: newDate.endDate,
       };
 
       const season = this.seasonsRepository.create(seasonData);
@@ -110,7 +110,7 @@ export class SeasonsService {
       .find({
         take: 1,
         order: {
-          SEASON_NO: 'DESC',
+          seasonNumber: 'DESC',
         },
       })
       .then((result) => result[0]);

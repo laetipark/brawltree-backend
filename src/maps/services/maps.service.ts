@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Maps } from '~/maps/entities/maps.entity';
 
-import { BrawlerStats } from '~/brawlers/entities/stats.entity';
+import { BrawlerStats } from '~/brawlers/entities/brawler-stats.entity';
 
 @Injectable()
 export class MapsService {
@@ -18,13 +18,13 @@ export class MapsService {
   async findMapInfo(id: string) {
     return await this.maps
       .createQueryBuilder('m')
-      .select('m.MAP_ID', 'MAP_ID')
-      .addSelect('m.MAP_NM', 'MAP_NM')
-      .addSelect('m.MAP_MD', 'MAP_MD')
-      .addSelect('mr.ROTATION_TL_BOOL', 'ROTATION_TL_BOOL')
-      .addSelect('mr.ROTATION_PL_BOOL', 'ROTATION_PL_BOOL')
+      .select('m.mapID', 'mapID')
+      .addSelect('m.name', 'name')
+      .addSelect('m.mode', 'mode')
+      .addSelect('mr.isTrophyLeague', 'isTrophyLeague')
+      .addSelect('mr.isPowerLeague', 'isPowerLeague')
       .leftJoin('m.mapRotation', 'mr')
-      .where('m.MAP_ID = :id', {
+      .where('m.mapID = :id', {
         id: id,
       })
       .getRawOne();
@@ -50,31 +50,31 @@ export class MapsService {
 
     return await this.brawlerStats
       .createQueryBuilder('bs')
-      .select('bs.MAP_ID', 'MAP_ID')
-      .addSelect('bs.BRAWLER_ID', 'BRAWLER_ID')
+      .select('bs.mapID', 'mapID')
+      .addSelect('bs.brawlerID', 'brawlerID')
       .addSelect(
-        'ROUND(SUM(bs.MATCH_CNT) * 100 / SUM(SUM(bs.MATCH_CNT)) OVER(), 2)',
-        'MATCH_P_RATE',
+        'ROUND(SUM(bs.matchCount) * 100 / SUM(SUM(bs.matchCount)) OVER(), 2)',
+        'pickRate',
       )
       .addSelect(
-        'ROUND(SUM(bs.MATCH_CNT_VIC) * 100 / (SUM(bs.MATCH_CNT_VIC) + SUM(bs.MATCH_CNT_DEF)), 2)',
-        'MATCH_VIC_RATE',
+        'ROUND(SUM(bs.victoryCount) * 100 / (SUM(bs.victoryCount) + SUM(bs.defeatCount)), 2)',
+        'victoryRate',
       )
-      .addSelect('b.BRAWLER_NM', 'BRAWLER_NM')
+      .addSelect('b.name', 'name')
       .leftJoin('bs.brawler', 'b')
-      .where('MAP_ID = :id', {
+      .where('bs.mapID = :id', {
         id: id,
       })
-      .andWhere('MATCH_TYP = :type', {
+      .andWhere('bs.matchType = :type', {
         type: type,
       })
-      .andWhere('MATCH_GRD IN (:grade)', {
+      .andWhere('bs.matchGrade IN (:grade)', {
         grade: matchGrade(type, grade),
       })
-      .groupBy('bs.BRAWLER_ID')
-      .addGroupBy('b.BRAWLER_NM')
-      .orderBy('MATCH_P_RATE', 'DESC')
-      .addOrderBy('MATCH_VIC_RATE', 'DESC')
+      .groupBy('bs.brawlerID')
+      .addGroupBy('b.name')
+      .orderBy('pickRate', 'DESC')
+      .addOrderBy('victoryRate', 'DESC')
       .getRawMany();
   }
 }

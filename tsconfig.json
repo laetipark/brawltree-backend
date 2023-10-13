@@ -14,8 +14,11 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "paths": {
-      "~/config/*": [
-        "./src/config/*"
+      "~/configs/*": [
+        "./src/configs/*"
+      ],
+      "~/database/*": [
+        "./src/database/*"
       ],
       "~/blossom/*": [
         "./src/blossom/*"

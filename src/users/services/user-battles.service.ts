@@ -4,14 +4,14 @@ import { Repository } from 'typeorm';
 import { Users } from '~/users/entities/users.entity';
 import { UserBattles } from '~/users/entities/users.entity';
 import { Maps } from '~/maps/entities/maps.entity';
-import { Seasons } from '~/seasons/seasons.entity';
+import { Seasons } from '~/seasons/entities/seasons.entity';
 
 import { HttpService } from '@nestjs/axios';
 import { UsersService } from './users.service';
 import { DateService } from '~/date/date.service';
-import { UserBrawlerBattles } from '~/users/entities/userBrawlers.entity';
+import { UserBrawlerBattles } from '~/users/entities/user-brawlers.entity';
 
-import { GameConfigService } from '~/config/gameConfig.service';
+import { AppConfigService } from '~/configs/app-config.service';
 
 import { catchError, firstValueFrom, map, of } from 'rxjs';
 
@@ -37,25 +37,25 @@ export class UserBattlesService {
     private readonly usersService: UsersService,
     private readonly dateService: DateService,
     private readonly httpService: HttpService,
-    private configService: GameConfigService,
+    private configService: AppConfigService,
   ) {}
 
   private async getQuery(type: string, mode: string) {
     const match = {
-      MATCH_TYP: [],
-      MATCH_MD: [],
+      matchType: [],
+      matchMode: [],
     };
 
     if (type === '7') {
-      match.MATCH_TYP = await this.configService.getTypeList();
+      match.matchType = await this.configService.getTypeList();
     } else {
-      match.MATCH_TYP = [type];
+      match.matchType = [type];
     }
 
     if (mode === 'all') {
-      match.MATCH_MD = await this.configService.getModeList();
+      match.matchMode = await this.configService.getModeList();
     } else {
-      match.MATCH_MD = [mode];
+      match.matchMode = [mode];
     }
 
     return match;
@@ -69,7 +69,6 @@ export class UserBattlesService {
             const battleLogs = res.data;
             await this.createUserBattles(battleLogs, userID);
 
-            const newUserLastCheck = new Date();
             const newUserLastBattle = this.dateService.getDate(
               battleLogs?.items[0].battleTime,
             );
@@ -78,10 +77,9 @@ export class UserBattlesService {
               .createQueryBuilder()
               .update()
               .set({
-                USER_LST_CK: newUserLastCheck,
-                USER_LST_BT: newUserLastBattle,
+                lastBattleAt: newUserLastBattle,
               })
-              .where('USER_ID = :id', { id: `#${userID}` })
+              .where('u.userID = :id', { id: `#${userID}` })
               .execute();
           }),
           catchError((e) => {
@@ -90,7 +88,7 @@ export class UserBattlesService {
         ),
       );
     } catch (err) {
-      Logger.error(err.response?.data);
+      Logger.error(err);
     }
   }
 
@@ -173,7 +171,7 @@ export class UserBattlesService {
 
     const userLastUpdate = await this.usersService
       .findUser(userID)
-      .then((result) => result.USER_LST_BT);
+      .then((result) => result.lastBattleAt);
     const lastBattleDate = new Date(userLastUpdate);
     const lastBattleDateResponse = this.dateService.getDate(
       battleLogs?.items[0].battleTime,
@@ -274,25 +272,25 @@ export class UserBattlesService {
                 if (mapModeNumber === 0) {
                   for (const brawler of players[playerNumber]?.brawlers) {
                     battles.push(<UserBattles>{
-                      USER_ID: userTag,
-                      PLAYER_ID: players[playerNumber].tag,
-                      BRAWLER_ID: brawler.id,
-                      MATCH_DT: matchDate,
-                      MAP_ID: item.event.id,
-                      MAP_MD_CD: mapModeNumber,
-                      MATCH_TYP: matchType,
-                      MATCH_TYP_RAW: typeIndex,
-                      MATCH_GRD: matchGrade,
-                      MATCH_DUR: duration,
-                      MATCH_RNK: matchRank,
-                      MATCH_RES: matchResult,
-                      MATCH_CHG: 0,
-                      MATCH_CHG_RAW: brawler.trophyChange,
-                      PLAYER_NM: players[playerNumber].name,
-                      PLAYER_TM_NO: parseInt(teamNumber),
-                      PLAYER_SP_BOOL: false,
-                      BRAWLER_PWR: brawler.power,
-                      BRAWLER_TRP: brawler.trophies,
+                      userID: userTag,
+                      playerID: players[playerNumber].tag,
+                      brawlerID: brawler.id,
+                      matchDate: matchDate,
+                      mapID: item.event.id,
+                      modeCode: mapModeNumber,
+                      matchType: matchType,
+                      matchTypeRaw: typeIndex,
+                      matchGrade: matchGrade,
+                      duration: duration,
+                      matchRank: matchRank,
+                      matchResult: matchResult,
+                      matchChange: 0,
+                      matchChangeRaw: brawler.trophyChange,
+                      playerName: players[playerNumber].name,
+                      teamNumber: parseInt(teamNumber),
+                      isStarPlayer: false,
+                      brawlerPower: brawler.power,
+                      brawlerTrophies: brawler.trophies,
                     });
                   }
                 } else {
@@ -307,27 +305,27 @@ export class UserBattlesService {
                   }
 
                   battles.push(<UserBattles>{
-                    USER_ID: userTag,
-                    PLAYER_ID: players[playerNumber].tag,
-                    BRAWLER_ID: players[playerNumber].brawler.id,
-                    MATCH_DT: matchDate,
-                    MAP_ID: item.event.id,
-                    MAP_MD_CD: mapModeNumber,
-                    MATCH_TYP: matchType,
-                    MATCH_TYP_RAW: typeIndex,
-                    MATCH_GRD: matchGrade,
-                    MATCH_DUR: duration,
-                    MATCH_RNK: matchRank,
-                    MATCH_RES: matchResult,
-                    MATCH_CHG: matchChange,
-                    MATCH_CHG_RAW: 0,
-                    PLAYER_NM: players[playerNumber].name,
-                    PLAYER_TM_NO: [1, 2].includes(mapModeNumber)
+                    userID: userTag,
+                    playerID: players[playerNumber].tag,
+                    brawlerID: players[playerNumber].brawler.id,
+                    matchDate: matchDate,
+                    mapID: item.event.id,
+                    modeCode: mapModeNumber,
+                    matchType: matchType,
+                    matchTypeRaw: typeIndex,
+                    matchGrade: matchGrade,
+                    duration: duration,
+                    matchRank: matchRank,
+                    matchResult: matchResult,
+                    matchChange: matchChange,
+                    matchChangeRaw: 0,
+                    playerName: players[playerNumber].name,
+                    teamNumber: [1, 2].includes(mapModeNumber)
                       ? matchRank
                       : parseInt(teamNumber),
-                    PLAYER_SP_BOOL: isStarPlayer,
-                    BRAWLER_PWR: players[playerNumber].brawler.power,
-                    BRAWLER_TRP: players[playerNumber].brawler.trophies,
+                    isStarPlayer: isStarPlayer,
+                    brawlerPower: players[playerNumber].brawler.power,
+                    brawlerTrophies: players[playerNumber].brawler.trophies,
                   });
                 }
               }
@@ -336,13 +334,15 @@ export class UserBattlesService {
 
           if (matchType === 6) {
             await this.userBattles
-              .createQueryBuilder()
+              .createQueryBuilder('ub')
               .update()
               .set({
-                MATCH_TYP: matchType,
+                matchType: matchType,
               })
-              .where('USER_ID = :id AND MATCH_DT = :date', {
+              .where('USER_ID = :id', {
                 id: userTag,
+              })
+              .andWhere('MATCH_DT = :date', {
                 date: matchDate,
               })
               .execute();
@@ -351,7 +351,13 @@ export class UserBattlesService {
       }
     } // battleLogs 탐색 종료
 
-    await this.userBattles.save(battles);
+    await this.userBattles
+      .createQueryBuilder()
+      .insert()
+      .into('USER_BATTLES')
+      .values(battles)
+      .orIgnore()
+      .execute();
   }
 
   async findUserBattles(
@@ -362,83 +368,83 @@ export class UserBattlesService {
   ) {
     const query = await this.getQuery(type, mode);
 
-    const userBattles = [
+    const battlesSummary = [
       await this.userBattles
         .createQueryBuilder('ub')
-        .select('DATE_FORMAT(ub.MATCH_DT, "%Y-%m-%d")', 'day')
-        .addSelect('COUNT(ub.MATCH_DT)', 'value')
-        .innerJoin(Maps, 'm', 'ub.MAP_ID = m.MAP_ID')
-        .where('ub.USER_ID = :id AND PLAYER_ID = :id', {
+        .select('DATE_FORMAT(ub.matchDate, "%Y-%m-%d")', 'day')
+        .addSelect('COUNT(ub.matchDate)', 'value')
+        .innerJoin(Maps, 'm', 'ub.mapID = m.mapID')
+        .where('ub.userID = :id AND ub.playerID = :id', {
           id: `#${id}`,
         })
-        .andWhere('ub.MATCH_DT BETWEEN :begin AND :end', {
-          begin: season.SEASON_BGN_DT,
-          end: season.SEASON_END_DT,
+        .andWhere('ub.matchDate BETWEEN :begin AND :end', {
+          begin: season.beginDate,
+          end: season.endDate,
         })
-        .andWhere('ub.MATCH_TYP IN (:type)', {
-          type: query.MATCH_TYP,
+        .andWhere('ub.matchType IN (:type)', {
+          type: query.matchType,
         })
-        .andWhere('m.MAP_MD IN (:mode)', {
-          mode: query.MATCH_MD,
+        .andWhere('m.mode IN (:mode)', {
+          mode: query.matchMode,
         })
-        .groupBy('DATE_FORMAT(ub.MATCH_DT, "%Y-%m-%d")')
+        .groupBy('DATE_FORMAT(ub.matchDate, "%Y-%m-%d")')
         .getRawMany(),
       await this.userBattles
         .createQueryBuilder('ub')
-        .select('DATE_FORMAT(ub.MATCH_DT, "%Y-%m-%d")', 'day')
+        .select('DATE_FORMAT(ub.matchDate, "%Y-%m-%d")', 'day')
         .addSelect(
-          'SUM(CASE WHEN ub.MATCH_TYP NOT IN (4, 5) THEN ub.MATCH_CHG ELSE 0 END)',
+          'SUM(CASE WHEN ub.matchType NOT IN (4, 5) THEN ub.matchChange ELSE 0 END)',
           'value',
         )
-        .innerJoin(Maps, 'm', 'ub.MAP_ID = m.MAP_ID')
-        .where('ub.USER_ID = :id AND PLAYER_ID = :id', {
+        .innerJoin(Maps, 'm', 'ub.mapID = m.mapID')
+        .where('ub.userID = :id AND ub.playerID = :id', {
           id: `#${id}`,
         })
-        .andWhere('ub.MATCH_DT BETWEEN :begin AND :end', {
-          begin: season.SEASON_BGN_DT,
-          end: season.SEASON_END_DT,
+        .andWhere('ub.matchDate BETWEEN :begin AND :end', {
+          begin: season.beginDate,
+          end: season.endDate,
         })
-        .andWhere('ub.MATCH_TYP IN (:type)', {
-          type: query.MATCH_TYP,
+        .andWhere('ub.matchType IN (:type)', {
+          type: query.matchType,
         })
-        .andWhere('m.MAP_MD IN (:mode)', {
-          mode: query.MATCH_MD,
+        .andWhere('m.mode IN (:mode)', {
+          mode: query.matchMode,
         })
-        .groupBy('DATE_FORMAT(ub.MATCH_DT, "%Y-%m-%d")')
+        .groupBy('DATE_FORMAT(ub.matchDate, "%Y-%m-%d")')
         .getRawMany(),
     ];
 
-    const userBrawlers = await this.userBrawlerBattles
+    const brawlersSummary = await this.userBrawlerBattles
       .createQueryBuilder('ubb')
-      .select('ubb.BRAWLER_ID', 'BRAWLER_ID')
-      .addSelect('SUM(ubb.MATCH_CNT)', 'MATCH_CNT')
+      .select('ubb.brawlerID', 'brawlerID')
+      .addSelect('SUM(ubb.matchCount)', 'matchCount')
       .addSelect(
-        'ROUND(SUM(ubb.MATCH_CNT) * 100 / SUM(SUM(ubb.MATCH_CNT)) OVER(), 2)',
-        'MATCH_PCK_R',
+        'ROUND(SUM(ubb.matchCount) * 100 / SUM(SUM(ubb.matchCount)) OVER(), 2)',
+        'pickRate',
       )
       .addSelect(
-        'ROUND(SUM(ubb.MATCH_CNT_VIC) * 100 / SUM(ubb.MATCH_CNT_VIC + ubb.MATCH_CNT_DEF), 2)',
-        'MATCH_VIC_R',
+        'ROUND(SUM(ubb.victoryCount) * 100 / SUM(ubb.victoryCount + ubb.defeatCount), 2)',
+        'victoryRate',
       )
-      .addSelect('b.BRAWLER_NM', 'BRAWLER_NM')
+      .addSelect('b.name', 'name')
       .innerJoin('ubb.brawler', 'b')
       .innerJoin('ubb.map', 'm')
-      .where('ubb.USER_ID = :id', {
+      .where('ubb.userID = :id', {
         id: `#${id}`,
       })
-      .andWhere('ubb.MATCH_TYP IN (:type)', {
-        type: query.MATCH_TYP,
+      .andWhere('ubb.matchType IN (:type)', {
+        type: query.matchType,
       })
-      .andWhere('m.MAP_MD IN (:mode)', {
-        mode: query.MATCH_MD,
+      .andWhere('m.mode IN (:mode)', {
+        mode: query.matchMode,
       })
-      .groupBy('ubb.BRAWLER_ID')
-      .addGroupBy('b.BRAWLER_NM')
-      .orderBy('MATCH_CNT', 'DESC')
+      .groupBy('ubb.brawlerID')
+      .addGroupBy('b.name')
+      .orderBy('matchCount', 'DESC')
       .limit(5)
       .getRawMany();
 
-    return [userBattles, userBrawlers];
+    return [battlesSummary, brawlersSummary];
   }
 
   async findUserBattleLogs(
@@ -451,40 +457,40 @@ export class UserBattlesService {
 
     const recentBattles = await this.userBattles
       .createQueryBuilder('ub')
-      .select('ub.MATCH_DT', 'MATCH_DT')
-      .addSelect('ub.MATCH_DUR', 'MATCH_DUR')
-      .addSelect('ub.BRAWLER_ID', 'BRAWLER_ID')
-      .addSelect('ub.MATCH_RES', 'MATCH_RES')
-      .addSelect('ub.MAP_ID', 'MAP_ID')
-      .addSelect('ub.PLAYER_SP_BOOL', 'PLAYER_SP_BOOL')
-      .addSelect('m.MAP_MD', 'MAP_MD')
-      .addSelect('m.MAP_NM', 'MAP_NM')
-      .addSelect('b.BRAWLER_NM', 'BRAWLER_NM')
-      .addSelect('b.BRAWLER_CL', 'BRAWLER_CL')
+      .select('ub.matchDate', 'matchDate')
+      .addSelect('ub.duration', 'duration')
+      .addSelect('ub.brawlerID', 'brawlerID')
+      .addSelect('ub.matchResult', 'matchResult')
+      .addSelect('ub.mapID', 'mapID')
+      .addSelect('ub.isStarPlayer', 'isStarPlayer')
+      .addSelect('m.mode', 'mode')
+      .addSelect('m.name', 'mapName')
+      .addSelect('b.name', 'brawlerName')
+      .addSelect('b.role', 'role')
       .innerJoin('ub.brawler', 'b')
-      .innerJoin(Maps, 'm', 'ub.MAP_ID = m.MAP_ID')
-      .where('ub.USER_ID = :id AND PLAYER_ID = :id', {
+      .innerJoin(Maps, 'm', 'ub.mapID = m.mapID')
+      .where('ub.userID = :id AND ub.playerID = :id', {
         id: `#${id}`,
       })
-      .andWhere('ub.MATCH_DT BETWEEN :begin AND :end', {
-        begin: season.SEASON_BGN_DT,
-        end: season.SEASON_END_DT,
+      .andWhere('ub.matchDate BETWEEN :begin AND :end', {
+        begin: season.beginDate,
+        end: season.endDate,
       })
-      .andWhere('ub.MATCH_TYP IN (:type)', {
-        type: query.MATCH_TYP,
+      .andWhere('ub.matchType IN (:type)', {
+        type: query.matchType,
       })
-      .andWhere('m.MAP_MD IN (:mode)', {
-        mode: query.MATCH_MD,
+      .andWhere('m.mode IN (:mode)', {
+        mode: query.matchMode,
       })
-      .orderBy('MATCH_DT', 'DESC')
-      .take(30)
+      .orderBy('ub.matchDate', 'DESC')
+      .limit(30)
       .getRawMany();
 
     const counter = {};
 
     recentBattles.forEach(function (item) {
-      const brawlerID = item.BRAWLER_ID;
-      const matchRes = item.MATCH_RES;
+      const brawlerID = item.brawlerID;
+      const matchRes = item.matchResult;
 
       if (!counter[brawlerID]) {
         counter[brawlerID] = {};
@@ -500,14 +506,14 @@ export class UserBattlesService {
     const brawlerCounts = Object.keys(counter).map((brawlerID) => {
       const matchResultCounts = counter[brawlerID];
       const brawlerName = recentBattles.find(
-        (brawler) => brawler.BRAWLER_ID === brawlerID,
-      ).BRAWLER_NM;
+        (brawler) => brawler.brawlerID === brawlerID,
+      ).name;
 
       return {
-        BRAWLER_ID: brawlerID,
-        BRAWLER_NM: brawlerName,
-        MATCH_CNT_RES: matchResultCounts,
-        MATCH_CNT_TOT: Object.values(matchResultCounts).reduce(
+        brawlerID: brawlerID,
+        name: brawlerName,
+        resultCount: matchResultCounts,
+        matchCount: Object.values(matchResultCounts).reduce(
           (sum: number, count: number) => sum + count,
           0,
         ),
@@ -518,71 +524,71 @@ export class UserBattlesService {
       .sort(
         (
           a: {
-            BRAWLER_NM: string;
-            MATCH_CNT_TOT: number;
-            MATCH_CNT_RES: number;
-            BRAWLER_ID: string;
+            name: string;
+            matchCount: number;
+            resultCount: number;
+            brawlerID: string;
           },
           b: {
-            BRAWLER_NM: string;
-            MATCH_CNT_TOT: number;
-            MATCH_CNT_RES: number;
-            BRAWLER_ID: string;
+            name: string;
+            matchCount: number;
+            resultCount: number;
+            brawlerID: string;
           },
-        ) => b.MATCH_CNT_TOT - a.MATCH_CNT_TOT,
+        ) => b.matchCount - a.matchCount,
       )
       .slice(0, 6);
 
     const battles = await this.userBattles
       .createQueryBuilder('ub')
-      .select('ub.USER_ID', 'USER_ID')
+      .select('ub.userID', 'userID')
       .addSelect(
         'JSON_OBJECT(' +
-          '"USER_ID", ub.USER_ID,' +
-          '"MATCH_DT", ub.MATCH_DT,' +
-          '"MATCH_DUR", ub.MATCH_DUR,' +
-          '"MATCH_TYP", ub.MATCH_TYP,' +
-          '"MAP_MD_CD", ub.MAP_MD_CD,' +
-          '"MATCH_GRD", ub.MATCH_GRD,' +
-          '"MATCH_CHG", ub.MATCH_CHG)',
+          '"userID", ub.userID,' +
+          '"matchDate", ub.matchDate,' +
+          '"duration", ub.duration,' +
+          '"matchType", ub.matchType,' +
+          '"modeCode", ub.modeCode,' +
+          '"matchGrade", ub.matchGrade,' +
+          '"matchChange", ub.matchChange)',
         'BATTLE_INFO',
       )
       .addSelect(
         'JSON_ARRAYAGG(' +
           'JSON_OBJECT(' +
-          '"PLAYER_ID", ub.PLAYER_ID,' +
-          '"PLAYER_NM", ub.PLAYER_NM,' +
-          '"PLAYER_TM_NO", ub.PLAYER_TM_NO,' +
-          '"BRAWLER_ID", ub.BRAWLER_ID,' +
-          '"BRAWLER_PWR", ub.BRAWLER_PWR,' +
-          '"BRAWLER_TRP", ub.BRAWLER_TRP,' +
-          '"MATCH_RNK", ub.MATCH_RNK,' +
-          '"MATCH_RES", ub.MATCH_RES,' +
-          '"PLAYER_SP_BOOL", ub.PLAYER_SP_BOOL))',
+          '"playerID", ub.playerID,' +
+          '"playerName", ub.playerName,' +
+          '"teamNumber", ub.teamNumber,' +
+          '"brawlerID", ub.brawlerID,' +
+          '"brawlerPower", ub.brawlerPower,' +
+          '"brawlerTrophies", ub.brawlerTrophies,' +
+          '"matchRank", ub.matchRank,' +
+          '"matchResult", ub.matchResult,' +
+          '"isStarPlayer", ub.isStarPlayer))',
         'BATTLE_PLAYERS',
       )
-      .innerJoin(Maps, 'm', 'ub.MAP_ID = m.MAP_ID')
-      .where('ub.USER_ID = :id', {
+      .innerJoin(Maps, 'm', 'ub.mapID = m.mapID')
+      .where('ub.userID = :id', {
         id: `#${id}`,
       })
-      .andWhere('ub.MATCH_DT BETWEEN :begin AND :end', {
-        begin: season.SEASON_BGN_DT,
-        end: season.SEASON_END_DT,
+      .andWhere('ub.matchDate BETWEEN :begin AND :end', {
+        begin: season.beginDate,
+        end: season.endDate,
       })
-      .andWhere('ub.MATCH_TYP IN (:type)', {
-        type: query.MATCH_TYP,
+      .andWhere('ub.matchType IN (:type)', {
+        type: query.matchType,
       })
-      .andWhere('m.MAP_MD IN (:mode)', {
-        mode: query.MATCH_MD,
+      .andWhere('m.mode IN (:mode)', {
+        mode: query.matchMode,
       })
-      .groupBy('ub.USER_ID')
-      .addGroupBy('ub.MATCH_DT')
-      .addGroupBy('ub.MATCH_DUR')
-      .addGroupBy('ub.MATCH_TYP')
-      .addGroupBy('ub.MAP_MD_CD')
-      .addGroupBy('ub.MATCH_GRD')
-      .addGroupBy('ub.MATCH_CHG')
-      .orderBy('ub.MATCH_DT', 'DESC')
+      .groupBy('ub.userID')
+      .addGroupBy('ub.matchDate')
+      .addGroupBy('ub.duration')
+      .addGroupBy('ub.matchType')
+      .addGroupBy('ub.modeCode')
+      .addGroupBy('ub.matchGrade')
+      .addGroupBy('ub.matchChange')
+      .orderBy('ub.matchDate', 'DESC')
       .limit(30)
       .getRawMany()
       .then((result) => {
@@ -592,8 +598,8 @@ export class UserBattlesService {
               battle.BATTLE_INFO,
               recentBattles.find(
                 (item) =>
-                  new Date(battle.BATTLE_INFO.MATCH_DT).toString() ===
-                  new Date(item.MATCH_DT).toString(),
+                  new Date(battle.BATTLE_INFO.matchDate).toString() ===
+                  new Date(item.matchDate).toString(),
               ),
             ),
             BATTLE_PLAYERS: battle.BATTLE_PLAYERS,

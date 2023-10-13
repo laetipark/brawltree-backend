@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm';
 
-import { Body, Injectable, Param } from '@nestjs/common';
+import { Injectable, Param } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Users } from '~/users/entities/users.entity';
 
@@ -18,23 +18,40 @@ export class UsersService {
     private readonly httpService: HttpService,
   ) {}
 
-  async createUser(@Body() userData: CreateUsersDto): Promise<Users> {
-    const user = this.users.create(userData);
+  async createUser(createUsersDto: CreateUsersDto): Promise<Users> {
+    const user = Users.from(createUsersDto);
     return await this.users.save(user);
+  }
+
+  async findUsers(keyword: string) {
+    return await this.users
+      .createQueryBuilder('u')
+      .select('u.userID', 'userID')
+      .addSelect('up.name', 'name')
+      .addSelect('up.profile', 'profile')
+      .addSelect('up.clubName', 'clubName')
+      .addSelect('up.currentTrophies', 'currentTrophies')
+      .addSelect('up.currentSoloPL', 'currentSoloPL')
+      .addSelect('up.currentTeamPL', 'currentTeamPL')
+      .innerJoin('u.userProfile', 'up')
+      .where('up.name LIKE :keyword', {
+        keyword: `%${keyword}%`,
+      })
+      .getRawMany();
   }
 
   async findUser(@Param('id') id: string) {
     return await this.users
       .createQueryBuilder('u')
-      .select('u.USER_ID', 'USER_ID')
-      .addSelect('u.USER_LST_CK', 'USER_LST_CK')
-      .addSelect('u.USER_LST_BT', 'USER_LST_BT')
-      .addSelect('u.USER_CR', 'USER_CR')
-      .addSelect('u.USER_CR_NM', 'USER_CR_NM')
-      .addSelect('up.USER_NM', 'USER_NM')
-      .addSelect('up.USER_PRFL', 'USER_PRFL')
+      .select('u.userID', 'userID')
+      .addSelect('u.lastBattleAt', 'lastBattleAt')
+      .addSelect('u.crew', 'crew')
+      .addSelect('u.crewName', 'crewName')
+      .addSelect('u.updatedAt', 'updatedAt')
+      .addSelect('up.name', 'name')
+      .addSelect('up.profile', 'profile')
       .innerJoin('u.userProfile', 'up')
-      .where(`u.USER_ID = :id`, {
+      .where(`u.userID = :id`, {
         id: `#${id}`,
       })
       .getRawOne();
