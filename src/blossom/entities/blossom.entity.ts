@@ -1,9 +1,9 @@
 import {
-  Entity,
-  PrimaryColumn,
   Column,
-  ManyToOne,
+  Entity,
   JoinColumn,
+  ManyToOne,
+  PrimaryColumn,
   Relation,
 } from 'typeorm';
 import { Users } from '~/users/entities/users.entity';
@@ -24,7 +24,7 @@ abstract class Common extends BaseEntity {
   matchType: number;
 
   @PrimaryColumn({
-    name: 'MATCH_TYP_RAW',
+    name: 'MATCH_GRD',
     type: 'tinyint',
   })
   matchGrade: number;

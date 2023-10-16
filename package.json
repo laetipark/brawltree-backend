@@ -1,7 +1,7 @@
 {
   "name": "brawltree-backend",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Plant Brawl Tree",
   "scripts": {
     "build": "nest build",

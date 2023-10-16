@@ -26,9 +26,6 @@
       "~/brawlers/*": [
         "./src/brawlers/*"
       ],
-      "~/date/*": [
-        "./src/date/*"
-      ],
       "~/maps/*": [
         "./src/maps/*"
       ],
@@ -37,6 +34,9 @@
       ],
       "~/users/*": [
         "./src/users/*"
+      ],
+      "~/utils/*": [
+        "./src/utils/*"
       ]
     }
   }

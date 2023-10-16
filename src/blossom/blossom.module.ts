@@ -19,7 +19,7 @@ import { BlossomController } from './blossom.controller';
 
 import { BlossomService } from './blossom.service';
 import { EventsService } from '~/maps/services/events.service';
-import { DateService } from '~/date/date.service';
+import { DateService } from '~/utils/date.service';
 import { UsersService } from '~/users/services/users.service';
 import { UserProfileService } from '~/users/services/user-profile.service';
 import { UserBattlesService } from '~/users/services/user-battles.service';

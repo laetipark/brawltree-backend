@@ -9,6 +9,7 @@ import { MapsController } from './controllers/maps.controller';
 import { EventsController } from './controllers/events.controller';
 
 import { EventsService } from './services/events.service';
+import { BattleService } from '~/utils/battle.service';
 import { AppConfigService } from '~/configs/app-config.service';
 import { MapsService } from '~/maps/services/maps.service';
 import { BrawlerStats } from '~/brawlers/entities/brawler-stats.entity';
@@ -24,6 +25,6 @@ import { BrawlerStats } from '~/brawlers/entities/brawler-stats.entity';
     ]),
   ],
   controllers: [MapsController, EventsController],
-  providers: [MapsService, EventsService, AppConfigService],
+  providers: [MapsService, EventsService, BattleService, AppConfigService],
 })
 export class MapsModule {}

@@ -25,7 +25,7 @@ export class UsersController {
     private seasonsService: SeasonsService,
   ) {}
 
-  @Get('')
+  @Get()
   @HttpCode(200)
   async selectUsers(@Query('keyword') keyword: string) {
     return this.usersService.findUsers(keyword);
@@ -35,17 +35,16 @@ export class UsersController {
   @HttpCode(200)
   async selectUser(@Param('id') id: string) {
     const user = await this.usersService.findUser(id);
-
     if (
       !user ||
-      new Date(new Date(user.updatedAt).getTime() + 5 * 60 * 1000) < new Date()
+      new Date(new Date(user.updatedAt).getTime() + 2 * 60 * 1000) < new Date()
     ) {
       await this.insertUser(id, user);
     }
     const season = await this.seasonsService.findSeason();
 
     return {
-      user: user || (await this.usersService.findUser(id)),
+      user: await this.usersService.findUser(id),
       profile: await this.userProfileService.findUserProfile(id, season),
     };
   }

@@ -71,7 +71,7 @@ export class BlossomController {
   }
 
   @Get('/members/:id')
-  async selectMember(@Param('id') id: string, @Query('date') date: Date) {
+  async selectMember(@Param('id') id: string) {
     return {
       friends: await this.blossomService.findMemberFriends(id),
       seasonRecords: await this.blossomService.findMemberSeasonRecords(id),

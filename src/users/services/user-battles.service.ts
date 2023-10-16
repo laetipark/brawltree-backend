@@ -8,7 +8,7 @@ import { Seasons } from '~/seasons/entities/seasons.entity';
 
 import { HttpService } from '@nestjs/axios';
 import { UsersService } from './users.service';
-import { DateService } from '~/date/date.service';
+import { DateService } from '~/utils/date.service';
 import { UserBrawlerBattles } from '~/users/entities/user-brawlers.entity';
 
 import { AppConfigService } from '~/configs/app-config.service';
@@ -78,8 +78,9 @@ export class UserBattlesService {
               .update()
               .set({
                 lastBattleAt: newUserLastBattle,
+                updatedAt: new Date(),
               })
-              .where('u.userID = :id', { id: `#${userID}` })
+              .where('USER_ID = :id', { id: `#${userID}` })
               .execute();
           }),
           catchError((e) => {
@@ -507,11 +508,11 @@ export class UserBattlesService {
       const matchResultCounts = counter[brawlerID];
       const brawlerName = recentBattles.find(
         (brawler) => brawler.brawlerID === brawlerID,
-      ).name;
+      ).brawlerName;
 
       return {
         brawlerID: brawlerID,
-        name: brawlerName,
+        brawlerName: brawlerName,
         resultCount: matchResultCounts,
         matchCount: Object.values(matchResultCounts).reduce(
           (sum: number, count: number) => sum + count,
@@ -524,13 +525,13 @@ export class UserBattlesService {
       .sort(
         (
           a: {
-            name: string;
+            brawlerName: string;
             matchCount: number;
             resultCount: number;
             brawlerID: string;
           },
           b: {
-            name: string;
+            brawlerName: string;
             matchCount: number;
             resultCount: number;
             brawlerID: string;

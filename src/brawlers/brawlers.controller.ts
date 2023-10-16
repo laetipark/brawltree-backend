@@ -1,6 +1,4 @@
-import { Controller, Get, HttpCode } from '@nestjs/common';
-
-import { Brawlers } from './entities/brawlers.entity';
+import { Controller, Get, HttpCode, Param } from '@nestjs/common';
 
 import { BrawlersService } from './brawlers.service';
 
@@ -10,13 +8,20 @@ export class BrawlersController {
 
   @Get()
   @HttpCode(200)
-  async selectBrawlers(): Promise<Brawlers[]> {
-    return await this.brawlerService.findBrawlers();
+  async selectBrawlers() {
+    return {
+      brawlers: await this.brawlerService.getBrawlers(),
+      totalStats: await this.brawlerService.getBrawlerTotalStats(),
+      stats: await this.brawlerService.getBrawlerStats(),
+    };
   }
 
-  @Get('/stats')
+  @Get('/:id')
   @HttpCode(200)
-  async selectBrawlerStats() {
-    return await this.brawlerService.findTotalBrawlerStats();
+  async selectBrawler(@Param('id') id: string) {
+    return {
+      brawler: await this.brawlerService.getBrawler(id),
+      status: await this.brawlerService.getBrawlerStatus(id),
+    };
   }
 }

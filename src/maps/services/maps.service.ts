@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { Maps } from '~/maps/entities/maps.entity';
 
 import { BrawlerStats } from '~/brawlers/entities/brawler-stats.entity';
+import { BattleService } from '~/utils/battle.service';
 
 @Injectable()
 export class MapsService {
@@ -13,6 +14,7 @@ export class MapsService {
     private brawlerStats: Repository<BrawlerStats>,
     @InjectRepository(Maps)
     private maps: Repository<Maps>,
+    private readonly battleService: BattleService,
   ) {}
 
   async findMapInfo(id: string) {
@@ -31,22 +33,7 @@ export class MapsService {
   }
 
   async findMapStats(id: string, type: string, grade: string[]) {
-    const matchGrade = (type: string, grade: string[]) => {
-      if (type === '0') {
-        return grade;
-      } else {
-        const array = [];
-        grade?.map((num) => {
-          array.push(parseInt(num) * 3 + 1);
-          if (num !== '6') {
-            array.push(parseInt(num) * 3 + 2);
-            array.push(parseInt(num) * 3 + 3);
-          }
-        });
-
-        return array;
-      }
-    };
+    const matchGrade = this.battleService.setMatchGrade(type, grade);
 
     return await this.brawlerStats
       .createQueryBuilder('bs')
@@ -69,7 +56,7 @@ export class MapsService {
         type: type,
       })
       .andWhere('bs.matchGrade IN (:grade)', {
-        grade: matchGrade(type, grade),
+        grade: matchGrade,
       })
       .groupBy('bs.brawlerID')
       .addGroupBy('b.name')

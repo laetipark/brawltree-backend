@@ -23,7 +23,7 @@ import { UserProfileService } from './services/user-profile.service';
 import { UserBattlesService } from './services/user-battles.service';
 import { UserBrawlersService } from './services/user-brawlers.service';
 import { EventsService } from '~/maps/services/events.service';
-import { DateService } from '~/date/date.service';
+import { DateService } from '~/utils/date.service';
 import { AppConfigService } from '~/configs/app-config.service';
 
 @Module({

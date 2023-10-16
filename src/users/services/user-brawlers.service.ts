@@ -79,7 +79,7 @@ export class UserBrawlersService {
       .addSelect('ubi.itemID', 'itemID')
       .addSelect('ubi.itemKind', 'itemKind')
       .addSelect('ubi.itemName', 'itemName')
-      .where('userID = :id', {
+      .where('ubi.userID = :id', {
         id: `#${id}`,
       })
       .getRawMany();
@@ -113,14 +113,14 @@ export class UserBrawlersService {
           };
         });
 
+        const beginDate = new Date(season.beginDate.getTime() - 24 * 60 * 1000);
         brawlers.map((item) => {
           graphJSON.push({
             brawlerID: item.brawlerID,
             x:
-              season.beginDate.toString().slice(5, 8) +
-              (parseInt(season.beginDate.toString().slice(8, 10)) - 1)
-                .toString()
-                .padStart(2, '0'),
+              (beginDate.getMonth() + 1).toString().padStart(2, '0') +
+              '-' +
+              beginDate.getDate().toString().padStart(2, '0'),
             y: brawlers.find((brawler) => brawler.brawlerID === item.brawlerID)
               .beginTrophies,
           });
