@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Maps } from '~/maps/entities/maps.entity';
 import { BrawlerStats } from '~/brawlers/entities/brawler-stats.entity';
-import { Users, UserBattles } from '~/users/entities/users.entity';
+import { UserBattles, Users } from '~/users/entities/users.entity';
 import { UserFriends, UserRecords } from './entities/blossom.entity';
 
 import { AppConfigService } from '~/configs/app-config.service';
@@ -204,9 +204,9 @@ export class BlossomService {
       .select('ur.matchType', 'matchType')
       .addSelect('ur.matchGrade', 'matchGrade')
       .addSelect('ur.mode', 'mode')
-      .addSelect('ur.matchCount', 'matchCount')
-      .addSelect('ur.victoryCount', 'victoryCount')
-      .addSelect('ur.defeatCount', 'defeatCount')
+      .addSelect('SUM(ur.matchCount)', 'matchCount')
+      .addSelect('SUM(ur.victoryCount)', 'victoryCount')
+      .addSelect('SUM(ur.defeatCount)', 'defeatCount')
       .addSelect(
         'ROUND(ur.victoryCount * 100 / SUM(ur.victoryCount + ur.defeatCount), 2)',
         'victoryRate',
@@ -262,9 +262,9 @@ export class BlossomService {
       .addSelect('uf.matchGrade', 'matchGrade')
       .addSelect('uf.mode', 'mode')
       .addSelect('uf.name', 'name')
-      .addSelect('uf.matchCount', 'matchCount')
-      .addSelect('uf.victoryCount', 'victoryCount')
-      .addSelect('uf.defeatCount', 'defeatCount')
+      .addSelect('SUM(uf.matchCount)', 'matchCount')
+      .addSelect('SUM(uf.victoryCount)', 'victoryCount')
+      .addSelect('SUM(uf.defeatCount)', 'defeatCount')
       .addSelect(
         'ROUND(uf.victoryCount * 100 / SUM(uf.victoryCount + uf.defeatCount), 2)',
         'victoryRate',

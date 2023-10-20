@@ -1,15 +1,22 @@
 import {
-  Entity,
-  PrimaryColumn,
   Column,
-  ManyToOne,
+  Entity,
   JoinColumn,
+  ManyToOne,
+  PrimaryColumn,
   Relation,
 } from 'typeorm';
 import { BaseEntity } from '~/database/entities/base.entity';
 import { Brawlers } from '~/brawlers/entities/brawlers.entity';
 
 abstract class Common extends BaseEntity {
+  @PrimaryColumn({
+    name: 'AGGREGATION_DT',
+    type: 'varchar',
+    length: 12,
+  })
+  aggregationDate: Date;
+
   @PrimaryColumn({
     name: 'MAP_ID',
     length: 8,

@@ -11,6 +11,13 @@ import { BaseEntity } from '~/database/entities/base.entity';
 
 abstract class Common extends BaseEntity {
   @PrimaryColumn({
+    name: 'AGGREGATION_DT',
+    type: 'varchar',
+    length: 12,
+  })
+  aggregationDate: Date;
+
+  @PrimaryColumn({
     name: 'USER_ID',
     type: 'varchar',
     length: 12,
