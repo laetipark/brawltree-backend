@@ -20,20 +20,20 @@
       "~/database/*": [
         "./src/database/*"
       ],
-      "~/blossom/*": [
-        "./src/blossom/*"
+      "~/crew/*": [
+        "./src/features/crew/*"
       ],
       "~/brawlers/*": [
-        "./src/brawlers/*"
+        "./src/features/brawlers/*"
       ],
       "~/maps/*": [
-        "./src/maps/*"
+        "./src/features/maps/*"
       ],
       "~/seasons/*": [
-        "./src/seasons/*"
+        "./src/features/seasons/*"
       ],
       "~/users/*": [
-        "./src/users/*"
+        "./src/features/users/*"
       ],
       "~/utils/*": [
         "./src/utils/*"

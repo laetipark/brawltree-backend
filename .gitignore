@@ -403,3 +403,5 @@ dist
 /src/configs/*
 
 /ecosystem.config.cjs
+/.production.env
+/.development.env

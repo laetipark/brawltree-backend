@@ -1,13 +1,11 @@
 import { Module } from '@nestjs/common';
-import { UsersModule } from './users/users.module';
-import { BlossomModule } from './blossom/blossom.module';
-import { MapsModule } from './maps/maps.module';
-import { BrawlersModule } from './brawlers/brawlers.module';
-
-import { TypeOrmModule } from '@nestjs/typeorm';
-
 import { ConfigModule } from '@nestjs/config';
-import { AppConfigService } from '~/configs/app-config.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UsersModule } from '~/users/users.module';
+import { CrewModule } from '~/crew/crew.module';
+import { MapsModule } from '~/maps/maps.module';
+import { BrawlersModule } from '~/brawlers/brawlers.module';
+import { UtilsModule } from '~/utils/utils.module';
 import AppConfig from './configs/app.config';
 import DatabaseConfig from './configs/database.config';
 
@@ -15,7 +13,7 @@ import DatabaseConfig from './configs/database.config';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: `${__dirname}/configs/env/.${process.env.NODE_ENV}.env`,
+      envFilePath: `.${process.env.NODE_ENV}.env`,
       load: [AppConfig],
     }),
     TypeOrmModule.forRootAsync({
@@ -24,9 +22,10 @@ import DatabaseConfig from './configs/database.config';
     BrawlersModule,
     MapsModule,
     UsersModule,
-    BlossomModule,
+    CrewModule,
+    UtilsModule,
   ],
   controllers: [],
-  providers: [AppConfigService],
+  providers: [],
 })
 export class AppModule {}

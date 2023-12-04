@@ -1,8 +1,8 @@
-import { CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
+import { CreateDateColumn, DeleteDateColumn, UpdateDateColumn } from 'typeorm';
 
 export abstract class BaseEntity {
   @CreateDateColumn({
-    name: 'CREATED_AT',
+    name: 'created_at',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
     select: false,
@@ -10,7 +10,7 @@ export abstract class BaseEntity {
   createdAt: Date;
 
   @UpdateDateColumn({
-    name: 'UPDATED_AT',
+    name: 'updated_at',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
@@ -21,7 +21,7 @@ export abstract class BaseEntity {
 
 export abstract class SoftDeleteEntity extends BaseEntity {
   @DeleteDateColumn({
-    name: 'DELETED_AT',
+    name: 'deleted_at',
     type: 'timestamp',
     default: () => null,
     select: false,
