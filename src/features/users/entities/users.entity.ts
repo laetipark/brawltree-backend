@@ -40,7 +40,7 @@ export class Users extends SoftDeleteEntity {
   })
   isCycle: boolean;
 
-  @OneToOne(() => UserProfile)
+  @OneToOne(() => UserProfile, (user) => user.user)
   userProfile: UserProfile;
 
   @OneToMany(() => UserBattles, (battle) => battle.user)

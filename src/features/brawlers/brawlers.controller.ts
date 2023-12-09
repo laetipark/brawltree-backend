@@ -4,9 +4,9 @@ import { BrawlersService } from './brawlers.service';
 
 @Controller('brawler')
 export class BrawlersController {
-  constructor(private brawlerService: BrawlersService) {}
+  constructor(private readonly brawlerService: BrawlersService) {}
 
-  @Get()
+  @Get('/')
   @HttpCode(200)
   async selectBrawlers() {
     return {

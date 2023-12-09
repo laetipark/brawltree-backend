@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Maps } from '~/maps/entities/maps.entity';
+import { MapRotation } from '~/maps/entities/map-rotation.entity';
 
 @Entity({ name: 'events' })
 export class Events {
@@ -43,4 +44,8 @@ export class Events {
   @ManyToOne(() => Maps, (map) => map.events)
   @JoinColumn({ name: 'map_id', referencedColumnName: 'id' })
   map: Maps;
+
+  @ManyToOne(() => MapRotation, (mapRotation) => mapRotation.events)
+  @JoinColumn({ name: 'map_id', referencedColumnName: 'mapID' })
+  mapRotation: MapRotation;
 }

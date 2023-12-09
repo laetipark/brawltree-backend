@@ -1,0 +1,16 @@
+# build
+backend.dockerfile
+dist
+node_modules
+
+# dev
+.git
+.eslintrc.js
+.gitignore
+.prettierrc
+README.md
+start.bat
+
+# env
+.development.env.sample
+.production.env.sample

@@ -7,7 +7,7 @@ import { Seasons } from './entities/seasons.entity';
 export class SeasonsService {
   constructor(
     @InjectRepository(Seasons)
-    private seasons: Repository<Seasons>,
+    private readonly seasons: Repository<Seasons>,
   ) {}
 
   async findSeason(): Promise<Seasons> {

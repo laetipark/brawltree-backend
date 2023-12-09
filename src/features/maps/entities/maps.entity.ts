@@ -23,7 +23,7 @@ export class Maps extends BaseEntity {
   })
   name: string;
 
-  @OneToOne(() => MapRotation)
+  @OneToOne(() => MapRotation, (mapRotation) => mapRotation.map)
   mapRotation: MapRotation;
 
   @OneToMany(

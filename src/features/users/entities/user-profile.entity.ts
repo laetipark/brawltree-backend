@@ -131,7 +131,7 @@ export class UserProfile extends BaseEntity {
   })
   highestTeamPL: number;
 
-  @OneToOne(() => Users, {
+  @OneToOne(() => Users, (user) => user.userProfile, {
     cascade: true,
     eager: true,
   })

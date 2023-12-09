@@ -399,9 +399,5 @@ dist
 .webpack
 .serverless/**/*.zip
 
-/src/configs/
-/src/configs/*
-
-/ecosystem.config.cjs
 /.production.env
 /.development.env

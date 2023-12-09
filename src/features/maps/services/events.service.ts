@@ -52,9 +52,9 @@ export class EventsService {
   async selectRotationTLDaily(): Promise<Events[]> {
     return await this.mapRotation
       .createQueryBuilder('mr')
-      .select('e.slotNumber', 'slotNumber')
-      .addSelect('e.beginDate', 'beginDate')
-      .addSelect('e.endDate', 'endDate')
+      .select('e.id', 'id')
+      .addSelect('e.startTime', 'startTime')
+      .addSelect('e.endTime', 'endTime')
       .addSelect('e.mapID', 'mapID')
       .addSelect('e.modifiers', 'modifiers')
       .addSelect('m.name', 'name')
@@ -64,27 +64,27 @@ export class EventsService {
       .where((qb) => {
         const subQuery = qb
           .subQuery()
-          .select('e.slotNumber', 'slotNumber')
-          .addSelect('MAX(e.beginDate)', 'beginDate')
+          .select('e.id', 'id')
+          .addSelect('MAX(e.startTime)', 'startTime')
           .from(Events, 'e')
-          .groupBy('e.slotNumber')
+          .groupBy('e.id')
           .getQuery();
-        return '(e.slotNumber, e.beginDate) IN ' + subQuery;
+        return '(e.id, e.startTime) IN ' + subQuery;
       })
       .andWhere('mr.isTrophyLeague = TRUE')
-      .andWhere('e.endDate >= :time', {
+      .andWhere('e.endTime >= :time', {
         time: new Date(),
       })
-      .orderBy('e.slotNumber', 'ASC')
-      .addOrderBy('e.beginDate', 'DESC')
+      .orderBy('e.id', 'ASC')
+      .addOrderBy('e.startTime', 'DESC')
       .getRawMany();
   }
 
   async findRotationTLNext(): Promise<Events[]> {
     return await this.mapRotation
       .createQueryBuilder('mr')
-      .select('e.slotNumber', 'slotNumber')
-      .addSelect('e.beginDate', 'beginDate')
+      .select('e.id', 'id')
+      .addSelect('e.startTime', 'startTime')
       .addSelect('e.endDate', 'endDate')
       .addSelect('e.mapID', 'mapID')
       .addSelect('e.modifiers', 'modifiers')
@@ -95,16 +95,16 @@ export class EventsService {
       .where((qb) => {
         const subQuery = qb
           .subQuery()
-          .select('e.slotNumber', 'slotNumber')
-          .addSelect('MIN(e.beginDate)', 'beginDate')
+          .select('e.id', 'id')
+          .addSelect('MIN(e.startTime)', 'startTime')
           .from(Events, 'e')
-          .groupBy('e.slotNumber')
+          .groupBy('e.id')
           .getQuery();
-        return '(e.slotNumber, e.beginDate) IN ' + subQuery;
+        return '(e.id, e.startTime) IN ' + subQuery;
       })
       .andWhere('mr.isTrophyLeague = TRUE')
-      .orderBy('e.slotNumber', 'ASC')
-      .addOrderBy('e.beginDate', 'DESC')
+      .orderBy('e.id', 'ASC')
+      .addOrderBy('e.startTime', 'DESC')
       .getRawMany();
   }
 

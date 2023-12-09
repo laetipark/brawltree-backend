@@ -6,15 +6,19 @@ import { Maps } from '~/maps/entities/maps.entity';
 import { Seasons } from '~/seasons/entities/seasons.entity';
 import { UserBrawlerBattles } from '~/users/entities/user-brawlers.entity';
 import { AppConfigService } from '~/utils/services/app-config.service';
+import { SeasonsService } from '~/seasons/seasons.service';
+import { EventsService } from '~/maps/services/events.service';
 
 @Injectable()
 export class UserBattlesService {
   constructor(
     @InjectRepository(UserBattles)
-    private userBattles: Repository<UserBattles>,
+    private readonly userBattles: Repository<UserBattles>,
     @InjectRepository(UserBrawlerBattles)
-    private userBrawlerBattles: Repository<UserBrawlerBattles>,
-    private configService: AppConfigService,
+    private readonly userBrawlerBattles: Repository<UserBrawlerBattles>,
+    private readonly eventsService: EventsService,
+    private readonly seasonsService: SeasonsService,
+    private readonly configService: AppConfigService,
   ) {}
 
   async findUserBattles(
@@ -208,7 +212,7 @@ export class UserBattlesService {
           '"modeCode", ub.modeCode,' +
           '"matchGrade", ub.matchGrade,' +
           '"trophyChange", ub.trophyChange)',
-        'BATTLE_INFO',
+        'battleInfo',
       )
       .addSelect(
         'JSON_ARRAYAGG(' +
@@ -222,7 +226,7 @@ export class UserBattlesService {
           '"gameRank", ub.gameRank,' +
           '"gameResult", ub.gameResult,' +
           '"isStarPlayer", ub.isStarPlayer))',
-        'BATTLE_PLAYERS',
+        'battlePlayers',
       )
       .innerJoin(Maps, 'm', 'ub.mapID = m.id')
       .where('ub.userID = :id', {
@@ -251,20 +255,29 @@ export class UserBattlesService {
       .then((result) => {
         return result.map((battle) => {
           return {
-            BATTLE_INFO: Object.assign(
-              battle.BATTLE_INFO,
-              recentBattles.find(
-                (item) =>
-                  new Date(battle.BATTLE_INFO.battleTime).toString() ===
-                  new Date(item.battleTime).toString(),
-              ),
+            battleInfo: Object.assign(
+              battle.battleInfo,
+              recentBattles.find((item) => {
+                return (
+                  new Date(battle.battleInfo.battleTime).toString() ===
+                  new Date(item.battleTime).toString()
+                );
+              }),
             ),
-            BATTLE_PLAYERS: battle.BATTLE_PLAYERS,
+            battlePlayers: battle.battlePlayers,
           };
         });
       });
 
     return [recentBattles, recentBrawlers, battles];
+  }
+
+  async getRotation() {
+    return {
+      season: await this.seasonsService.findSeason(),
+      rotationTL: await this.eventsService.findModeTL(),
+      rotationPL: await this.eventsService.findModePL(),
+    };
   }
 
   private async getQuery(type: string, mode: string) {

@@ -7,15 +7,15 @@ import { Users } from '~/users/entities/users.entity';
 export class UsersService {
   constructor(
     @InjectRepository(Users)
-    private users: Repository<Users>,
+    private readonly users: Repository<Users>,
   ) {}
 
-  async findUsers(keyword: string) {
+  async selectUsers(keyword: string) {
     return await this.users
       .createQueryBuilder('u')
-      .select('u.userID', 'userID')
+      .select('u.id', 'userID')
       .addSelect('up.name', 'name')
-      .addSelect('up.profile', 'profile')
+      .addSelect('up.profileIcon', 'profile')
       .addSelect('up.clubName', 'clubName')
       .addSelect('up.currentTrophies', 'currentTrophies')
       .addSelect('up.currentSoloPL', 'currentSoloPL')
@@ -27,18 +27,18 @@ export class UsersService {
       .getRawMany();
   }
 
-  async findUser(@Param('id') id: string) {
+  async selectUser(@Param('id') id: string) {
     return await this.users
       .createQueryBuilder('u')
-      .select('u.userID', 'userID')
-      .addSelect('u.lastBattleAt', 'lastBattleAt')
+      .select('u.id', 'userID')
+      .addSelect('u.lastBattledOn', 'lastBattledOn')
       .addSelect('u.crew', 'crew')
       .addSelect('u.crewName', 'crewName')
       .addSelect('u.updatedAt', 'updatedAt')
       .addSelect('up.name', 'name')
-      .addSelect('up.profile', 'profile')
+      .addSelect('up.profileIcon', 'profile')
       .innerJoin('u.userProfile', 'up')
-      .where(`u.userID = :id`, {
+      .where(`u.id = :id`, {
         id: `#${id}`,
       })
       .getRawOne();

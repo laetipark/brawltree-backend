@@ -6,7 +6,7 @@ import {
   OneToMany,
   PrimaryColumn,
 } from 'typeorm';
-import { BaseEntity } from '~/database/entities/base.entity';
+import { BaseEntity, SoftDeleteEntity } from '~/database/entities/base.entity';
 import { BattleStats } from '~/brawlers/entities/battle-stats.entity';
 import { UserBattles } from '~/users/entities/user-battles.entity';
 import {
@@ -78,7 +78,7 @@ export class Brawlers extends BaseEntity {
 }
 
 @Entity({ name: 'brawler_items' })
-export class BrawlerItems {
+export class BrawlerItems extends SoftDeleteEntity {
   @PrimaryColumn({ type: 'char', length: 8 })
   id: string;
 
@@ -91,7 +91,7 @@ export class BrawlerItems {
   @Column({ type: 'varchar', length: 30 })
   name: string;
 
-  @OneToMany(() => UserBrawlerItems, (brawler) => brawler.brawlerItems)
+  @OneToMany(() => UserBrawlerItems, (brawler) => brawler.brawlerItem)
   userBrawlerItems: UserBrawlerItems[];
 
   @ManyToOne(() => Brawlers, (brawler) => brawler.brawlerItems)

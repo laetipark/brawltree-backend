@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm';
 
-@Entity({ name: 'SEASONS' })
+@Entity({ name: 'seasons' })
 export class Seasons {
   @PrimaryColumn({
     type: 'tinyint',

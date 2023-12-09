@@ -3,18 +3,20 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserProfile } from '~/users/entities/user-profile.entity';
 import { UserBattles } from '~/users/entities/user-battles.entity';
-import { Seasons } from '~/seasons/entities/seasons.entity';
+import { SeasonsService } from '~/seasons/seasons.service';
 
 @Injectable()
 export class UserProfileService {
   constructor(
     @InjectRepository(UserProfile)
-    private userProfile: Repository<UserProfile>,
+    private readonly userProfile: Repository<UserProfile>,
     @InjectRepository(UserBattles)
-    private userBattles: Repository<UserBattles>,
+    private readonly userBattles: Repository<UserBattles>,
+    private readonly seasonsService: SeasonsService,
   ) {}
 
-  async findUserProfile(id: string, season: Seasons) {
+  async selectUserProfile(id: string) {
+    const season = await this.seasonsService.findSeason();
     const trophyChange = await this.userBattles
       .createQueryBuilder('ub')
       .select('SUM(ub.trophyChange)', 'trophyChange')

@@ -1,6 +1,6 @@
 export class CreateUsersDto {
   userID: string;
-  lastBattleAt: Date;
+  lastBattledOn: Date;
   crew: string;
   crewName: string;
 }

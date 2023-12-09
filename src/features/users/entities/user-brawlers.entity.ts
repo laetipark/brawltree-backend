@@ -127,6 +127,15 @@ export class UserBrawlerItems extends Common {
   brawler: Brawlers;
 
   @ManyToOne(() => BrawlerItems, (brawler) => brawler.userBrawlerItems)
-  @JoinColumn({ name: 'item_id', referencedColumnName: 'id' })
-  brawlerItems: BrawlerItems;
+  @JoinColumn([
+    {
+      name: 'brawler_id',
+      referencedColumnName: 'brawlerID',
+    },
+    {
+      name: 'item_id',
+      referencedColumnName: 'id',
+    },
+  ])
+  brawlerItem: BrawlerItems;
 }

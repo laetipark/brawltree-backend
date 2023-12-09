@@ -1,5 +1,13 @@
-import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  OneToMany,
+  OneToOne,
+  PrimaryColumn,
+} from 'typeorm';
 import { Maps } from '~/maps/entities/maps.entity';
+import { Events } from './events.entity';
 
 @Entity({ name: 'map_rotation' })
 export class MapRotation {
@@ -22,4 +30,7 @@ export class MapRotation {
   @OneToOne(() => Maps)
   @JoinColumn({ name: 'map_id', referencedColumnName: 'id' })
   map: Maps;
+
+  @OneToMany(() => Events, (event) => event.mapRotation)
+  events: Events[];
 }

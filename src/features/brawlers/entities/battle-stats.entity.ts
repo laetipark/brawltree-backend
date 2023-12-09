@@ -44,10 +44,10 @@ export class BattleStats extends BaseEntity {
   matchCount: number;
 
   @Column({
-    name: 'MATCH_CNT_VIC',
+    name: 'victories_count',
     type: 'int',
     unsigned: true,
-    nullable: true,
+    default: () => 0,
   })
   victoriesCount: number;
 

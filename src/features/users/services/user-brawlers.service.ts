@@ -5,20 +5,22 @@ import { Repository } from 'typeorm';
 import { UserBrawlerItems } from '~/users/entities/user-brawlers.entity';
 import { UserBattles } from '~/users/entities/user-battles.entity';
 import { Brawlers } from '~/brawlers/entities/brawlers.entity';
-import { Seasons } from '~/seasons/entities/seasons.entity';
+import { SeasonsService } from '~/seasons/seasons.service';
 
 @Injectable()
 export class UserBrawlersService {
   constructor(
     @InjectRepository(Brawlers)
-    private brawlers: Repository<Brawlers>,
+    private readonly brawlers: Repository<Brawlers>,
     @InjectRepository(UserBattles)
-    private userBattles: Repository<UserBattles>,
+    private readonly userBattles: Repository<UserBattles>,
     @InjectRepository(UserBrawlerItems)
-    private userBrawlerItems: Repository<UserBrawlerItems>,
+    private readonly userBrawlerItems: Repository<UserBrawlerItems>,
+    private readonly seasonsService: SeasonsService,
   ) {}
 
-  async findUserBrawlers(id: string, season: Seasons) {
+  async findUserBrawlers(id: string) {
+    const season = await this.seasonsService.findSeason();
     const brawlers = await this.brawlers
       .createQueryBuilder('b')
       .select('b.id', 'brawlerID')
@@ -77,8 +79,9 @@ export class UserBrawlersService {
       .select('ubi.userID', 'userID')
       .addSelect('ubi.brawlerID', 'brawlerID')
       .addSelect('ubi.itemID', 'itemID')
-      .addSelect('ubi.itemKind', 'itemKind')
-      .addSelect('ubi.itemName', 'itemName')
+      .addSelect('bi.kind', 'itemKind')
+      .addSelect('bi.name', 'itemName')
+      .innerJoin('ubi.brawlerItem', 'bi')
       .where('ubi.userID = :id', {
         id: `#${id}`,
       })
@@ -136,6 +139,10 @@ export class UserBrawlersService {
         });
       });
 
-    return [brawlers, items, graph];
+    return {
+      brawlers,
+      brawlerItems: items,
+      brawlerGraphs: graph,
+    };
   }
 }

@@ -15,18 +15,18 @@ import { UserBattles } from '~/users/entities/user-battles.entity';
 export class CrewService {
   constructor(
     @InjectRepository(BattleStats)
-    private brawlerStats: Repository<BattleStats>,
+    private readonly brawlerStats: Repository<BattleStats>,
     @InjectRepository(Users)
-    private users: Repository<Users>,
+    private readonly users: Repository<Users>,
     @InjectRepository(UserBattles)
-    private userBattles: Repository<UserBattles>,
+    private readonly userBattles: Repository<UserBattles>,
     @InjectRepository(UserRecords)
-    private userRecords: Repository<UserRecords>,
+    private readonly userRecords: Repository<UserRecords>,
     @InjectRepository(UserFriends)
-    private userFriends: Repository<UserFriends>,
-    private eventsService: EventsService,
-    private seasonService: SeasonsService,
-    private configService: AppConfigService,
+    private readonly userFriends: Repository<UserFriends>,
+    private readonly eventsService: EventsService,
+    private readonly seasonService: SeasonsService,
+    private readonly configService: AppConfigService,
   ) {}
 
   async findMembersSummary() {
@@ -113,7 +113,7 @@ export class CrewService {
   async findMemberTable() {
     return await this.users
       .createQueryBuilder('u')
-      .select('u.userID', 'userID')
+      .select('u.id', 'userID')
       .addSelect('u.crewName', 'name')
       .addSelect('up.profile', 'profile')
       .addSelect('up.currentTrophies', 'currentTrophies')
@@ -129,7 +129,7 @@ export class CrewService {
   async findBrawlerTable(brawler: string) {
     return await this.users
       .createQueryBuilder('u')
-      .select('u.userID', 'userID')
+      .select('u.id', 'userID')
       .addSelect('u.crewName', 'name')
       .addSelect('up.profile', 'profile')
       .addSelect('ubr.brawlerID', 'brawlerID')
@@ -153,7 +153,7 @@ export class CrewService {
   ) {
     return await this.users
       .createQueryBuilder('u')
-      .select('u.userID', 'userID')
+      .select('u.id', 'userID')
       .addSelect('u.crewName', 'name')
       .addSelect('up.profile', 'profile')
       .addSelect('COUNT(DISTINCT ub.battleTime)', 'matchCount')
@@ -181,7 +181,7 @@ export class CrewService {
   async findSeasonTable(type: string, mode: string) {
     return await this.users
       .createQueryBuilder('u')
-      .select('u.userID', 'userID')
+      .select('u.id', 'userID')
       .addSelect('u.crewName', 'name')
       .addSelect('up.profile', 'profile')
       .addSelect('SUM(ur.matchCount)', 'matchCount')
