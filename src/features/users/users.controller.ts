@@ -10,56 +10,42 @@ import { UsersService } from './services/users.service';
 import { UserProfileService } from './services/user-profile.service';
 import { UserBattlesService } from './services/user-battles.service';
 import { UserBrawlersService } from './services/user-brawlers.service';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { FailureResponseEnum } from '../../common/enums/failure-response.enum';
 
 @Controller('brawlian')
 export class UsersController {
   constructor(
-    private usersService: UsersService,
-    private userProfileService: UserProfileService,
-    private userBattlesService: UserBattlesService,
-    private userBrawlersService: UserBrawlersService,
-    private readonly httpService: HttpService,
+    private readonly usersService: UsersService,
+    private readonly userProfileService: UserProfileService,
+    private readonly userBattlesService: UserBattlesService,
+    private readonly userBrawlersService: UserBrawlersService,
   ) {}
 
-  @Get()
+  /** 이름에 입력값이 포함된 사용자 조회
+   * @param keyword 입력값 */
+  @Get('/')
   @HttpCode(200)
-  async selectUsers(@Query('keyword') keyword: string) {
+  selectUsers(@Query('keyword') keyword: string) {
     return this.usersService.selectUsers(keyword);
   }
 
+  /** 사용자 ID에 대한 상세 조회
+   * @param id 사용자 ID */
   @Get('/:id')
   @HttpCode(200)
   async selectUser(@Param('id') id: string) {
     const user = await this.usersService.selectUser(id);
-    const response = {
-      insert: false,
-      update: false,
-    };
+    const { insert, update } = await this.usersService.updateUserFromCrawler(
+      user,
+      id,
+    );
 
     if (!user) {
-      const res = await firstValueFrom(this.httpService.post(`brawlian/${id}`));
-      if (res.status === 201) {
-        response.insert = true;
+      if (!insert && !update) {
+        throw new NotFoundException(
+          `${FailureResponseEnum.USER_NOT_FOUND}: ${id}`,
+        );
       }
-    }
-
-    if (
-      response.insert ||
-      (user &&
-        new Date(new Date(user.updatedAt).getTime() + 2 * 60 * 1000) <
-          new Date())
-    ) {
-      const res = await firstValueFrom(
-        this.httpService.patch(`brawlian/${id}`),
-      );
-      if (res.status === 200) {
-        response.update = true;
-      }
-    }
-    if (!user && !response.insert && !response.update) {
-      throw new NotFoundException(`User ${id} not Found`);
     } else {
       return {
         user: await this.usersService.selectUser(id),
@@ -68,11 +54,13 @@ export class UsersController {
     }
   }
 
+  /** 사용자 소유 브롤러 정보 조회
+   * @param id 사용자 ID */
   @Get('/:id/brawlers')
   @HttpCode(200)
   async selectUserBrawlers(@Param('id') id: string) {
     const { brawlers, brawlerItems, brawlerGraphs } =
-      await this.userBrawlersService.findUserBrawlers(id);
+      await this.userBrawlersService.selectUserBrawlers(id);
 
     return {
       brawlers: brawlers,
@@ -81,6 +69,10 @@ export class UsersController {
     };
   }
 
+  /** 사용자 전투 정보 조회
+   * @param id 사용자 ID
+   * @param type 전투 타입
+   * @param mode 전투 모드 */
   @Get('/:id/battles')
   @HttpCode(200)
   async selectUserBattles(
@@ -89,11 +81,16 @@ export class UsersController {
     @Query('mode') mode: string,
   ) {
     const { season, rotationTL, rotationPL } =
-      await this.userBattlesService.getRotation();
-    const [battlesSummary, brawlersSummary] =
-      await this.userBattlesService.findUserBattles(id, type, mode, season);
-    const [recentBattles, recentBrawlers, battles] =
-      await this.userBattlesService.findUserBattleLogs(id, type, mode, season);
+      await this.userBattlesService.getSeasonAndGameMode();
+    const { battlesSummary, brawlersSummary } =
+      await this.userBattlesService.selectUserBattles(id, type, mode, season);
+    const { recentBattles, recentBrawlers, battles } =
+      await this.userBattlesService.selectUserBattleLogs(
+        id,
+        type,
+        mode,
+        season,
+      );
 
     return {
       battlesSummary: battlesSummary,

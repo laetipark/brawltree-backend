@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { SeasonsService } from '~/seasons/seasons.service';
 import { UserProfile } from '~/users/entities/user-profile.entity';
 import { UserBattles } from '~/users/entities/user-battles.entity';
-import { SeasonsService } from '~/seasons/seasons.service';
 
 @Injectable()
 export class UserProfileService {
@@ -15,8 +15,10 @@ export class UserProfileService {
     private readonly seasonsService: SeasonsService,
   ) {}
 
+  /** 사용자 프로필 정보 반환
+   * @param id 사용자 ID */
   async selectUserProfile(id: string) {
-    const season = await this.seasonsService.findSeason();
+    const season = await this.seasonsService.selectRecentSeason();
     const trophyChange = await this.userBattles
       .createQueryBuilder('ub')
       .select('SUM(ub.trophyChange)', 'trophyChange')

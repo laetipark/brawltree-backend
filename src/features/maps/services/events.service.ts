@@ -15,7 +15,7 @@ export class EventsService {
     private configService: AppConfigService,
   ) {}
 
-  async findModeTL() {
+  async selectModeTL() {
     const rotation = await this.mapRotation
       .createQueryBuilder('mr')
       .select('m.mode', 'mode')
@@ -32,7 +32,7 @@ export class EventsService {
     return filterModeList;
   }
 
-  async findModePL() {
+  async selectModePL() {
     const rotation = await this.mapRotation
       .createQueryBuilder('mr')
       .select('m.mode', 'mode')

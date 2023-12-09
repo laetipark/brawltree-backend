@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserBattles } from '~/users/entities/user-battles.entity';
-import { Maps } from '~/maps/entities/maps.entity';
-import { Seasons } from '~/seasons/entities/seasons.entity';
-import { UserBrawlerBattles } from '~/users/entities/user-brawlers.entity';
 import { AppConfigService } from '~/utils/services/app-config.service';
 import { SeasonsService } from '~/seasons/seasons.service';
 import { EventsService } from '~/maps/services/events.service';
+import { UserBattles } from '~/users/entities/user-battles.entity';
+import { UserBrawlerBattles } from '~/users/entities/user-brawlers.entity';
+import { Maps } from '~/maps/entities/maps.entity';
+import { Seasons } from '~/seasons/entities/seasons.entity';
 
 @Injectable()
 export class UserBattlesService {
@@ -21,7 +21,12 @@ export class UserBattlesService {
     private readonly configService: AppConfigService,
   ) {}
 
-  async findUserBattles(
+  /** 사용자 전투 요약 통계 정보 반환
+   * @param id 사용자 ID
+   * @param type 전투 타입
+   * @param mode 전투 모드
+   * @param season 최근 시즌 정보 */
+  async selectUserBattles(
     id: string,
     type: string,
     mode: string,
@@ -29,6 +34,7 @@ export class UserBattlesService {
   ) {
     const query = await this.getQuery(type, mode);
 
+    // 모드별 시즌 전투 요약 통계
     const battlesSummary = [
       await this.userBattles
         .createQueryBuilder('ub')
@@ -75,6 +81,7 @@ export class UserBattlesService {
         .getRawMany(),
     ];
 
+    // 모드별 최근 브롤러 전투 요약 통계
     const brawlersSummary = await this.userBrawlerBattles
       .createQueryBuilder('ubb')
       .select('ubb.brawlerID', 'brawlerID')
@@ -105,10 +112,15 @@ export class UserBattlesService {
       .limit(5)
       .getRawMany();
 
-    return [battlesSummary, brawlersSummary];
+    return { battlesSummary, brawlersSummary };
   }
 
-  async findUserBattleLogs(
+  /** 사용자 전투 상세 통계 및 전투 기록 정보 반환
+   * @param id 사용자 ID
+   * @param type 전투 타입
+   * @param mode 전투 모드
+   * @param season 최근 시즌 정보 */
+  async selectUserBattleLogs(
     id: string,
     type: string,
     mode: string,
@@ -116,6 +128,7 @@ export class UserBattlesService {
   ) {
     const query = await this.getQuery(type, mode);
 
+    // 최근 전투 통계
     const recentBattles = await this.userBattles
       .createQueryBuilder('ub')
       .select('ub.battleTime', 'battleTime')
@@ -147,8 +160,8 @@ export class UserBattlesService {
       .limit(30)
       .getRawMany();
 
+    // 시즌 사용한 브롤러 통계
     const counter = {};
-
     recentBattles.forEach(function (item) {
       const brawlerID = item.brawlerID;
       const matchRes = item.gameResult;
@@ -200,6 +213,7 @@ export class UserBattlesService {
       )
       .slice(0, 6);
 
+    // 전투 기록 목록
     const battles = await this.userBattles
       .createQueryBuilder('ub')
       .select('ub.userID', 'userID')
@@ -269,17 +283,22 @@ export class UserBattlesService {
         });
       });
 
-    return [recentBattles, recentBrawlers, battles];
+    return { recentBattles, recentBrawlers, battles };
   }
 
-  async getRotation() {
+  /** 최근 시즌 및 게임 모드 정보 반환 */
+  async getSeasonAndGameMode() {
     return {
-      season: await this.seasonsService.findSeason(),
-      rotationTL: await this.eventsService.findModeTL(),
-      rotationPL: await this.eventsService.findModePL(),
+      season: await this.seasonsService.selectRecentSeason(),
+      rotationTL: await this.eventsService.selectModeTL(),
+      rotationPL: await this.eventsService.selectModePL(),
     };
   }
 
+  /** 전투 타입 및 전투 모드
+   * @param type 전투 타입
+   * @param mode 전투 모드
+   */
   private async getQuery(type: string, mode: string) {
     const match = {
       matchType: [],

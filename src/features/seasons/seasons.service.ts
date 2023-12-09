@@ -10,7 +10,7 @@ export class SeasonsService {
     private readonly seasons: Repository<Seasons>,
   ) {}
 
-  async findSeason(): Promise<Seasons> {
+  async selectRecentSeason(): Promise<Seasons> {
     return await this.seasons
       .find({
         take: 1,

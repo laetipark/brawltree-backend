@@ -335,12 +335,12 @@ export class CrewService {
 
   getModes() {
     return {
-      rotationTL: this.eventsService.findModeTL(),
-      rotationPL: this.eventsService.findModePL(),
+      rotationTL: this.eventsService.selectModeTL(),
+      rotationPL: this.eventsService.selectModePL(),
     };
   }
 
   getSeason() {
-    return this.seasonService.findSeason();
+    return this.seasonService.selectRecentSeason();
   }
 }

@@ -10,8 +10,8 @@ import { UserBattlesService } from './services/user-battles.service';
 import { UserBrawlersService } from './services/user-brawlers.service';
 
 import { Users } from './entities/users.entity';
-import { UserProfile } from '~/users/entities/user-profile.entity';
-import { UserBattles } from '~/users/entities/user-battles.entity';
+import { UserProfile } from './entities/user-profile.entity';
+import { UserBattles } from './entities/user-battles.entity';
 import {
   UserBrawlerBattles,
   UserBrawlerItems,
