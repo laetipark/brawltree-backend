@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { SeasonsService } from '~/seasons/seasons.service';
 import { UserProfile } from '~/users/entities/user-profile.entity';
 import { UserBattles } from '~/users/entities/user-battles.entity';
+import { SelectUserProfileDto } from '~/users/dto/select-user-profile.dto';
 
 @Injectable()
 export class UserProfileService {
@@ -17,7 +18,7 @@ export class UserProfileService {
 
   /** 사용자 프로필 정보 반환
    * @param id 사용자 ID */
-  async selectUserProfile(id: string) {
+  async selectUserProfile(id: string): Promise<SelectUserProfileDto> {
     const season = await this.seasonsService.selectRecentSeason();
     const trophyChange = await this.userBattles
       .createQueryBuilder('ub')

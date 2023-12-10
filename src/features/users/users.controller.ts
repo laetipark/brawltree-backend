@@ -84,7 +84,7 @@ export class UsersController {
       await this.userBattlesService.getSeasonAndGameMode();
     const { battlesSummary, brawlersSummary } =
       await this.userBattlesService.selectUserBattles(id, type, mode, season);
-    const { recentBattles, recentBrawlers, battles } =
+    const { recentUserBattles, userBrawlerBattles, userBattleLogs } =
       await this.userBattlesService.selectUserBattleLogs(
         id,
         type,
@@ -95,9 +95,9 @@ export class UsersController {
     return {
       battlesSummary: battlesSummary,
       brawlersSummary: brawlersSummary,
-      recentBattles: recentBattles,
-      recentBrawlers: recentBrawlers,
-      battles: battles,
+      recentBattles: recentUserBattles,
+      recentBrawlers: userBrawlerBattles,
+      battles: userBattleLogs,
       rotationTL: rotationTL,
       rotationPL: rotationPL,
       season: season,

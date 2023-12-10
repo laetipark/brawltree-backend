@@ -8,6 +8,12 @@ import { UserBattles } from '~/users/entities/user-battles.entity';
 import { UserBrawlerBattles } from '~/users/entities/user-brawlers.entity';
 import { Maps } from '~/maps/entities/maps.entity';
 import { Seasons } from '~/seasons/entities/seasons.entity';
+import {
+  SelectRecentUserBattlesDto,
+  SelectUserBattleLogsDto,
+  SelectUserBattlesDto,
+  SelectUserBrawlerBattlesDto,
+} from '~/users/dto/select-user-battles.dto';
 
 @Injectable()
 export class UserBattlesService {
@@ -125,44 +131,45 @@ export class UserBattlesService {
     type: string,
     mode: string,
     season: Seasons,
-  ) {
+  ): Promise<SelectUserBattleLogsDto> {
     const query = await this.getQuery(type, mode);
 
     // 최근 전투 통계
-    const recentBattles = await this.userBattles
-      .createQueryBuilder('ub')
-      .select('ub.battleTime', 'battleTime')
-      .addSelect('ub.duration', 'duration')
-      .addSelect('ub.brawlerID', 'brawlerID')
-      .addSelect('ub.gameResult', 'gameResult')
-      .addSelect('ub.mapID', 'mapID')
-      .addSelect('ub.isStarPlayer', 'isStarPlayer')
-      .addSelect('m.mode', 'mode')
-      .addSelect('m.name', 'mapName')
-      .addSelect('b.name', 'brawlerName')
-      .addSelect('b.role', 'role')
-      .innerJoin('ub.brawler', 'b')
-      .innerJoin(Maps, 'm', 'ub.mapID = m.id')
-      .where('ub.userID = :id AND ub.playerID = :id', {
-        id: `#${id}`,
-      })
-      .andWhere('ub.battleTime BETWEEN :begin AND :end', {
-        begin: season.beginDate,
-        end: season.endDate,
-      })
-      .andWhere('ub.matchType IN (:type)', {
-        type: query.matchType,
-      })
-      .andWhere('m.mode IN (:mode)', {
-        mode: query.matchMode,
-      })
-      .orderBy('ub.battleTime', 'DESC')
-      .limit(30)
-      .getRawMany();
+    const recentUserBattles: SelectRecentUserBattlesDto[] =
+      await this.userBattles
+        .createQueryBuilder('ub')
+        .select('ub.battleTime', 'battleTime')
+        .addSelect('ub.duration', 'duration')
+        .addSelect('ub.brawlerID', 'brawlerID')
+        .addSelect('ub.gameResult', 'gameResult')
+        .addSelect('ub.mapID', 'mapID')
+        .addSelect('ub.isStarPlayer', 'isStarPlayer')
+        .addSelect('m.mode', 'mode')
+        .addSelect('m.name', 'mapName')
+        .addSelect('b.name', 'brawlerName')
+        .addSelect('b.role', 'role')
+        .innerJoin('ub.brawler', 'b')
+        .innerJoin(Maps, 'm', 'ub.mapID = m.id')
+        .where('ub.userID = :id AND ub.playerID = :id', {
+          id: `#${id}`,
+        })
+        .andWhere('ub.battleTime BETWEEN :begin AND :end', {
+          begin: season.beginDate,
+          end: season.endDate,
+        })
+        .andWhere('ub.matchType IN (:type)', {
+          type: query.matchType,
+        })
+        .andWhere('m.mode IN (:mode)', {
+          mode: query.matchMode,
+        })
+        .orderBy('ub.battleTime', 'DESC')
+        .limit(30)
+        .getRawMany();
 
     // 시즌 사용한 브롤러 통계
     const counter = {};
-    recentBattles.forEach(function (item) {
+    recentUserBattles.forEach(function (item) {
       const brawlerID = item.brawlerID;
       const matchRes = item.gameResult;
 
@@ -177,24 +184,27 @@ export class UserBattlesService {
       }
     });
 
-    const brawlerCounts = Object.keys(counter).map((brawlerID) => {
-      const gameResultCounts = counter[brawlerID];
-      const brawlerName = recentBattles.find(
-        (brawler) => brawler.brawlerID === brawlerID,
-      ).brawlerName;
+    const userBrawlerBattles: SelectUserBrawlerBattlesDto[] = Object.keys(
+      counter,
+    )
+      .map((brawlerID) => {
+        const gameResultCounts = counter[brawlerID];
+        const brawlerName = recentUserBattles.find(
+          (brawler) => brawler.brawlerID === brawlerID,
+        ).brawlerName;
 
-      return {
-        brawlerID: brawlerID,
-        brawlerName: brawlerName,
-        resultCount: gameResultCounts,
-        matchCount: Object.values(gameResultCounts).reduce(
-          (sum: number, count: number) => sum + count,
-          0,
-        ),
-      };
-    });
-
-    const recentBrawlers = brawlerCounts
+        return {
+          brawlerID: brawlerID,
+          brawlerName: brawlerName,
+          resultCount: gameResultCounts,
+          matchCount: Number(
+            Object.values(gameResultCounts).reduce(
+              (sum: number, count: number) => sum + count,
+              0,
+            ),
+          ),
+        };
+      })
       .sort(
         (
           a: {
@@ -214,7 +224,7 @@ export class UserBattlesService {
       .slice(0, 6);
 
     // 전투 기록 목록
-    const battles = await this.userBattles
+    const userBattleLogs: SelectUserBattlesDto[] = await this.userBattles
       .createQueryBuilder('ub')
       .select('ub.userID', 'userID')
       .addSelect(
@@ -271,7 +281,7 @@ export class UserBattlesService {
           return {
             battleInfo: Object.assign(
               battle.battleInfo,
-              recentBattles.find((item) => {
+              recentUserBattles.find((item) => {
                 return (
                   new Date(battle.battleInfo.battleTime).toString() ===
                   new Date(item.battleTime).toString()
@@ -283,7 +293,7 @@ export class UserBattlesService {
         });
       });
 
-    return { recentBattles, recentBrawlers, battles };
+    return { recentUserBattles, userBrawlerBattles, userBattleLogs };
   }
 
   /** 최근 시즌 및 게임 모드 정보 반환 */
