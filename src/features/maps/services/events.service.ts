@@ -11,10 +11,11 @@ import { AppConfigService } from '~/utils/services/app-config.service';
 export class EventsService {
   constructor(
     @InjectRepository(MapRotation)
-    private mapRotation: Repository<MapRotation>,
-    private configService: AppConfigService,
+    private readonly mapRotation: Repository<MapRotation>,
+    private readonly configService: AppConfigService,
   ) {}
 
+  /** 트로피 리그 모드 반환 */
   async selectModeTL() {
     const rotation = await this.mapRotation
       .createQueryBuilder('mr')
@@ -32,6 +33,7 @@ export class EventsService {
     return filterModeList;
   }
 
+  /** 파워 리그 모드 반환 */
   async selectModePL() {
     const rotation = await this.mapRotation
       .createQueryBuilder('mr')
@@ -49,6 +51,7 @@ export class EventsService {
     return filterModeList;
   }
 
+  /** 금일 트로피 리그 맵 목록 반환 */
   async selectRotationTLDaily(): Promise<Events[]> {
     return await this.mapRotation
       .createQueryBuilder('mr')
@@ -80,6 +83,7 @@ export class EventsService {
       .getRawMany();
   }
 
+  /** 익일 트로피 리그 맵 목록 반환 */
   async findRotationTLNext(): Promise<Events[]> {
     return await this.mapRotation
       .createQueryBuilder('mr')
@@ -108,6 +112,7 @@ export class EventsService {
       .getRawMany();
   }
 
+  /** 파워 리그 맵 목록 반환 */
   async findRotationPL(): Promise<Maps[]> {
     return await this.mapRotation
       .createQueryBuilder('mr')

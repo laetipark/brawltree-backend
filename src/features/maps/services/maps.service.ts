@@ -6,22 +6,25 @@ import { Maps } from '../entities/maps.entity';
 
 import { BattleStats } from '~/brawlers/entities/battle-stats.entity';
 import { BattleService } from '~/utils/services/battle.service';
+import { SelectMapDto, SelectMapStatsDto } from '~/maps/dto/select-map.dto';
 
 @Injectable()
 export class MapsService {
   constructor(
     @InjectRepository(BattleStats)
-    private battleStats: Repository<BattleStats>,
+    private readonly battleStats: Repository<BattleStats>,
     @InjectRepository(Maps)
-    private maps: Repository<Maps>,
+    private readonly maps: Repository<Maps>,
     private readonly battleService: BattleService,
   ) {}
 
-  async findMapInfo(id: string) {
+  /** 맵 ID에 대한 맵 정보 반환
+   * @param id 맵 ID */
+  async selectMap(id: string): Promise<SelectMapDto> {
     return await this.maps
       .createQueryBuilder('m')
       .select('m.id', 'mapID')
-      .addSelect('m.name', 'name')
+      .addSelect('m.name', 'mapName')
       .addSelect('m.mode', 'mode')
       .addSelect('mr.isTrophyLeague', 'isTrophyLeague')
       .addSelect('mr.isPowerLeague', 'isPowerLeague')
@@ -32,7 +35,15 @@ export class MapsService {
       .getRawOne();
   }
 
-  async findMapStats(id: string, type: string, grade: string[]) {
+  /** 맵 ID에 대한 전투 통계 반환
+   * @param id 맵 ID
+   * @param type 전투 타입
+   * @param grade 전투 등급 */
+  async selectMapStats(
+    id: string,
+    type: string,
+    grade: string[],
+  ): Promise<SelectMapStatsDto[]> {
     const matchGrade = this.battleService.setMatchGrade(type, grade);
 
     return await this.battleStats
@@ -47,7 +58,7 @@ export class MapsService {
         'ROUND(SUM(bs.victoriesCount) * 100 / (SUM(bs.victoriesCount) + SUM(bs.defeatsCount)), 2)',
         'victoryRate',
       )
-      .addSelect('b.name', 'name')
+      .addSelect('b.name', 'brawlerName')
       .leftJoin('bs.brawler', 'b')
       .where('bs.mapID = :id', {
         id: id,
