@@ -20,7 +20,7 @@ export class UserBrawlersService {
   ) {}
 
   async selectUserBrawlers(id: string) {
-    const season = await this.seasonsService.selectRecentSeason();
+    const season = await this.seasonsService.getRecentSeason();
     const brawlers = await this.brawlers
       .createQueryBuilder('b')
       .select('b.id', 'brawlerID')

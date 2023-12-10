@@ -341,6 +341,6 @@ export class CrewService {
   }
 
   getSeason() {
-    return this.seasonService.selectRecentSeason();
+    return this.seasonService.getRecentSeason();
   }
 }

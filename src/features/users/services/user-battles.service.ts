@@ -7,13 +7,13 @@ import { EventsService } from '~/maps/services/events.service';
 import { UserBattles } from '~/users/entities/user-battles.entity';
 import { UserBrawlerBattles } from '~/users/entities/user-brawlers.entity';
 import { Maps } from '~/maps/entities/maps.entity';
-import { Seasons } from '~/seasons/entities/seasons.entity';
 import {
   SelectRecentUserBattlesDto,
   SelectUserBattleLogsDto,
   SelectUserBattlesDto,
   SelectUserBrawlerBattlesDto,
 } from '~/users/dto/select-user-battles.dto';
+import { SeasonDto } from '~/seasons/dto/season.dto';
 
 @Injectable()
 export class UserBattlesService {
@@ -36,7 +36,7 @@ export class UserBattlesService {
     id: string,
     type: string,
     mode: string,
-    season: Seasons,
+    season: SeasonDto,
   ) {
     const query = await this.getQuery(type, mode);
 
@@ -130,7 +130,7 @@ export class UserBattlesService {
     id: string,
     type: string,
     mode: string,
-    season: Seasons,
+    season: SeasonDto,
   ): Promise<SelectUserBattleLogsDto> {
     const query = await this.getQuery(type, mode);
 
@@ -299,7 +299,7 @@ export class UserBattlesService {
   /** 최근 시즌 및 게임 모드 정보 반환 */
   async getSeasonAndGameMode() {
     return {
-      season: await this.seasonsService.selectRecentSeason(),
+      season: await this.seasonsService.getRecentSeason(),
       rotationTL: await this.eventsService.selectModeTL(),
       rotationPL: await this.eventsService.selectModePL(),
     };

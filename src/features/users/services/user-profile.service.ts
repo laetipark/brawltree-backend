@@ -19,7 +19,7 @@ export class UserProfileService {
   /** 사용자 프로필 정보 반환
    * @param id 사용자 ID */
   async selectUserProfile(id: string): Promise<SelectUserProfileDto> {
-    const season = await this.seasonsService.selectRecentSeason();
+    const season = await this.seasonsService.getRecentSeason();
     const trophyChange = await this.userBattles
       .createQueryBuilder('ub')
       .select('SUM(ub.trophyChange)', 'trophyChange')
