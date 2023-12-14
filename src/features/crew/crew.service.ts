@@ -29,7 +29,7 @@ export class CrewService {
     private readonly configService: AppConfigService,
   ) {}
 
-  async findMembersSummary() {
+  async selectMembersSummary() {
     return await this.users
       .createQueryBuilder('u')
       .select('COUNT(up.userID)', 'MEMBER_CNT')
@@ -39,7 +39,7 @@ export class CrewService {
       .getRawOne();
   }
 
-  async findBattlesSummary() {
+  async selectBattlesSummary() {
     const beginDate = new Date(
       new Date(
         new Date().getFullYear(),
@@ -64,14 +64,14 @@ export class CrewService {
       .getRawOne();
   }
 
-  async findSeasonSummary() {
+  async selectSeasonSummary() {
     return await this.userRecords
       .createQueryBuilder('ur')
       .select('SUM(ur.matchCount)', 'matchCount')
       .getRawOne();
   }
 
-  async findBrawlerSummary() {
+  async selectBrawlerSummary() {
     return [
       await this.brawlerStats
         .createQueryBuilder('bs')
@@ -110,7 +110,7 @@ export class CrewService {
     ];
   }
 
-  async findMemberTable() {
+  async selectMemberTable() {
     return await this.users
       .createQueryBuilder('u')
       .select('u.id', 'userID')
@@ -145,7 +145,7 @@ export class CrewService {
       .getRawMany();
   }
 
-  async findBattlesTable(
+  async selectBattlesTable(
     beginDate: Date,
     endDate: Date,
     type: string,
@@ -178,7 +178,7 @@ export class CrewService {
       .getRawMany();
   }
 
-  async findSeasonTable(type: string, mode: string) {
+  async selectSeasonTable(type: string, mode: string) {
     return await this.users
       .createQueryBuilder('u')
       .select('u.id', 'userID')
@@ -202,7 +202,7 @@ export class CrewService {
       .getRawMany();
   }
 
-  async findMemberSeasonRecords(id: string) {
+  async selectMemberSeasonRecords(id: string) {
     return await this.userRecords
       .createQueryBuilder('ur')
       .select('ur.matchType', 'matchType')
@@ -258,7 +258,7 @@ export class CrewService {
       });
   }
 
-  async findMemberFriends(id: string) {
+  async selectMemberFriends(id: string) {
     return await this.userFriends
       .createQueryBuilder('uf')
       .select('uf.friendID', 'friendID')

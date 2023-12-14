@@ -9,13 +9,13 @@ export class CrewController {
   @Get('/main')
   async selectMain() {
     const [brawlersTL, brawlersPL] =
-      await this.crewService.findBrawlerSummary();
+      await this.crewService.selectBrawlerSummary();
     const rotation = await this.crewService.getDailyRotation();
 
     return {
-      members: await this.crewService.findMembersSummary(),
-      battles: await this.crewService.findBattlesSummary(),
-      season: await this.crewService.findSeasonSummary(),
+      members: await this.crewService.selectMembersSummary(),
+      battles: await this.crewService.selectBattlesSummary(),
+      season: await this.crewService.selectSeasonSummary(),
       events: rotation,
       brawlersTL: brawlersTL,
       brawlersPL: brawlersPL,
@@ -24,7 +24,7 @@ export class CrewController {
 
   @Get('/members')
   async selectMembersTable() {
-    return await this.crewService.findMemberTable();
+    return await this.crewService.selectMemberTable();
   }
 
   @Get('/brawlers')
@@ -45,7 +45,7 @@ export class CrewController {
     return {
       rotationTL: await rotationTL,
       rotationPL: await rotationPL,
-      members: await this.crewService.findBattlesTable(
+      members: await this.crewService.selectBattlesTable(
         date,
         nextDate,
         type,
@@ -65,15 +65,15 @@ export class CrewController {
     return {
       rotationTL: await rotationTL,
       rotationPL: await rotationPL,
-      members: await this.crewService.findSeasonTable(type, mode),
+      members: await this.crewService.selectSeasonTable(type, mode),
     };
   }
 
   @Get('/members/:id')
   async selectMember(@Param('id') id: string) {
     return {
-      friends: await this.crewService.findMemberFriends(id),
-      seasonRecords: await this.crewService.findMemberSeasonRecords(id),
+      friends: await this.crewService.selectMemberFriends(id),
+      seasonRecords: await this.crewService.selectMemberSeasonRecords(id),
     };
   }
 }
