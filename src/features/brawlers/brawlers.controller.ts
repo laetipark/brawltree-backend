@@ -24,13 +24,4 @@ export class BrawlersController {
       status: await this.brawlerService.getBrawlerStatus(id),
     };
   }
-
-  @Get('/:id/summary')
-  @HttpCode(200)
-  async selectBrawler(@Param('id') id: string) {
-    return {
-      brawler: await this.brawlerService.getBrawler(id),
-      status: await this.brawlerService.getBrawlerStatus(id),
-    };
-  }
 }
