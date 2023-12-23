@@ -40,18 +40,16 @@ export class UsersController {
       id,
     );
 
-    if (!user) {
-      if (!insert && !update) {
-        throw new NotFoundException(
-          `${FailureResponseEnum.USER_NOT_FOUND}: ${id}`,
-        );
-      }
-    } else {
-      return {
-        user: await this.usersService.selectUser(id),
-        profile: await this.userProfileService.selectUserProfile(id),
-      };
+    if (!user && !insert && !update) {
+      throw new NotFoundException(
+        `${FailureResponseEnum.USER_NOT_FOUND}: ${id}`,
+      );
     }
+
+    return {
+      user: await this.usersService.selectUser(id),
+      profile: await this.userProfileService.selectUserProfile(id),
+    };
   }
 
   /** 사용자 소유 브롤러 정보 조회
