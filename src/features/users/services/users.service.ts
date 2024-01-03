@@ -76,8 +76,9 @@ export class UsersService {
       if (
         isResponse.insert ||
         (user &&
-          new Date(new Date(user.updatedAt).getTime() + 2 * 60 * 1000) <
-            new Date())
+          (new Date(new Date(user.updatedAt).getTime() + 2 * 60 * 1000) <
+            new Date() ||
+            new Date(user.lastBattledOn).getTime() < 1001))
       ) {
         const res = await firstValueFrom(
           this.httpService.patch(`brawlian/${id}`),

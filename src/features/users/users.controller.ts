@@ -52,10 +52,20 @@ export class UsersController {
     };
   }
 
-  /** 사용자 소유 브롤러 정보 조회
+  /** 사용자 소유 브롤러 한 종 정보 조회
+   * @param id 사용자 ID
+   * @param brawlerID */
+  @Get('/:id/brawler/:brawler')
+  async selectUserBrawler(
+    @Param('id') id: string,
+    @Param('brawler') brawlerID: string,
+  ) {
+    // return await this.userBrawlersService.selectUserBrawler(id, brawlerID);
+  }
+
+  /** 사용자 소유 모든 브롤러 정보 조회
    * @param id 사용자 ID */
   @Get('/:id/brawlers')
-  @HttpCode(200)
   async selectUserBrawlers(@Param('id') id: string) {
     const { brawlers, brawlerItems, brawlerGraphs } =
       await this.userBrawlersService.selectUserBrawlers(id);

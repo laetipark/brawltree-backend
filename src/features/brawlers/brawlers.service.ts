@@ -77,4 +77,35 @@ export class BrawlersService {
       .addOrderBy('victoryRate', 'DESC')
       .getRawMany();
   }
+
+  /** 랜덤 브롤러 반환
+   * @param rarity 브롤러 희귀도
+   * @param role 브롤러 역할
+   * @param gender 브롤러 성별
+   */
+  async getRandomBrawler(
+    rarity: string,
+    role: string,
+    gender: string,
+  ): Promise<Brawlers> {
+    return await this.brawlers
+      .createQueryBuilder('b')
+      .select('b.id', 'id')
+      .addSelect('b.name', 'name')
+      .addSelect('b.rarity', 'rarity')
+      .addSelect('b.role', 'role')
+      .addSelect('b.gender', 'gender')
+      .addSelect('b.icon', 'icon')
+      .where('b.rarity LIKE :rarity', {
+        rarity: rarity || '%%',
+      })
+      .andWhere('b.role LIKE :role', {
+        role: role || '%%',
+      })
+      .andWhere('b.gender LIKE :gender', {
+        gender: gender || '%%',
+      })
+      .orderBy('RAND()')
+      .getRawOne();
+  }
 }

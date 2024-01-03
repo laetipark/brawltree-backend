@@ -1,13 +1,13 @@
-import { Controller, Get, HttpCode, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 
 import { BrawlersService } from './brawlers.service';
+import { Brawlers } from './entities/brawlers.entity';
 
 @Controller('brawler')
 export class BrawlersController {
   constructor(private readonly brawlerService: BrawlersService) {}
 
   @Get('/')
-  @HttpCode(200)
   async selectBrawlers() {
     return {
       brawlers: await this.brawlerService.getBrawlers(),
@@ -16,8 +16,16 @@ export class BrawlersController {
     };
   }
 
+  @Get('/random')
+  async selectRandomBrawler(
+    @Query('rarity') rarity: string,
+    @Query('role') role: string,
+    @Query('gender') gender: string,
+  ): Promise<Brawlers> {
+    return await this.brawlerService.getRandomBrawler(rarity, role, gender);
+  }
+
   @Get('/:id/summary')
-  @HttpCode(200)
   async selectBrawlerSummary(@Param('id') id: string) {
     return {
       brawler: await this.brawlerService.getBrawler(id),
