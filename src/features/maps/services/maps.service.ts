@@ -22,14 +22,14 @@ export class MapsService {
    * @param id 맵 ID */
   async selectMap(id: string): Promise<SelectMapDto> {
     return await this.maps
-      .createQueryBuilder('m')
-      .select('m.id', 'mapID')
-      .addSelect('m.name', 'mapName')
-      .addSelect('m.mode', 'mode')
-      .addSelect('mr.isTrophyLeague', 'isTrophyLeague')
-      .addSelect('mr.isPowerLeague', 'isPowerLeague')
-      .leftJoin('m.mapRotation', 'mr')
-      .where('m.id = :id', {
+      .createQueryBuilder('map')
+      .select('map.id', 'mapID')
+      .addSelect('map.name', 'mapName')
+      .addSelect('map.mode', 'mode')
+      .addSelect('mRotation.isTrophyLeague', 'isTrophyLeague')
+      .addSelect('mRotation.isPowerLeague', 'isPowerLeague')
+      .leftJoin('map.mapRotation', 'mRotation')
+      .where('map.id = :id', {
         id: id,
       })
       .getRawOne();
@@ -47,30 +47,30 @@ export class MapsService {
     const matchGrade = this.battleService.setMatchGrade(type, grade);
 
     return await this.battleStats
-      .createQueryBuilder('bs')
-      .select('bs.mapID', 'mapID')
-      .addSelect('bs.brawlerID', 'brawlerID')
+      .createQueryBuilder('battleStats')
+      .select('battleStats.mapID', 'mapID')
+      .addSelect('battleStats.brawlerID', 'brawlerID')
       .addSelect(
-        'ROUND(SUM(bs.matchCount) * 100 / SUM(SUM(bs.matchCount)) OVER(), 2)',
+        'ROUND(SUM(battleStats.matchCount) * 100 / SUM(SUM(battleStats.matchCount)) OVER(), 2)',
         'pickRate',
       )
       .addSelect(
-        'ROUND(SUM(bs.victoriesCount) * 100 / (SUM(bs.victoriesCount) + SUM(bs.defeatsCount)), 2)',
+        'ROUND(SUM(battleStats.victoriesCount) * 100 / (SUM(battleStats.victoriesCount) + SUM(battleStats.defeatsCount)), 2)',
         'victoryRate',
       )
-      .addSelect('b.name', 'brawlerName')
-      .leftJoin('bs.brawler', 'b')
-      .where('bs.mapID = :id', {
+      .addSelect('brawler.name', 'brawlerName')
+      .leftJoin('battleStats.brawler', 'b')
+      .where('battleStats.mapID = :id', {
         id: id,
       })
-      .andWhere('bs.matchType = :type', {
+      .andWhere('battleStats.matchType = :type', {
         type: type,
       })
-      .andWhere('bs.matchGrade IN (:grade)', {
+      .andWhere('battleStats.matchGrade IN (:grade)', {
         grade: matchGrade,
       })
-      .groupBy('bs.brawlerID')
-      .addGroupBy('b.name')
+      .groupBy('battleStats.brawlerID')
+      .addGroupBy('brawler.name')
       .orderBy('pickRate', 'DESC')
       .addOrderBy('victoryRate', 'DESC')
       .getRawMany();

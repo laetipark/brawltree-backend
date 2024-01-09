@@ -4,6 +4,7 @@ import {
   HttpCode,
   NotFoundException,
   Param,
+  ParseIntPipe,
   Query,
 } from '@nestjs/common';
 import { UsersService } from './services/users.service';
@@ -80,13 +81,15 @@ export class UsersController {
   /** 사용자 전투 정보 조회
    * @param id 사용자 ID
    * @param type 전투 타입
-   * @param mode 전투 모드 */
+   * @param mode 전투 모드
+   * @param stack  */
   @Get('/:id/battles')
   @HttpCode(200)
   async selectUserBattles(
     @Param('id') id: string,
     @Query('type') type: string,
     @Query('mode') mode: string,
+    @Query('stack', ParseIntPipe) stack: number,
   ) {
     const { season, rotationTL, rotationPL } =
       await this.userBattlesService.getSeasonAndGameMode();
@@ -98,6 +101,7 @@ export class UsersController {
         type,
         mode,
         season,
+        stack || 1,
       );
 
     return {

@@ -18,11 +18,11 @@ export class EventsService {
   /** 트로피 리그 모드 반환 */
   async selectModeTL() {
     const rotation = await this.mapRotation
-      .createQueryBuilder('mr')
-      .select('m.mode', 'mode')
-      .innerJoin('mr.map', 'm')
-      .where('mr.isTrophyLeague = TRUE')
-      .groupBy('m.mode')
+      .createQueryBuilder('mRotation')
+      .select('map.mode', 'mode')
+      .innerJoin('mRotation.map', 'map')
+      .where('mRotation.isTrophyLeague = TRUE')
+      .groupBy('map.mode')
       .getRawMany();
 
     const modeList = rotation.map((map) => map.mode);
@@ -36,11 +36,11 @@ export class EventsService {
   /** 파워 리그 모드 반환 */
   async selectModePL() {
     const rotation = await this.mapRotation
-      .createQueryBuilder('mr')
-      .select('m.mode', 'mode')
-      .innerJoin('mr.map', 'm')
-      .where('mr.isPowerLeague = TRUE')
-      .groupBy('m.mode')
+      .createQueryBuilder('mRotation')
+      .select('map.mode', 'mode')
+      .innerJoin('mRotation.map', 'map')
+      .where('mRotation.isPowerLeague = TRUE')
+      .groupBy('map.mode')
       .getRawMany();
 
     const modeList = rotation.map((map) => map.mode);
@@ -54,16 +54,16 @@ export class EventsService {
   /** 금일 트로피 리그 맵 목록 반환 */
   async selectRotationTLDaily(): Promise<Events[]> {
     return await this.mapRotation
-      .createQueryBuilder('mr')
+      .createQueryBuilder('mRotation')
       .select('e.id', 'id')
       .addSelect('e.startTime', 'startTime')
       .addSelect('e.endTime', 'endTime')
       .addSelect('e.mapID', 'mapID')
       .addSelect('e.modifiers', 'modifiers')
-      .addSelect('m.name', 'mapName')
-      .addSelect('m.mode', 'mode')
-      .innerJoin('mr.map', 'm')
-      .innerJoin('mr.events', 'e')
+      .addSelect('map.name', 'mapName')
+      .addSelect('map.mode', 'mode')
+      .innerJoin('mRotation.map', 'map')
+      .innerJoin('mRotation.events', 'e')
       .where((qb) => {
         const subQuery = qb
           .subQuery()
@@ -74,8 +74,8 @@ export class EventsService {
           .getQuery();
         return '(e.id, e.startTime) IN ' + subQuery;
       })
-      .andWhere('mr.isTrophyLeague = TRUE')
-      .andWhere('e.endTime >= :time', {
+      .andWhere('mRotation.isTrophyLeague = TRUE')
+      .andWhere('e.startTime <= :time AND e.endTime >= :time', {
         time: new Date(),
       })
       .orderBy('e.id', 'ASC')
@@ -86,16 +86,16 @@ export class EventsService {
   /** 익일 트로피 리그 맵 목록 반환 */
   async findRotationTLNext(): Promise<Events[]> {
     return await this.mapRotation
-      .createQueryBuilder('mr')
+      .createQueryBuilder('mRotation')
       .select('e.id', 'id')
       .addSelect('e.startTime', 'startTime')
-      .addSelect('e.endDate', 'endDate')
+      .addSelect('e.endTime', 'endTime')
       .addSelect('e.mapID', 'mapID')
       .addSelect('e.modifiers', 'modifiers')
-      .addSelect('m.mode', 'mode')
-      .addSelect('m.name', 'mapName')
-      .innerJoin('mr.map', 'm')
-      .innerJoin('mr.events', 'e')
+      .addSelect('map.mode', 'mode')
+      .addSelect('map.name', 'mapName')
+      .innerJoin('mRotation.map', 'map')
+      .innerJoin('mRotation.events', 'e')
       .where((qb) => {
         const subQuery = qb
           .subQuery()
@@ -106,7 +106,10 @@ export class EventsService {
           .getQuery();
         return '(e.id, e.startTime) IN ' + subQuery;
       })
-      .andWhere('mr.isTrophyLeague = TRUE')
+      .andWhere('mRotation.isTrophyLeague = TRUE')
+      .orWhere('e.startTime > :time', {
+        time: new Date(),
+      })
       .orderBy('e.id', 'ASC')
       .addOrderBy('e.startTime', 'DESC')
       .getRawMany();
@@ -115,13 +118,13 @@ export class EventsService {
   /** 파워 리그 맵 목록 반환 */
   async findRotationPL(): Promise<Maps[]> {
     return await this.mapRotation
-      .createQueryBuilder('mr')
-      .select('m.id', 'mapID')
-      .addSelect('m.mode', 'mode')
-      .addSelect('m.name', 'mapName')
-      .innerJoin('mr.map', 'm')
-      .where('mr.isPowerLeague = TRUE')
-      .orderBy('m.mode', 'ASC')
+      .createQueryBuilder('mRotation')
+      .select('map.id', 'mapID')
+      .addSelect('map.mode', 'mode')
+      .addSelect('map.name', 'mapName')
+      .innerJoin('mRotation.map', 'map')
+      .where('mRotation.isPowerLeague = TRUE')
+      .orderBy('map.mode', 'ASC')
       .getRawMany();
   }
 }

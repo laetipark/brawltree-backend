@@ -22,87 +22,87 @@ export class UserBrawlersService {
   async selectUserBrawlers(id: string) {
     const season = await this.seasonsService.getRecentSeason();
     const brawlers = await this.brawlers
-      .createQueryBuilder('b')
-      .select('b.id', 'brawlerID')
-      .addSelect('b.name', 'name')
-      .addSelect('b.rarity', 'rarity')
-      .addSelect('ub.userID', 'userID')
-      .addSelect('ub.brawlerPower', 'brawlerPower')
-      .addSelect('ub.beginTrophies', 'beginTrophies')
-      .addSelect('ub.currentTrophies', 'currentTrophies')
-      .addSelect('ub.highestTrophies', 'highestTrophies')
-      .addSelect('ub.brawlerRank', 'brawlerRank')
+      .createQueryBuilder('brawler')
+      .select('brawler.id', 'brawlerID')
+      .addSelect('brawler.name', 'name')
+      .addSelect('brawler.rarity', 'rarity')
+      .addSelect('uBrawler.userID', 'userID')
+      .addSelect('uBrawler.brawlerPower', 'brawlerPower')
+      .addSelect('uBrawler.beginTrophies', 'beginTrophies')
+      .addSelect('uBrawler.currentTrophies', 'currentTrophies')
+      .addSelect('uBrawler.highestTrophies', 'highestTrophies')
+      .addSelect('uBrawler.brawlerRank', 'brawlerRank')
       .addSelect(
         'ROUND(IFNULL(' +
-          'SUM(CASE WHEN ubb.matchType = 0 ' +
-          'THEN ubb.matchCount ELSE 0 END) * 100 / ' +
-          'SUM(SUM(CASE WHEN ubb.matchType = 0 ' +
-          'THEN ubb.matchCount ELSE 0 END)) OVER(), 0), 2)',
+          'SUM(CASE WHEN uBrawlerBattle.matchType = 0 ' +
+          'THEN uBrawlerBattle.matchCount ELSE 0 END) * 100 / ' +
+          'SUM(SUM(CASE WHEN uBrawlerBattle.matchType = 0 ' +
+          'THEN uBrawlerBattle.matchCount ELSE 0 END)) OVER(), 0), 2)',
         'trophyLeaguePickRate',
       )
       .addSelect(
         'ROUND(IFNULL(' +
-          'SUM(CASE WHEN ubb.matchType = 0 ' +
-          'THEN ubb.victoriesCount ELSE 0 END) * 100 / ' +
-          'SUM(CASE WHEN ubb.matchType = 0 ' +
-          'THEN ubb.victoriesCount + ubb.defeatsCount ELSE 0 END), 0), 2)',
+          'SUM(CASE WHEN uBrawlerBattle.matchType = 0 ' +
+          'THEN uBrawlerBattle.victoriesCount ELSE 0 END) * 100 / ' +
+          'SUM(CASE WHEN uBrawlerBattle.matchType = 0 ' +
+          'THEN uBrawlerBattle.victoriesCount + uBrawlerBattle.defeatsCount ELSE 0 END), 0), 2)',
         'trophyLeagueVictoryRate',
       )
       .addSelect(
         'ROUND(IFNULL(' +
-          'SUM(CASE WHEN ubb.matchType IN (2, 3) ' +
-          'THEN ubb.matchCount ELSE 0 END) * 100 / ' +
-          'SUM(SUM(CASE WHEN ubb.matchType IN (2, 3) ' +
-          'THEN ubb.matchCount ELSE 0 END)) OVER(), 0), 2)',
+          'SUM(CASE WHEN uBrawlerBattle.matchType IN (2, 3) ' +
+          'THEN uBrawlerBattle.matchCount ELSE 0 END) * 100 / ' +
+          'SUM(SUM(CASE WHEN uBrawlerBattle.matchType IN (2, 3) ' +
+          'THEN uBrawlerBattle.matchCount ELSE 0 END)) OVER(), 0), 2)',
         'powerLeaguePickRate',
       )
       .addSelect(
         'ROUND(IFNULL(' +
-          'SUM(CASE WHEN ubb.matchType IN (2, 3) ' +
-          'THEN ubb.victoriesCount ELSE 0 END) * 100 / ' +
-          'SUM(CASE WHEN ubb.matchType IN (2, 3) ' +
-          'THEN ubb.victoriesCount + ubb.defeatsCount ELSE 0 END), 0), 2)',
+          'SUM(CASE WHEN uBrawlerBattle.matchType IN (2, 3) ' +
+          'THEN uBrawlerBattle.victoriesCount ELSE 0 END) * 100 / ' +
+          'SUM(CASE WHEN uBrawlerBattle.matchType IN (2, 3) ' +
+          'THEN uBrawlerBattle.victoriesCount + uBrawlerBattle.defeatsCount ELSE 0 END), 0), 2)',
         'powerLeagueVictoryRate',
       )
-      .innerJoin('b.userBrawlers', 'ub')
-      .leftJoin('b.userBrawlerBattles', 'ubb')
-      .where('ub.userID = :id', {
+      .innerJoin('brawler.userBrawlers', 'uBrawler')
+      .leftJoin('brawler.userBrawlerBattles', 'ubb')
+      .where('uBrawler.userID = :id', {
         id: `#${id}`,
       })
-      .groupBy('b.id')
-      .addGroupBy('b.name')
-      .orderBy('ub.currentTrophies', 'DESC')
+      .groupBy('brawler.id')
+      .addGroupBy('brawler.name')
+      .orderBy('uBrawler.currentTrophies', 'DESC')
       .getRawMany();
 
     const items = await this.userBrawlerItems
-      .createQueryBuilder('ubi')
-      .select('ubi.userID', 'userID')
-      .addSelect('ubi.brawlerID', 'brawlerID')
-      .addSelect('ubi.itemID', 'itemID')
-      .addSelect('bi.kind', 'itemKind')
-      .addSelect('bi.name', 'itemName')
-      .innerJoin('ubi.brawlerItem', 'bi')
-      .where('ubi.userID = :id', {
+      .createQueryBuilder('uBrawlerItem')
+      .select('uBrawlerItem.userID', 'userID')
+      .addSelect('uBrawlerItem.brawlerID', 'brawlerID')
+      .addSelect('uBrawlerItem.itemID', 'itemID')
+      .addSelect('bItem.kind', 'itemKind')
+      .addSelect('bItem.name', 'itemName')
+      .innerJoin('uBrawlerItem.brawlerItem', 'bi')
+      .where('uBrawlerItem.userID = :id', {
         id: `#${id}`,
       })
       .getRawMany();
 
     const graph = await this.userBattles
-      .createQueryBuilder('ub')
-      .select('DISTINCT(ub.brawlerID)', 'brawlerID')
-      .addSelect('DATE_FORMAT(ub.battleTime, "%m-%d")', 'x')
+      .createQueryBuilder('uBrawler')
+      .select('DISTINCT(uBrawler.brawlerID)', 'brawlerID')
+      .addSelect('DATE_FORMAT(uBrawler.battleTime, "%m-%d")', 'x')
       .addSelect(
-        'SUM(ub.trophyChange) OVER(PARTITION BY ub.brawlerID ORDER BY DATE(ub.battleTime))',
+        'SUM(uBrawler.trophyChange) OVER(PARTITION BY uBrawler.brawlerID ORDER BY DATE(uBrawler.battleTime))',
         'y',
       )
-      .where('ub.userID = :id AND ub.playerID = :id', {
+      .where('uBrawler.userID = :id AND uBrawler.playerID = :id', {
         id: `#${id}`,
       })
-      .andWhere('ub.battleTime BETWEEN :begin AND :end', {
+      .andWhere('uBrawler.battleTime BETWEEN :begin AND :end', {
         begin: season.beginDate,
         end: season.endDate,
       })
-      .andWhere('ub.matchType = 0')
+      .andWhere('uBrawler.matchType = 0')
       .getRawMany()
       .then((result) => {
         const graphJSON = result.map((item) => {

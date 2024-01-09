@@ -10,6 +10,9 @@ import { BattleStats } from '~/brawlers/entities/battle-stats.entity';
 import { Maps } from '~/maps/entities/maps.entity';
 import { Users } from '~/users/entities/users.entity';
 import { UserBattles } from '~/users/entities/user-battles.entity';
+import { SelectUserRecordDto } from '~/crew/dto/select-user-record.dto';
+import { plainToInstance } from 'class-transformer';
+import { SelectUserFriendDto } from '~/crew/dto/select-user-friend.dto';
 
 @Injectable()
 export class CrewService {
@@ -31,11 +34,11 @@ export class CrewService {
 
   async selectMembersSummary() {
     return await this.users
-      .createQueryBuilder('u')
-      .select('COUNT(up.userID)', 'MEMBER_CNT')
-      .addSelect('SUM(up.currentTrophies)', 'currentTrophies_TOT')
-      .innerJoin('u.userProfile', 'up')
-      .where('u.crew IN ("Blossom", "Team")')
+      .createQueryBuilder('user')
+      .select('COUNT(uProfile.userID)', 'MEMBER_CNT')
+      .addSelect('SUM(uProfile.currentTrophies)', 'currentTrophies_TOT')
+      .innerJoin('user.userProfile', 'uProfile')
+      .where('user.crew IN ("Blossom", "Team")')
       .getRawOne();
   }
 
@@ -54,20 +57,20 @@ export class CrewService {
     return await this.userBattles
       .createQueryBuilder('ub')
       .select('COUNT(DISTINCT ub.battleTime)', 'matchCount')
-      .innerJoin('ub.user', 'u')
+      .innerJoin('ub.user', 'user')
       .where('ub.battleTime BETWEEN :begin AND :end', {
         begin: beginDate,
         end: endDate,
       })
       .andWhere('ub.userID = ub.playerID')
-      .andWhere('u.crew IN ("Blossom", "Team")')
+      .andWhere('user.crew IN ("Blossom", "Team")')
       .getRawOne();
   }
 
   async selectSeasonSummary() {
     return await this.userRecords
-      .createQueryBuilder('ur')
-      .select('SUM(ur.matchCount)', 'matchCount')
+      .createQueryBuilder('uRecord')
+      .select('SUM(uRecord.matchCount)', 'matchCount')
       .getRawOne();
   }
 
@@ -112,32 +115,32 @@ export class CrewService {
 
   async selectMemberTable() {
     return await this.users
-      .createQueryBuilder('u')
-      .select('u.id', 'userID')
-      .addSelect('u.crewName', 'name')
-      .addSelect('up.profileIcon', 'profile')
-      .addSelect('up.currentTrophies', 'currentTrophies')
-      .addSelect('up.currentTrophies', 'currentTrophies')
-      .addSelect('up.currentSoloPL', 'currentSoloPL')
-      .addSelect('up.currentTeamPL', 'currentTeamPL')
-      .innerJoin('u.userProfile', 'up')
-      .where('u.crew IN ("Blossom", "Team")')
-      .orderBy('up.currentTrophies', 'DESC')
+      .createQueryBuilder('user')
+      .select('user.id', 'userID')
+      .addSelect('user.crewName', 'name')
+      .addSelect('uProfile.profileIcon', 'profile')
+      .addSelect('uProfile.currentTrophies', 'currentTrophies')
+      .addSelect('uProfile.currentTrophies', 'currentTrophies')
+      .addSelect('uProfile.currentSoloPL', 'currentSoloPL')
+      .addSelect('uProfile.currentTeamPL', 'currentTeamPL')
+      .innerJoin('user.userProfile', 'uProfile')
+      .where('user.crew IN ("Blossom", "Team")')
+      .orderBy('uProfile.currentTrophies', 'DESC')
       .getRawMany();
   }
 
   async findBrawlerTable(brawler: string) {
     return await this.users
-      .createQueryBuilder('u')
-      .select('u.id', 'userID')
-      .addSelect('u.crewName', 'name')
-      .addSelect('up.profileIcon', 'profile')
+      .createQueryBuilder('user')
+      .select('user.id', 'userID')
+      .addSelect('user.crewName', 'name')
+      .addSelect('uProfile.profileIcon', 'profile')
       .addSelect('ubr.brawlerID', 'brawlerID')
       .addSelect('ubr.currentTrophies', 'currentTrophies')
       .addSelect('ubr.highestTrophies', 'highestTrophies')
-      .innerJoin('u.userProfile', 'up')
-      .innerJoin('u.userBrawlers', 'ubr')
-      .where('u.crew IN ("Blossom", "Team")')
+      .innerJoin('user.userProfile', 'uProfile')
+      .innerJoin('user.userBrawlers', 'ubr')
+      .where('user.crew IN ("Blossom", "Team")')
       .andWhere('ubr.brawlerID = :brawler', {
         brawler: brawler,
       })
@@ -152,16 +155,16 @@ export class CrewService {
     mode: string,
   ) {
     return await this.users
-      .createQueryBuilder('u')
-      .select('u.id', 'userID')
-      .addSelect('u.crewName', 'name')
-      .addSelect('up.profileIcon', 'profile')
+      .createQueryBuilder('user')
+      .select('user.id', 'userID')
+      .addSelect('user.crewName', 'name')
+      .addSelect('uProfile.profileIcon', 'profile')
       .addSelect('COUNT(DISTINCT ub.battleTime)', 'matchCount')
       .addSelect('SUM(ub.trophyChange)', 'trophyChange')
-      .innerJoin('u.userProfile', 'up')
-      .innerJoin('u.userBattles', 'ub')
+      .innerJoin('user.userProfile', 'uProfile')
+      .innerJoin('user.userBattles', 'ub')
       .innerJoin(Maps, 'm', 'ub.mapID = m.id')
-      .where('u.crew IN ("Blossom", "Team")')
+      .where('user.crew IN ("Blossom", "Team")')
       .andWhere('m.mode IN (:modes)', {
         modes: mode !== 'all' ? mode : await this.configService.getModeList(),
       })
@@ -173,59 +176,65 @@ export class CrewService {
       .andWhere('ub.matchType IN (:types)', {
         types: type !== '7' ? type : await this.configService.getTypeList(),
       })
-      .groupBy('up.userID')
+      .groupBy('uProfile.userID')
       .orderBy('matchCount', 'DESC')
       .getRawMany();
   }
 
   async selectSeasonTable(type: string, mode: string) {
     return await this.users
-      .createQueryBuilder('u')
-      .select('u.id', 'userID')
-      .addSelect('u.crewName', 'name')
-      .addSelect('up.profileIcon', 'profile')
-      .addSelect('SUM(ur.matchCount)', 'matchCount')
-      .addSelect('SUM(ur.trophyChange)', 'trophyChange')
-      .addSelect('SUM(uf.friendPoints)', 'friendPoints')
-      .innerJoin('u.userProfile', 'up')
-      .leftJoin('u.userRecords', 'ur')
-      .leftJoin('u.userFriends', 'uf')
-      .where('u.crew IN ("Blossom", "Team")')
-      .where('ur.mode IN (:modes)', {
+      .createQueryBuilder('user')
+      .select('user.id', 'userID')
+      .addSelect('user.crewName', 'name')
+      .addSelect('uProfile.profileIcon', 'profile')
+      .addSelect('SUM(uRecord.matchCount)', 'matchCount')
+      .addSelect('SUM(uRecord.trophyChange)', 'trophyChange')
+      .addSelect('SUM(uFriend.friendPoints)', 'friendPoints')
+      .innerJoin('user.userProfile', 'uProfile')
+      .leftJoin('user.userRecords', 'uRecord')
+      .leftJoin('user.userFriends', 'uFriend')
+      .where('user.crew IN ("Blossom", "Team")')
+      .where('uRecord.mode IN (:modes)', {
         modes: mode !== 'all' ? [mode] : await this.configService.getModeList(),
       })
-      .andWhere('ur.matchType IN (:types)', {
+      .andWhere('uRecord.matchType IN (:types)', {
         types: type !== '7' ? [type] : await this.configService.getTypeList(),
       })
-      .groupBy('up.userID')
+      .groupBy('uProfile.userID')
       .orderBy('matchCount', 'DESC')
       .getRawMany();
   }
 
   async selectMemberSeasonRecords(id: string) {
     return await this.userRecords
-      .createQueryBuilder('ur')
-      .select('ur.matchType', 'matchType')
-      .addSelect('ur.matchGrade', 'matchGrade')
-      .addSelect('ur.mode', 'mode')
-      .addSelect('SUM(ur.matchCount)', 'matchCount')
-      .addSelect('SUM(ur.victoriesCount)', 'victoriesCount')
-      .addSelect('SUM(ur.defeatsCount)', 'defeatsCount')
+      .createQueryBuilder('uRecord')
+      .select('uRecord.matchType', 'matchType')
+      .addSelect('uRecord.matchGrade', 'matchGrade')
+      .addSelect('uRecord.mode', 'mode')
+      .addSelect('SUM(uRecord.matchCount)', 'matchCount')
+      .addSelect('SUM(uRecord.victoriesCount)', 'victoriesCount')
+      .addSelect('SUM(uRecord.defeatsCount)', 'defeatsCount')
       .addSelect(
-        'ROUND(ur.victoriesCount * 100 / SUM(ur.victoriesCount + ur.defeatsCount), 2)',
+        'ROUND(uRecord.victoriesCount * 100 / SUM(uRecord.victoriesCount + uRecord.defeatsCount), 2)',
         'victoryRate',
       )
-      .where('ur.userID = :id', {
+      .where('uRecord.userID = :id', {
         id: `#${id}`,
       })
-      .groupBy('ur.matchType')
-      .addGroupBy('ur.matchGrade')
-      .addGroupBy('ur.mode')
+      .groupBy('uRecord.matchType')
+      .addGroupBy('uRecord.matchGrade')
+      .addGroupBy('uRecord.mode')
       .getRawMany()
-      .then((data: any[]) => {
+      .then((result: SelectUserRecordDto[]) => {
+        const data = plainToInstance(SelectUserRecordDto, result);
         const totalData = [];
-        data.forEach((item) => {
-          const { matchType, matchCount, victoriesCount, defeatsCount } = item;
+        data.forEach((item: SelectUserRecordDto) => {
+          const {
+            matchType,
+            matchCount,
+            victoriesCount,
+            defeatsCount,
+          }: SelectUserRecordDto = item;
           if (!totalData[matchType]) {
             totalData[matchType] = {
               matchType,
@@ -234,12 +243,13 @@ export class CrewService {
               defeatsCount: 0,
             };
           }
+
           totalData[matchType].matchCount += matchCount;
           totalData[matchType].victoriesCount += victoriesCount;
           totalData[matchType].defeatsCount += defeatsCount;
         });
 
-        const keyData = data.reduce(function (result, current) {
+        const keyData = data.reduce((result, current) => {
           result[current.matchType] = result[current.matchType] || [];
           result[current.matchType].push(current);
           return result;
@@ -260,35 +270,37 @@ export class CrewService {
 
   async selectMemberFriends(id: string) {
     return await this.userFriends
-      .createQueryBuilder('uf')
-      .select('uf.friendID', 'friendID')
-      .addSelect('uf.matchType', 'matchType')
-      .addSelect('uf.matchGrade', 'matchGrade')
-      .addSelect('uf.mode', 'mode')
-      .addSelect('uf.friendName', 'friendName')
-      .addSelect('SUM(uf.matchCount)', 'matchCount')
-      .addSelect('SUM(uf.victoriesCount)', 'victoriesCount')
-      .addSelect('SUM(uf.defeatsCount)', 'defeatsCount')
+      .createQueryBuilder('uFriend')
+      .select('uFriend.friendID', 'friendID')
+      .addSelect('uFriend.matchType', 'matchType')
+      .addSelect('uFriend.matchGrade', 'matchGrade')
+      .addSelect('uFriend.mode', 'mode')
+      .addSelect('uFriend.friendName', 'friendName')
+      .addSelect('SUM(uFriend.matchCount)', 'matchCount')
+      .addSelect('SUM(uFriend.victoriesCount)', 'victoriesCount')
+      .addSelect('SUM(uFriend.defeatsCount)', 'defeatsCount')
       .addSelect(
-        'ROUND(uf.victoriesCount * 100 / SUM(uf.victoriesCount + uf.defeatsCount), 2)',
+        'ROUND(uFriend.victoriesCount * 100 / SUM(uFriend.victoriesCount + uFriend.defeatsCount), 2)',
         'victoryRate',
       )
-      .addSelect('ROUND(uf.friendPoints, 2)', 'friendPoints')
-      .where('uf.userID = :id', {
+      .addSelect('ROUND(uFriend.friendPoints, 2)', 'friendPoints')
+      .where('uFriend.userID = :id', {
         id: `#${id}`,
       })
-      .groupBy('uf.friendID')
-      .addGroupBy('uf.matchType')
-      .addGroupBy('uf.matchGrade')
-      .addGroupBy('uf.mode')
-      .addGroupBy('uf.name')
+      .groupBy('uFriend.friendID')
+      .addGroupBy('uFriend.matchType')
+      .addGroupBy('uFriend.matchGrade')
+      .addGroupBy('uFriend.mode')
+      .addGroupBy('uFriend.friendName')
       .getRawMany()
-      .then((data: any[]) => {
+      .then((result: SelectUserFriendDto[]) => {
+        console.log(result);
+        const data = plainToInstance(SelectUserFriendDto, result);
         const totalData = [];
         data.forEach((item) => {
           const {
             friendID,
-            name,
+            friendName,
             matchCount,
             victoriesCount,
             defeatsCount,
@@ -297,7 +309,7 @@ export class CrewService {
           if (!totalData[friendID]) {
             totalData[friendID] = {
               friendID,
-              name,
+              friendName,
               matchCount: 0,
               victoriesCount: 0,
               defeatsCount: 0,
@@ -310,7 +322,7 @@ export class CrewService {
           totalData[friendID].friendPoints += friendPoints;
         });
 
-        const keyData = data.reduce(function (result, current) {
+        const keyData = data.reduce((result, current) => {
           result[current.friendID] = result[current.friendID] || [];
           result[current.friendID].push(current);
           return result;

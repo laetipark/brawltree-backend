@@ -18,16 +18,16 @@ export class UsersService {
    * @param keyword 입력값 */
   async selectUsers(keyword: string): Promise<SelectUsersDto[]> {
     return await this.users
-      .createQueryBuilder('u')
-      .select('u.id', 'userID')
-      .addSelect('up.name', 'userName')
-      .addSelect('up.profileIcon', 'profileIcon')
-      .addSelect('up.clubName', 'clubName')
-      .addSelect('up.currentTrophies', 'currentTrophies')
-      .addSelect('up.currentSoloPL', 'currentSoloPL')
-      .addSelect('up.currentTeamPL', 'currentTeamPL')
-      .innerJoin('u.userProfile', 'up')
-      .where('up.name LIKE :keyword', {
+      .createQueryBuilder('user')
+      .select('user.id', 'userID')
+      .addSelect('uProfile.name', 'userName')
+      .addSelect('uProfile.profileIcon', 'profileIcon')
+      .addSelect('uProfile.clubName', 'clubName')
+      .addSelect('uProfile.currentTrophies', 'currentTrophies')
+      .addSelect('uProfile.currentSoloPL', 'currentSoloPL')
+      .addSelect('uProfile.currentTeamPL', 'currentTeamPL')
+      .innerJoin('user.userProfile', 'uProfile')
+      .where('uProfile.name LIKE :keyword', {
         keyword: `%${keyword}%`,
       })
       .getRawMany();
@@ -37,16 +37,16 @@ export class UsersService {
    * @param id 사용자 ID */
   async selectUser(id: string): Promise<SelectUserDto> {
     return await this.users
-      .createQueryBuilder('u')
-      .select('u.id', 'userID')
-      .addSelect('u.lastBattledOn', 'lastBattledOn')
-      .addSelect('u.crew', 'crew')
-      .addSelect('u.crewName', 'crewName')
-      .addSelect('u.updatedAt', 'updatedAt')
-      .addSelect('up.name', 'userName')
-      .addSelect('up.profileIcon', 'profileIcon')
-      .innerJoin('u.userProfile', 'up')
-      .where(`u.id = :id`, {
+      .createQueryBuilder('user')
+      .select('user.id', 'userID')
+      .addSelect('user.lastBattledOn', 'lastBattledOn')
+      .addSelect('user.crew', 'crew')
+      .addSelect('user.crewName', 'crewName')
+      .addSelect('user.updatedAt', 'updatedAt')
+      .addSelect('uProfile.name', 'userName')
+      .addSelect('uProfile.profileIcon', 'profileIcon')
+      .innerJoin('user.userProfile', 'uProfile')
+      .where(`user.id = :id`, {
         id: `#${id}`,
       })
       .getRawOne();

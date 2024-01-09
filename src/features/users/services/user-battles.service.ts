@@ -43,77 +43,77 @@ export class UserBattlesService {
     // 모드별 시즌 전투 요약 통계
     const battlesSummary = [
       await this.userBattles
-        .createQueryBuilder('ub')
-        .select('DATE_FORMAT(ub.battleTime, "%Y-%m-%d")', 'day')
-        .addSelect('COUNT(ub.battleTime)', 'value')
-        .innerJoin(Maps, 'm', 'ub.mapID = m.id')
-        .where('ub.userID = :id AND ub.playerID = :id', {
+        .createQueryBuilder('uBattle')
+        .select('DATE_FORMAT(uBattle.battleTime, "%Y-%m-%d")', 'day')
+        .addSelect('COUNT(uBattle.battleTime)', 'value')
+        .innerJoin(Maps, 'map', 'uBattle.mapID = map.id')
+        .where('uBattle.userID = :id AND uBattle.playerID = :id', {
           id: `#${id}`,
         })
-        .andWhere('ub.battleTime BETWEEN :begin AND :end', {
+        .andWhere('uBattle.battleTime BETWEEN :begin AND :end', {
           begin: season.beginDate,
           end: season.endDate,
         })
-        .andWhere('ub.matchType IN (:type)', {
+        .andWhere('uBattle.matchType IN (:type)', {
           type: query.matchType,
         })
-        .andWhere('m.mode IN (:mode)', {
+        .andWhere('map.mode IN (:mode)', {
           mode: query.matchMode,
         })
-        .groupBy('DATE_FORMAT(ub.battleTime, "%Y-%m-%d")')
+        .groupBy('DATE_FORMAT(uBattle.battleTime, "%Y-%m-%d")')
         .getRawMany(),
       await this.userBattles
-        .createQueryBuilder('ub')
-        .select('DATE_FORMAT(ub.battleTime, "%Y-%m-%d")', 'day')
+        .createQueryBuilder('uBattle')
+        .select('DATE_FORMAT(uBattle.battleTime, "%Y-%m-%d")', 'day')
         .addSelect(
-          'SUM(CASE WHEN ub.matchType NOT IN (4, 5) THEN ub.trophyChange ELSE 0 END)',
+          'SUM(CASE WHEN uBattle.matchType NOT IN (4, 5) THEN uBattle.trophyChange ELSE 0 END)',
           'value',
         )
-        .innerJoin(Maps, 'm', 'ub.mapID = m.id')
-        .where('ub.userID = :id AND ub.playerID = :id', {
+        .innerJoin(Maps, 'map', 'uBattle.mapID = map.id')
+        .where('uBattle.userID = :id AND uBattle.playerID = :id', {
           id: `#${id}`,
         })
-        .andWhere('ub.battleTime BETWEEN :begin AND :end', {
+        .andWhere('uBattle.battleTime BETWEEN :begin AND :end', {
           begin: season.beginDate,
           end: season.endDate,
         })
-        .andWhere('ub.matchType IN (:type)', {
+        .andWhere('uBattle.matchType IN (:type)', {
           type: query.matchType,
         })
-        .andWhere('m.mode IN (:mode)', {
+        .andWhere('map.mode IN (:mode)', {
           mode: query.matchMode,
         })
-        .groupBy('DATE_FORMAT(ub.battleTime, "%Y-%m-%d")')
+        .groupBy('DATE_FORMAT(uBattle.battleTime, "%Y-%m-%d")')
         .getRawMany(),
     ];
 
     // 모드별 최근 브롤러 전투 요약 통계
     const brawlersSummary = await this.userBrawlerBattles
-      .createQueryBuilder('ubb')
-      .select('ubb.brawlerID', 'brawlerID')
-      .addSelect('SUM(ubb.matchCount)', 'matchCount')
+      .createQueryBuilder('uBrawlerBattle')
+      .select('uBrawlerBattle.brawlerID', 'brawlerID')
+      .addSelect('SUM(uBrawlerBattle.matchCount)', 'matchCount')
       .addSelect(
-        'ROUND(SUM(ubb.matchCount) * 100 / SUM(SUM(ubb.matchCount)) OVER(), 2)',
+        'ROUND(SUM(uBrawlerBattle.matchCount) * 100 / SUM(SUM(uBrawlerBattle.matchCount)) OVER(), 2)',
         'pickRate',
       )
       .addSelect(
-        'ROUND(SUM(ubb.victoriesCount) * 100 / SUM(ubb.victoriesCount + ubb.defeatsCount), 2)',
+        'ROUND(SUM(uBrawlerBattle.victoriesCount) * 100 / SUM(uBrawlerBattle.victoriesCount + uBrawlerBattle.defeatsCount), 2)',
         'victoryRate',
       )
-      .addSelect('b.name', 'name')
-      .innerJoin('ubb.brawler', 'b')
-      .innerJoin('ubb.map', 'm')
-      .where('ubb.userID = :id', {
+      .addSelect('brawler.name', 'name')
+      .innerJoin('uBrawlerBattle.brawler', 'brawler')
+      .innerJoin('uBrawlerBattle.map', 'map')
+      .where('uBrawlerBattle.userID = :id', {
         id: `#${id}`,
       })
-      .andWhere('ubb.matchType IN (:type)', {
+      .andWhere('uBrawlerBattle.matchType IN (:type)', {
         type: query.matchType,
       })
-      .andWhere('m.mode IN (:mode)', {
+      .andWhere('map.mode IN (:mode)', {
         mode: query.matchMode,
       })
-      .groupBy('ubb.brawlerID')
-      .addGroupBy('b.name')
+      .groupBy('uBrawlerBattle.brawlerID')
+      .addGroupBy('brawler.name')
       .orderBy('matchCount', 'DESC')
       .limit(5)
       .getRawMany();
@@ -125,46 +125,49 @@ export class UserBattlesService {
    * @param id 사용자 ID
    * @param type 전투 타입
    * @param mode 전투 모드
-   * @param season 최근 시즌 정보 */
+   * @param season 최근 시즌 정보
+   * @param stack */
   async selectUserBattleLogs(
     id: string,
     type: string,
     mode: string,
     season: SeasonDto,
+    stack: number,
   ): Promise<SelectUserBattleLogsDto> {
     const query = await this.getQuery(type, mode);
+    const limit = 30 * stack;
 
     // 최근 전투 통계
     const recentUserBattles: SelectRecentUserBattlesDto[] =
       await this.userBattles
-        .createQueryBuilder('ub')
-        .select('ub.battleTime', 'battleTime')
-        .addSelect('ub.duration', 'duration')
-        .addSelect('ub.brawlerID', 'brawlerID')
-        .addSelect('ub.gameResult', 'gameResult')
-        .addSelect('ub.mapID', 'mapID')
-        .addSelect('ub.isStarPlayer', 'isStarPlayer')
-        .addSelect('m.mode', 'mode')
-        .addSelect('m.name', 'mapName')
-        .addSelect('b.name', 'brawlerName')
-        .addSelect('b.role', 'role')
-        .innerJoin('ub.brawler', 'b')
-        .innerJoin(Maps, 'm', 'ub.mapID = m.id')
-        .where('ub.userID = :id AND ub.playerID = :id', {
+        .createQueryBuilder('uBattle')
+        .select('uBattle.battleTime', 'battleTime')
+        .addSelect('uBattle.duration', 'duration')
+        .addSelect('uBattle.brawlerID', 'brawlerID')
+        .addSelect('uBattle.gameResult', 'gameResult')
+        .addSelect('uBattle.mapID', 'mapID')
+        .addSelect('uBattle.isStarPlayer', 'isStarPlayer')
+        .addSelect('map.mode', 'mode')
+        .addSelect('map.name', 'mapName')
+        .addSelect('brawler.name', 'brawlerName')
+        .addSelect('brawler.role', 'role')
+        .innerJoin('uBattle.brawler', 'brawler')
+        .innerJoin(Maps, 'map', 'uBattle.mapID = map.id')
+        .where('uBattle.userID = :id AND uBattle.playerID = :id', {
           id: `#${id}`,
         })
-        .andWhere('ub.battleTime BETWEEN :begin AND :end', {
+        .andWhere('uBattle.battleTime BETWEEN :begin AND :end', {
           begin: season.beginDate,
           end: season.endDate,
         })
-        .andWhere('ub.matchType IN (:type)', {
+        .andWhere('uBattle.matchType IN (:type)', {
           type: query.matchType,
         })
-        .andWhere('m.mode IN (:mode)', {
+        .andWhere('map.mode IN (:mode)', {
           mode: query.matchMode,
         })
-        .orderBy('ub.battleTime', 'DESC')
-        .limit(30)
+        .orderBy('uBattle.battleTime', 'DESC')
+        .limit(limit)
         .getRawMany();
 
     // 시즌 사용한 브롤러 통계
@@ -225,56 +228,56 @@ export class UserBattlesService {
 
     // 전투 기록 목록
     const userBattleLogs: SelectUserBattlesDto[] = await this.userBattles
-      .createQueryBuilder('ub')
-      .select('ub.userID', 'userID')
+      .createQueryBuilder('uBattle')
+      .select('uBattle.userID', 'userID')
       .addSelect(
         'JSON_OBJECT(' +
-          '"userID", ub.userID,' +
-          '"battleTime", ub.battleTime,' +
-          '"duration", ub.duration,' +
-          '"matchType", ub.matchType,' +
-          '"modeCode", ub.modeCode,' +
-          '"matchGrade", ub.matchGrade,' +
-          '"trophyChange", ub.trophyChange)',
+          '"userID", uBattle.userID,' +
+          '"battleTime", uBattle.battleTime,' +
+          '"duration", uBattle.duration,' +
+          '"matchType", uBattle.matchType,' +
+          '"modeCode", uBattle.modeCode,' +
+          '"matchGrade", uBattle.matchGrade,' +
+          '"trophyChange", uBattle.trophyChange)',
         'battleInfo',
       )
       .addSelect(
         'JSON_ARRAYAGG(' +
           'JSON_OBJECT(' +
-          '"playerID", ub.playerID,' +
-          '"playerName", ub.playerName,' +
-          '"teamNumber", ub.teamNumber,' +
-          '"brawlerID", ub.brawlerID,' +
-          '"brawlerPower", ub.brawlerPower,' +
-          '"brawlerTrophies", ub.brawlerTrophies,' +
-          '"gameRank", ub.gameRank,' +
-          '"gameResult", ub.gameResult,' +
-          '"isStarPlayer", ub.isStarPlayer))',
+          '"playerID", uBattle.playerID,' +
+          '"playerName", uBattle.playerName,' +
+          '"teamNumber", uBattle.teamNumber,' +
+          '"brawlerID", uBattle.brawlerID,' +
+          '"brawlerPower", uBattle.brawlerPower,' +
+          '"brawlerTrophies", uBattle.brawlerTrophies,' +
+          '"gameRank", uBattle.gameRank,' +
+          '"gameResult", uBattle.gameResult,' +
+          '"isStarPlayer", uBattle.isStarPlayer))',
         'battlePlayers',
       )
-      .innerJoin(Maps, 'm', 'ub.mapID = m.id')
-      .where('ub.userID = :id', {
+      .innerJoin(Maps, 'map', 'uBattle.mapID = map.id')
+      .where('uBattle.userID = :id', {
         id: `#${id}`,
       })
-      .andWhere('ub.battleTime BETWEEN :begin AND :end', {
+      .andWhere('uBattle.battleTime BETWEEN :begin AND :end', {
         begin: season.beginDate,
         end: season.endDate,
       })
-      .andWhere('ub.matchType IN (:type)', {
+      .andWhere('uBattle.matchType IN (:type)', {
         type: query.matchType,
       })
-      .andWhere('m.mode IN (:mode)', {
+      .andWhere('map.mode IN (:mode)', {
         mode: query.matchMode,
       })
-      .groupBy('ub.userID')
-      .addGroupBy('ub.battleTime')
-      .addGroupBy('ub.duration')
-      .addGroupBy('ub.matchType')
-      .addGroupBy('ub.modeCode')
-      .addGroupBy('ub.matchGrade')
-      .addGroupBy('ub.trophyChange')
-      .orderBy('ub.battleTime', 'DESC')
-      .limit(30)
+      .groupBy('uBattle.userID')
+      .addGroupBy('uBattle.battleTime')
+      .addGroupBy('uBattle.duration')
+      .addGroupBy('uBattle.matchType')
+      .addGroupBy('uBattle.modeCode')
+      .addGroupBy('uBattle.matchGrade')
+      .addGroupBy('uBattle.trophyChange')
+      .orderBy('uBattle.battleTime', 'DESC')
+      .limit(limit)
       .getRawMany()
       .then((result) => {
         return result.map((battle) => {

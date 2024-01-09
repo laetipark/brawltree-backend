@@ -21,12 +21,12 @@ export class UserProfileService {
   async selectUserProfile(id: string): Promise<SelectUserProfileDto> {
     const season = await this.seasonsService.getRecentSeason();
     const trophyChange = await this.userBattles
-      .createQueryBuilder('ub')
-      .select('SUM(ub.trophyChange)', 'trophyChange')
-      .where('ub.userID = :id AND ub.playerID = :id', {
+      .createQueryBuilder('uBattle')
+      .select('SUM(uBattle.trophyChange)', 'trophyChange')
+      .where('uBattle.userID = :id AND uBattle.playerID = :id', {
         id: `#${id}`,
       })
-      .andWhere('ub.battleTime >= :season', {
+      .andWhere('uBattle.battleTime >= :season', {
         season: season.beginDate,
       })
       .getRawOne();
