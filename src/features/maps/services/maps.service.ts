@@ -59,7 +59,7 @@ export class MapsService {
         'victoryRate',
       )
       .addSelect('brawler.name', 'brawlerName')
-      .leftJoin('battleStats.brawler', 'b')
+      .leftJoin('battleStats.brawler', 'brawler')
       .where('battleStats.mapID = :id', {
         id: id,
       })

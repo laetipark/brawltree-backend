@@ -13,8 +13,9 @@ import http from 'http';
         baseURL: configService.get<string>('axios.baseURL'),
         httpAgent: new http.Agent({
           keepAlive: true,
-          maxSockets: 1000,
-          timeout: 300000,
+        }),
+        httpsAgent: new http.Agent({
+          keepAlive: true,
         }),
       }),
       inject: [ConfigService],

@@ -23,7 +23,7 @@ const duoModes = ['duoShowdown'];
 
 export default () => ({
   axios: {
-    baseURL: process.env.NODE_ENV === 'development' ? `http://${process.env.CRAWLER_HOST}:${process.env.CRAWLER_PORT}` : process.env.CRAWLER_HOST,
+    baseURL: process.env.CRAWLER_HOST,
   },
   game: {
     modeClass: {

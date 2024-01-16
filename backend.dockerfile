@@ -1,5 +1,5 @@
 # 베이스가 될 이미지. 로컬에 받아놓은 이미지를 먼저 찾고 없으면 리모트서버에서 받아온다.
-FROM node:18.18.2
+FROM node:20.11.0
 
 # 정보 입력
 LABEL maintainer="creator98@naver.com"

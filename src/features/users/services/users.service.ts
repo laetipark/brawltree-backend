@@ -88,7 +88,7 @@ export class UsersService {
         }
       }
     } catch (error) {
-      Logger.error(error, 'selectUser');
+      Logger.error(error, 'SelectUser');
     }
 
     return isResponse;

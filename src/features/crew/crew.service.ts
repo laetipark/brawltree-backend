@@ -181,30 +181,6 @@ export class CrewService {
       .getRawMany();
   }
 
-  async selectSeasonTable(type: string, mode: string) {
-    return await this.users
-      .createQueryBuilder('user')
-      .select('user.id', 'userID')
-      .addSelect('user.crewName', 'name')
-      .addSelect('uProfile.profileIcon', 'profile')
-      .addSelect('SUM(uRecord.matchCount)', 'matchCount')
-      .addSelect('SUM(uRecord.trophyChange)', 'trophyChange')
-      .addSelect('SUM(uFriend.friendPoints)', 'friendPoints')
-      .innerJoin('user.userProfile', 'uProfile')
-      .leftJoin('user.userRecords', 'uRecord')
-      .leftJoin('user.userFriends', 'uFriend')
-      .where('user.crew IN ("Blossom", "Team")')
-      .where('uRecord.mode IN (:modes)', {
-        modes: mode !== 'all' ? [mode] : await this.configService.getModeList(),
-      })
-      .andWhere('uRecord.matchType IN (:types)', {
-        types: type !== '7' ? [type] : await this.configService.getTypeList(),
-      })
-      .groupBy('uProfile.userID')
-      .orderBy('matchCount', 'DESC')
-      .getRawMany();
-  }
-
   async selectMemberSeasonRecords(id: string) {
     return await this.userRecords
       .createQueryBuilder('uRecord')
@@ -294,7 +270,6 @@ export class CrewService {
       .addGroupBy('uFriend.friendName')
       .getRawMany()
       .then((result: SelectUserFriendDto[]) => {
-        console.log(result);
         const data = plainToInstance(SelectUserFriendDto, result);
         const totalData = [];
         data.forEach((item) => {

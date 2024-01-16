@@ -55,20 +55,6 @@ export class CrewController {
     };
   }
 
-  @Get('/season')
-  async selectSeasonTable(
-    @Query('type') type: string,
-    @Query('mode') mode: string,
-  ) {
-    const { rotationTL, rotationPL } = this.crewService.getModes();
-
-    return {
-      rotationTL: await rotationTL,
-      rotationPL: await rotationPL,
-      members: await this.crewService.selectSeasonTable(type, mode),
-    };
-  }
-
   @Get('/members/:id')
   async selectMember(@Param('id') id: string) {
     return {
