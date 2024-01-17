@@ -35,8 +35,8 @@ export class CrewService {
   async selectMembersSummary() {
     return await this.users
       .createQueryBuilder('user')
-      .select('COUNT(uProfile.userID)', 'MEMBER_CNT')
-      .addSelect('SUM(uProfile.currentTrophies)', 'currentTrophies_TOT')
+      .select('COUNT(uProfile.userID)', 'memberCount')
+      .addSelect('SUM(uProfile.currentTrophies)', 'currentTotalTrophies')
       .innerJoin('user.userProfile', 'uProfile')
       .where('user.crew IN ("Blossom", "Team")')
       .getRawOne();
