@@ -64,7 +64,9 @@ export class UserBrawlersService {
           'THEN uBrawlerBattle.victoriesCount + uBrawlerBattle.defeatsCount ELSE 0 END), 0), 2)',
         'powerLeagueVictoryRate',
       )
+      .addSelect('bSkills.values', 'values')
       .innerJoin('brawler.userBrawlers', 'uBrawler')
+      .leftJoin('brawler.brawlerSkills', 'bSkills')
       .leftJoin('brawler.userBrawlerBattles', 'uBrawlerBattle')
       .where('uBrawler.userID = :id', {
         id: `#${id}`,
@@ -81,6 +83,7 @@ export class UserBrawlersService {
       .addSelect('uBrawlerItem.itemID', 'itemID')
       .addSelect('bItem.kind', 'itemKind')
       .addSelect('bItem.name', 'itemName')
+      .addSelect('bItem.values', 'values')
       .innerJoin('uBrawlerItem.brawlerItem', 'bItem')
       .where('uBrawlerItem.userID = :id', {
         id: `#${id}`,
