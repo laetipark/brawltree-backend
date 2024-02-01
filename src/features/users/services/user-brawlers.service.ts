@@ -73,6 +73,7 @@ export class UserBrawlersService {
       })
       .groupBy('brawler.id')
       .addGroupBy('brawler.name')
+      .addGroupBy('uBrawler.userID')
       .orderBy('uBrawler.currentTrophies', 'DESC')
       .getRawMany();
 

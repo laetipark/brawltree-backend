@@ -58,7 +58,7 @@ export class UserBattles extends BaseEntity {
   matchGrade: number;
 
   @Column({
-    type: 'tinyint',
+    type: 'smallint',
     unsigned: true,
     nullable: true,
   })
