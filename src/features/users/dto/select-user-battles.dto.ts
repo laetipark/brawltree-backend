@@ -1,4 +1,14 @@
 import { IsBoolean, IsDateString, IsNumber, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class SelectUserBattlesSummaryDto {
+  @IsString()
+  day: string;
+
+  @IsNumber()
+  @Type(() => Number)
+  value: number;
+}
 
 export class SelectUserBattleLogsDto {
   recentUserBattles: SelectRecentUserBattlesDto[];

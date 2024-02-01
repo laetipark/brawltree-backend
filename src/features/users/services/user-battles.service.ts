@@ -11,9 +11,11 @@ import {
   SelectRecentUserBattlesDto,
   SelectUserBattleLogsDto,
   SelectUserBattlesDto,
+  SelectUserBattlesSummaryDto,
   SelectUserBrawlerBattlesDto,
 } from '~/users/dto/select-user-battles.dto';
 import { SeasonDto } from '~/seasons/dto/season.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class UserBattlesService {
@@ -41,7 +43,7 @@ export class UserBattlesService {
     const query = await this.getQuery(type, mode);
 
     // 모드별 시즌 전투 요약 통계
-    const battlesSummary = [
+    const battlesSummary = plainToInstance(SelectUserBattlesSummaryDto, [
       await this.userBattles
         .createQueryBuilder('uBattle')
         .select('DATE_FORMAT(uBattle.battleTime, "%Y-%m-%d")', 'day')
@@ -85,7 +87,8 @@ export class UserBattlesService {
         })
         .groupBy('DATE_FORMAT(uBattle.battleTime, "%Y-%m-%d")')
         .getRawMany(),
-    ];
+    ]);
+    console.log(battlesSummary);
 
     // 모드별 최근 브롤러 전투 요약 통계
     const brawlersSummary = await this.userBrawlerBattles
