@@ -14,10 +14,18 @@ const tripleModes = [
   'holdTheTrophy',
   'botDrop',
   'snowtelThieves',
+  'pumpkinPlunder',
 ];
 const soloModes = {
   battle: ['duel'],
-  survive: ['soloShowdown', 'takedown', 'loneStar', 'hunters'],
+  survive: [
+    'soloShowdown',
+    'takedown',
+    'holdTheTrophy',
+    'loneStar',
+    'hunters',
+    'trophyEscape',
+  ],
 };
 const duoModes = ['duoShowdown'];
 
