@@ -72,9 +72,9 @@ export class UsersController {
       await this.userBrawlersService.selectUserBrawlers(id);
 
     return {
-      brawlers: brawlers,
-      brawlerItems: brawlerItems,
-      brawlerGraphs: brawlerGraphs,
+      brawlers,
+      brawlerItems,
+      brawlerGraphs,
     };
   }
 

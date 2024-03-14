@@ -21,7 +21,7 @@ export class UserBrawlersService {
 
   async selectUserBrawlers(id: string) {
     const season = await this.seasonsService.getRecentSeason();
-    const brawlers = await this.brawlers
+    const brawlersSummary = await this.brawlers
       .createQueryBuilder('brawler')
       .select('brawler.id', 'brawlerID')
       .addSelect('brawler.name', 'name')
@@ -32,6 +32,21 @@ export class UserBrawlersService {
       .addSelect('uBrawler.currentTrophies', 'currentTrophies')
       .addSelect('uBrawler.highestTrophies', 'highestTrophies')
       .addSelect('uBrawler.brawlerRank', 'brawlerRank')
+      .addSelect('bSkills.values', 'values')
+      .innerJoin('brawler.userBrawlers', 'uBrawler')
+      .leftJoin('brawler.brawlerSkills', 'bSkills')
+      .where('uBrawler.userID = :id', {
+        id: `#${id}`,
+      })
+      .groupBy('brawler.id')
+      .addGroupBy('brawler.name')
+      .addGroupBy('uBrawler.userID')
+      .orderBy('uBrawler.currentTrophies', 'DESC')
+      .getRawMany();
+
+    const brawlerPickRates = await this.brawlers
+      .createQueryBuilder('brawler')
+      .select('brawler.id', 'brawlerID')
       .addSelect(
         'ROUND(IFNULL(' +
           'SUM(CASE WHEN uBrawlerBattle.matchType = 0 ' +
@@ -50,32 +65,40 @@ export class UserBrawlersService {
       )
       .addSelect(
         'ROUND(IFNULL(' +
-          'SUM(CASE WHEN uBrawlerBattle.matchType IN (2, 3) ' +
+          'SUM(CASE WHEN uBrawlerBattle.matchType = 2 ' +
           'THEN uBrawlerBattle.matchCount ELSE 0 END) * 100 / ' +
-          'SUM(SUM(CASE WHEN uBrawlerBattle.matchType IN (2, 3) ' +
+          'SUM(SUM(CASE WHEN uBrawlerBattle.matchType = 2 ' +
           'THEN uBrawlerBattle.matchCount ELSE 0 END)) OVER(), 0), 2)',
         'powerLeaguePickRate',
       )
       .addSelect(
         'ROUND(IFNULL(' +
-          'SUM(CASE WHEN uBrawlerBattle.matchType IN (2, 3) ' +
+          'SUM(CASE WHEN uBrawlerBattle.matchType = 2 ' +
           'THEN uBrawlerBattle.victoriesCount ELSE 0 END) * 100 / ' +
-          'SUM(CASE WHEN uBrawlerBattle.matchType IN (2, 3) ' +
+          'SUM(CASE WHEN uBrawlerBattle.matchType = 2 ' +
           'THEN uBrawlerBattle.victoriesCount + uBrawlerBattle.defeatsCount ELSE 0 END), 0), 2)',
         'powerLeagueVictoryRate',
       )
-      .addSelect('bSkills.values', 'values')
-      .innerJoin('brawler.userBrawlers', 'uBrawler')
-      .leftJoin('brawler.brawlerSkills', 'bSkills')
       .leftJoin('brawler.userBrawlerBattles', 'uBrawlerBattle')
-      .where('uBrawler.userID = :id', {
+      .where('uBrawlerBattle.userID = :id', {
         id: `#${id}`,
       })
       .groupBy('brawler.id')
-      .addGroupBy('brawler.name')
-      .addGroupBy('uBrawler.userID')
-      .orderBy('uBrawler.currentTrophies', 'DESC')
       .getRawMany();
+
+    const brawlers = brawlersSummary.map((b1) => {
+      const b2 = brawlerPickRates.find((b) => b.brawlerID === b1.brawlerID);
+      if (!b2) {
+        return {
+          ...b1,
+          trophyLeaguePickRate: '0.00',
+          trophyLeagueVictoryRate: '0.00',
+          powerLeaguePickRate: '0.00',
+          powerLeagueVictoryRate: '0.00',
+        };
+      }
+      return { ...b1, ...b2 };
+    });
 
     const items = await this.userBrawlerItems
       .createQueryBuilder('uBrawlerItem')
