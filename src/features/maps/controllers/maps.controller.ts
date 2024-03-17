@@ -5,6 +5,14 @@ import { MapsService } from '../services/maps.service';
 export class MapsController {
   constructor(private readonly mapsService: MapsService) {}
 
+  /** 로테이션 맵 목록 조회 */
+  @Get('/')
+  async selectMaps() {
+    return {
+      maps: await this.mapsService.selectMaps(),
+    };
+  }
+
   /** 맵 ID에 대한 상세 정보 및 전투 통계 조회
    * @param id 맵 ID
    * @param type 전투 타입
