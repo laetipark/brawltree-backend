@@ -15,8 +15,8 @@ export class UsersService {
   ) {}
 
   /** 이름에 입력값이 포함된 사용자 조회 결과 반환
-   * @param keyword 입력값 */
-  async selectUsers(keyword: string): Promise<SelectUsersDto[]> {
+   * @param keyword 닉네임 입력값 */
+  async selectUsersByNickname(keyword: string): Promise<SelectUsersDto[]> {
     return await this.users
       .createQueryBuilder('user')
       .select('user.id', 'userID')
@@ -29,6 +29,25 @@ export class UsersService {
       .innerJoin('user.userProfile', 'uProfile')
       .where('uProfile.name LIKE :keyword', {
         keyword: `%${keyword}%`,
+      })
+      .getRawMany();
+  }
+
+  /** 이름에 입력값이 포함된 사용자 조회 결과 반환
+   * @param userIDs 유저 아이디 */
+  async selectUsersByUserIDs(userIDs: string[]): Promise<SelectUsersDto[]> {
+    return await this.users
+      .createQueryBuilder('user')
+      .select('user.id', 'userID')
+      .addSelect('uProfile.name', 'userName')
+      .addSelect('uProfile.profileIcon', 'profileIcon')
+      .addSelect('uProfile.clubName', 'clubName')
+      .addSelect('uProfile.currentTrophies', 'currentTrophies')
+      .addSelect('uProfile.currentSoloPL', 'currentSoloPL')
+      .addSelect('uProfile.currentTeamPL', 'currentTeamPL')
+      .innerJoin('user.userProfile', 'uProfile')
+      .where('user.id IN (:ids)', {
+        ids: userIDs,
       })
       .getRawMany();
   }

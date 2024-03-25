@@ -1,6 +1,4 @@
-import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -10,20 +8,15 @@ import { Events } from '~/maps/entities/events.entity';
 import { BattleStats } from '~/brawlers/entities/battle-stats.entity';
 import { BattleService } from '~/utils/services/battle.service';
 import { SelectMapDto, SelectMapStatsDto } from '~/maps/dto/select-map.dto';
-import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class MapsService {
   constructor(
     @InjectRepository(BattleStats)
     private readonly battleStats: Repository<BattleStats>,
-    @InjectRepository(Events)
-    private readonly events: Repository<Events>,
     @InjectRepository(Maps)
     private readonly maps: Repository<Maps>,
     private readonly battleService: BattleService,
-    private readonly configService: ConfigService,
-    private readonly httpService: HttpService,
   ) {}
 
   /** 맵 ID에 대한 맵 정보 반환
@@ -100,18 +93,6 @@ export class MapsService {
   }
 
   async selectMaps() {
-    const events = (
-      await firstValueFrom(
-        this.httpService.get('/database/trophy_league.json', {
-          baseURL: this.configService.get<string>('axios.cdnURL'),
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }),
-      )
-    ).data.type;
-    console.log(events);
-
     const maps = await this.maps
       .createQueryBuilder('map')
       .select('map.id', 'mapID')
@@ -119,24 +100,21 @@ export class MapsService {
       .addSelect('map.mode', 'mode')
       .addSelect('events.id', 'eventID')
       .addSelect('events.startTime', 'startTime')
-      .innerJoin(Events, 'events', 'map.id = events.map_id')
-      .where('events.id IN (:ids)', {
-        ids: [
-          ...events.fixed01.ids,
-          ...events.fixed02.ids,
-          ...events.rotated.ids,
-        ],
-      })
+      .innerJoin('map.mapRotation', 'mapRotation')
+      .leftJoin(Events, 'events', 'events.mapID = map.id')
       .getRawMany();
 
     return maps.reduce((acc, map) => {
       const mode = map.mode;
-      const id = map.eventID;
 
-      if (!acc[`${mode}_${id}`]) {
-        acc[`${mode}_${id}`] = [];
+      if (!acc[mode]) {
+        acc[mode] = [];
       }
-      acc[`${mode}_${id}`].push(map);
+
+      if (!acc[mode].find((m) => m.mapID === map.mapID)) {
+        acc[mode].push(map);
+      }
+
       return acc;
     }, {});
   }

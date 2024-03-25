@@ -24,10 +24,18 @@ export class UsersController {
 
   /** 이름에 입력값이 포함된 사용자 조회
    * @param keyword 입력값 */
-  @Get('/')
+  @Get('/nickname')
   @HttpCode(200)
-  selectUsers(@Query('keyword') keyword: string) {
-    return this.usersService.selectUsers(keyword);
+  selectUsersByNickname(@Query('keyword') keyword: string) {
+    return this.usersService.selectUsersByNickname(keyword);
+  }
+
+  /** 이름에 입력값이 포함된 사용자 조회
+   * @param userIDs 유저 아이디 */
+  @Get('/ids')
+  @HttpCode(200)
+  selectUsersByUserIDs(@Query('userIDs') userIDs: string[]) {
+    return this.usersService.selectUsersByUserIDs(userIDs);
   }
 
   /** 사용자 ID에 대한 상세 조회
