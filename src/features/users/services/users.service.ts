@@ -16,7 +16,7 @@ export class UsersService {
 
   /** 이름에 입력값이 포함된 사용자 조회 결과 반환
    * @param keyword 닉네임 입력값 */
-  async selectUsersByNickname(keyword: string): Promise<SelectUsersDto[]> {
+  async selectUsersByKeyword(keyword: string): Promise<SelectUsersDto[]> {
     return await this.users
       .createQueryBuilder('user')
       .select('user.id', 'userID')
@@ -27,8 +27,11 @@ export class UsersService {
       .addSelect('uProfile.currentSoloPL', 'currentSoloPL')
       .addSelect('uProfile.currentTeamPL', 'currentTeamPL')
       .innerJoin('user.userProfile', 'uProfile')
-      .where('uProfile.name LIKE :keyword', {
-        keyword: `%${keyword}%`,
+      .where('uProfile.name LIKE :nickname', {
+        nickname: `%${keyword}%`,
+      })
+      .orWhere('user.id LIKE :id', {
+        id: `#${keyword}%`,
       })
       .getRawMany();
   }

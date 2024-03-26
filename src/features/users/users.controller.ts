@@ -22,15 +22,15 @@ export class UsersController {
     private readonly userBrawlersService: UserBrawlersService,
   ) {}
 
-  /** 이름에 입력값이 포함된 사용자 조회
+  /** 키워드(닉네임 또는 태그)에 입력값이 포함된 사용자 조회
    * @param keyword 입력값 */
-  @Get('/nickname')
+  @Get('/keyword')
   @HttpCode(200)
   selectUsersByNickname(@Query('keyword') keyword: string) {
-    return this.usersService.selectUsersByNickname(keyword);
+    return this.usersService.selectUsersByKeyword(keyword);
   }
 
-  /** 이름에 입력값이 포함된 사용자 조회
+  /** 태그에 포함된 사용자 조회
    * @param userIDs 유저 아이디 */
   @Get('/ids')
   @HttpCode(200)

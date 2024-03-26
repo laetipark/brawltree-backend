@@ -88,7 +88,6 @@ export class UserBattlesService {
         .groupBy('DATE_FORMAT(uBattle.battleTime, "%Y-%m-%d")')
         .getRawMany(),
     ]);
-    console.log(battlesSummary);
 
     // 모드별 최근 브롤러 전투 요약 통계
     const brawlersSummary = await this.userBrawlerBattles
