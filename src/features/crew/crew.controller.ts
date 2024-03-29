@@ -10,13 +10,11 @@ export class CrewController {
   async selectMain() {
     const [brawlersTL, brawlersPL] =
       await this.crewService.selectBrawlerSummary();
-    const rotation = await this.crewService.getDailyRotation();
 
     return {
       members: await this.crewService.selectMembersSummary(),
       battles: await this.crewService.selectBattlesSummary(),
       season: await this.crewService.selectSeasonSummary(),
-      events: rotation,
       brawlersTL: brawlersTL,
       brawlersPL: brawlersPL,
     };

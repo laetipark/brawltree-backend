@@ -316,10 +316,6 @@ export class CrewService {
       });
   }
 
-  getDailyRotation() {
-    return this.eventsService.selectRotationTLDaily();
-  }
-
   getModes() {
     return {
       rotationTL: this.eventsService.selectModeTL(),
