@@ -25,6 +25,17 @@ export class BrawlersController {
     return await this.brawlerService.getRandomBrawler(rarity, role, gender);
   }
 
+  @Get('/summary')
+  async selectMain() {
+    const [brawlersTrophy, brawlersRanked] =
+      await this.brawlerService.selectBrawlerSummary();
+
+    return {
+      brawlersTrophy: brawlersTrophy,
+      brawlersRanked: brawlersRanked,
+    };
+  }
+
   @Get('/:id/summary')
   async selectBrawlerSummary(@Param('id') id: string) {
     return {

@@ -23,6 +23,51 @@ export class BrawlersService {
     return await this.brawlers.find({});
   }
 
+  async selectBrawlerSummary() {
+    return [
+      await this.brawlerStats
+        .createQueryBuilder('bs')
+        .select('bs.brawlerID', 'brawlerID')
+        .addSelect('b.name', 'brawlerName')
+        .addSelect(
+          'SUM(bs.matchCount) * 100 / SUM(SUM(bs.matchCount)) OVER()',
+          'trophyPickRate',
+        )
+        .addSelect(
+          'SUM(bs.victoriesCount) * 100 / (SUM(bs.victoriesCount) + SUM(bs.defeatsCount))',
+          'trophyVictoryRate',
+        )
+        .innerJoin('bs.brawler', 'b')
+        .where('bs.matchType = 0')
+        .andWhere('bs.matchGrade > 5')
+        .groupBy('bs.brawlerID')
+        .orderBy('trophyPickRate', 'DESC')
+        .addOrderBy('trophyVictoryRate', 'DESC')
+        .limit(10)
+        .getRawMany(),
+      await this.brawlerStats
+        .createQueryBuilder('bs')
+        .select('bs.brawlerID', 'brawlerID')
+        .addSelect('b.name', 'brawlerName')
+        .addSelect(
+          'SUM(bs.matchCount) * 100 / SUM(SUM(bs.matchCount)) OVER()',
+          'rankedPickRate',
+        )
+        .addSelect(
+          'SUM(bs.victoriesCount) * 100 / (SUM(bs.victoriesCount) + SUM(bs.defeatsCount))',
+          'rankedVictoryRate',
+        )
+        .innerJoin('bs.brawler', 'b')
+        .where('bs.matchType = 2')
+        .andWhere('bs.matchGrade > 16')
+        .groupBy('bs.brawlerID')
+        .orderBy('rankedPickRate', 'DESC')
+        .addOrderBy('rankedVictoryRate', 'DESC')
+        .limit(10)
+        .getRawMany(),
+    ];
+  }
+
   async getBrawlerTotalStats() {
     return await this.brawlerStats
       .createQueryBuilder('bs')

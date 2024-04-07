@@ -88,6 +88,7 @@ export class CrewService {
           'trophyLeagueVictoryRate',
         )
         .where('bs.matchType = 0')
+        .andWhere('bs.matchGrade > 5')
         .groupBy('bs.brawlerID')
         .orderBy('trophyLeaguePickRate', 'DESC')
         .addOrderBy('trophyLeagueVictoryRate', 'DESC')
@@ -104,7 +105,8 @@ export class CrewService {
           'SUM(bs.victoriesCount) * 100 / (SUM(bs.victoriesCount) + SUM(bs.defeatsCount))',
           'powerLeagueVictoryRate',
         )
-        .where('bs.matchType IN (2, 3)')
+        .where('bs.matchType = 2')
+        .andWhere('bs.matchGrade > 16')
         .groupBy('bs.brawlerID')
         .orderBy('powerLeaguePickRate', 'DESC')
         .addOrderBy('powerLeagueVictoryRate', 'DESC')
