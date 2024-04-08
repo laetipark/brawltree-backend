@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
 import { EventsService } from '~/maps/services/events.service';
 import { SeasonsService } from '~/seasons/seasons.service';
@@ -9,9 +10,9 @@ import { UserFriends, UserRecords } from './entities/crew.entity';
 import { BattleStats } from '~/brawlers/entities/battle-stats.entity';
 import { Maps } from '~/maps/entities/maps.entity';
 import { Users } from '~/users/entities/users.entity';
+import { UserProfile } from '~/users/entities/user-profile.entity';
 import { UserBattles } from '~/users/entities/user-battles.entity';
 import { SelectUserRecordDto } from '~/crew/dto/select-user-record.dto';
-import { plainToInstance } from 'class-transformer';
 import { SelectUserFriendDto } from '~/crew/dto/select-user-friend.dto';
 
 @Injectable()
@@ -253,7 +254,8 @@ export class CrewService {
       .addSelect('uFriend.matchType', 'matchType')
       .addSelect('uFriend.matchGrade', 'matchGrade')
       .addSelect('uFriend.mode', 'mode')
-      .addSelect('uFriend.friendName', 'friendName')
+      .addSelect('user.crewName', 'friendName')
+      .addSelect('uProfile.profileIcon', 'profileIcon')
       .addSelect('SUM(uFriend.matchCount)', 'matchCount')
       .addSelect('SUM(uFriend.victoriesCount)', 'victoriesCount')
       .addSelect('SUM(uFriend.defeatsCount)', 'defeatsCount')
@@ -261,7 +263,8 @@ export class CrewService {
         'ROUND(uFriend.victoriesCount * 100 / SUM(uFriend.victoriesCount + uFriend.defeatsCount), 2)',
         'victoryRate',
       )
-      .addSelect('ROUND(uFriend.friendPoints, 2)', 'friendPoints')
+      .innerJoin(Users, 'user', 'uFriend.friendID = user.id')
+      .innerJoin(UserProfile, 'uProfile', 'uFriend.friendID = uProfile.userID')
       .where('uFriend.userID = :id', {
         id: `#${id}`,
       })
@@ -269,34 +272,38 @@ export class CrewService {
       .addGroupBy('uFriend.matchType')
       .addGroupBy('uFriend.matchGrade')
       .addGroupBy('uFriend.mode')
-      .addGroupBy('uFriend.friendName')
+      .addGroupBy('user.crewName')
+      .addGroupBy('uProfile.profileIcon')
       .getRawMany()
       .then((result: SelectUserFriendDto[]) => {
+        console.log(result);
         const data = plainToInstance(SelectUserFriendDto, result);
         const totalData = [];
         data.forEach((item) => {
           const {
             friendID,
+            profileIcon,
             friendName,
             matchCount,
             victoriesCount,
             defeatsCount,
-            friendPoints,
+            // friendPoints,
           } = item;
           if (!totalData[friendID]) {
             totalData[friendID] = {
               friendID,
               friendName,
+              profileIcon,
               matchCount: 0,
               victoriesCount: 0,
               defeatsCount: 0,
-              friendPoints: 0,
+              // friendPoints: 0,
             };
           }
           totalData[friendID].matchCount += matchCount;
           totalData[friendID].victoriesCount += victoriesCount;
           totalData[friendID].defeatsCount += defeatsCount;
-          totalData[friendID].friendPoints += friendPoints;
+          // totalData[friendID].friendPoints += friendPoints;
         });
 
         const keyData = data.reduce((result, current) => {

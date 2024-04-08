@@ -8,6 +8,9 @@ export class SelectUserFriendDto {
   @IsString()
   friendName!: string;
 
+  @IsString()
+  profileIcon!: string;
+
   @IsNumber()
   @Type(() => Number)
   matchType!: number;

@@ -30,6 +30,9 @@ export class UsersService {
       .where('uProfile.name LIKE :nickname', {
         nickname: `%${keyword}%`,
       })
+      .orWhere('user.crewName LIKE :nickname', {
+        nickname: `%${keyword}%`,
+      })
       .orWhere('user.id LIKE :id', {
         id: `#${keyword}%`,
       })

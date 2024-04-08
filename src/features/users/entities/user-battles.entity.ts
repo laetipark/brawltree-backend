@@ -102,6 +102,12 @@ export class UserBattles extends BaseEntity {
   teamNumber: number;
 
   @Column({
+    name: 'is_team_player',
+    nullable: true,
+  })
+  isTeamPlayer: boolean;
+
+  @Column({
     name: 'is_star_player',
     nullable: true,
   })
