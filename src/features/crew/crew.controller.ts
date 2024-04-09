@@ -57,7 +57,7 @@ export class CrewController {
   async selectMember(@Param('id') id: string) {
     return {
       friends: await this.crewService.selectMemberFriends(id),
-      seasonRecords: await this.crewService.selectMemberSeasonRecords(id),
+      seasonRecords: await this.crewService.selectMemberSeason(id),
     };
   }
 }

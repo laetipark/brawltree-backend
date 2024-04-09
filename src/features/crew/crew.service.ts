@@ -184,7 +184,7 @@ export class CrewService {
       .getRawMany();
   }
 
-  async selectMemberSeasonRecords(id: string) {
+  async selectMemberSeason(id: string) {
     return await this.userRecords
       .createQueryBuilder('uRecord')
       .select('uRecord.matchType', 'matchType')
@@ -229,8 +229,30 @@ export class CrewService {
         });
 
         const keyData = data.reduce((result, current) => {
-          result[current.matchType] = result[current.matchType] || [];
-          result[current.matchType].push(current);
+          const matchType = current.matchType;
+          const mode = current.mode;
+
+          // matchType에 따라 그룹화
+          if (!result[matchType]) {
+            result[matchType] = {};
+          }
+
+          // mode에 따라 그룹화
+          if (!result[matchType][mode]) {
+            result[matchType][mode] = {
+              mode,
+              items: [],
+              matchCount: 0,
+              victoriesCount: 0,
+              defeatsCount: 0,
+            };
+          }
+          result[matchType][mode].matchCount += current.matchCount;
+          result[matchType][mode].victoriesCount += current.victoriesCount;
+          result[matchType][mode].defeatsCount += current.defeatsCount;
+
+          result[matchType][mode].items.push(current);
+
           return result;
         }, {});
         const keys = Object.keys(keyData);
@@ -276,7 +298,6 @@ export class CrewService {
       .addGroupBy('uProfile.profileIcon')
       .getRawMany()
       .then((result: SelectUserFriendDto[]) => {
-        console.log(result);
         const data = plainToInstance(SelectUserFriendDto, result);
         const totalData = [];
         data.forEach((item) => {
