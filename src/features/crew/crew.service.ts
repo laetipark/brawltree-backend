@@ -117,11 +117,13 @@ export class CrewService {
   }
 
   async selectMemberTable() {
-    return await this.users
+    const members = await this.users
       .createQueryBuilder('user')
       .select('user.id', 'userID')
-      .addSelect('user.crewName', 'name')
-      .addSelect('uProfile.profileIcon', 'profile')
+      .addSelect('uProfile.name', 'userName')
+      .addSelect('user.crew', 'crew')
+      .addSelect('user.crewName', 'crewName')
+      .addSelect('uProfile.profileIcon', 'profileIcon')
       .addSelect('uProfile.currentTrophies', 'currentTrophies')
       .addSelect('uProfile.currentTrophies', 'currentTrophies')
       .addSelect('uProfile.currentSoloPL', 'currentSoloPL')
@@ -130,6 +132,12 @@ export class CrewService {
       .where('user.crew IN ("Blossom", "Team")')
       .orderBy('uProfile.currentTrophies', 'DESC')
       .getRawMany();
+
+    return members.reduce((result, current) => {
+      result[current.crew] = result[current.crew] || [];
+      result[current.crew].push(current);
+      return result;
+    }, {});
   }
 
   async findBrawlerTable(brawler: string) {

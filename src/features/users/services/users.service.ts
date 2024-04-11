@@ -25,7 +25,7 @@ export class UsersService {
       .addSelect('uProfile.clubName', 'clubName')
       .addSelect('uProfile.currentTrophies', 'currentTrophies')
       .addSelect('uProfile.currentSoloPL', 'currentSoloPL')
-      .addSelect('uProfile.currentTeamPL', 'currentTeamPL')
+      // .addSelect('uProfile.currentTeamPL', 'currentTeamPL')
       .innerJoin('user.userProfile', 'uProfile')
       .where('uProfile.name LIKE :nickname', {
         nickname: `%${keyword}%`,
