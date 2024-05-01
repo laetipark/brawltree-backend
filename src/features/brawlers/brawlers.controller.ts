@@ -11,8 +11,8 @@ export class BrawlersController {
   async selectBrawlers() {
     return {
       brawlers: await this.brawlerService.getBrawlers(),
-      totalStats: await this.brawlerService.getBrawlerTotalStats(),
       stats: await this.brawlerService.getBrawlerStats(),
+      maps: await this.brawlerService.getBrawlerMaps(),
     };
   }
 
@@ -36,11 +36,11 @@ export class BrawlersController {
     };
   }
 
-  @Get('/:id/summary')
+  @Get('/:id/info')
   async selectBrawlerSummary(@Param('id') id: string) {
     return {
-      brawler: await this.brawlerService.getBrawler(id),
-      status: await this.brawlerService.getBrawlerStatus(id),
+      info: await this.brawlerService.getBrawler(id),
+      items: await this.brawlerService.getBrawlerItems(id),
     };
   }
 }

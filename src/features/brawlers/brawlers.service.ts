@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
-
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Brawlers } from './entities/brawlers.entity';
+
+import {
+  BrawlerItems,
+  Brawlers,
+  BrawlerSkills,
+} from './entities/brawlers.entity';
 import { BattleStats } from './entities/battle-stats.entity';
 import { Maps } from '~/maps/entities/maps.entity';
 import { AppConfigService } from '~/utils/services/app-config.service';
@@ -12,12 +16,22 @@ export class BrawlersService {
   constructor(
     @InjectRepository(Brawlers)
     private brawlers: Repository<Brawlers>,
+    @InjectRepository(BrawlerSkills)
+    private brawlerSkills: Repository<BrawlerSkills>,
+    @InjectRepository(BrawlerItems)
+    private brawlerItems: Repository<BrawlerItems>,
     @InjectRepository(BattleStats)
     private brawlerStats: Repository<BattleStats>,
     private readonly appConfigService: AppConfigService,
   ) {}
 
-  async getBrawler(id: string) {}
+  async getBrawler(id: string) {
+    return await this.brawlerSkills.findOne({
+      where: {
+        brawlerID: id,
+      },
+    });
+  }
 
   async getBrawlers(): Promise<Brawlers[]> {
     return await this.brawlers.find({});
@@ -68,7 +82,7 @@ export class BrawlersService {
     ];
   }
 
-  async getBrawlerTotalStats() {
+  async getBrawlerStats() {
     return await this.brawlerStats
       .createQueryBuilder('bs')
       .select('bs.brawlerID', 'brawlerID')
@@ -86,9 +100,15 @@ export class BrawlersService {
       .getRawMany();
   }
 
-  async getBrawlerStatus(id: string) {}
+  async getBrawlerItems(id: string) {
+    return await this.brawlerItems.find({
+      where: {
+        brawlerID: id,
+      },
+    });
+  }
 
-  async getBrawlerStats() {
+  async getBrawlerMaps() {
     return await this.brawlerStats
       .createQueryBuilder('bs')
       .select('bs.mapID', 'mapID')

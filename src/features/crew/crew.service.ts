@@ -39,7 +39,7 @@ export class CrewService {
       .select('COUNT(uProfile.userID)', 'memberCount')
       .addSelect('SUM(uProfile.currentTrophies)', 'currentTotalTrophies')
       .innerJoin('user.userProfile', 'uProfile')
-      .where('user.crew IN ("Blossom", "Team")')
+      .where('user.crew IN ("Blossom", "Team", "Lucy")')
       .getRawOne();
   }
 
@@ -64,7 +64,7 @@ export class CrewService {
         end: endDate,
       })
       .andWhere('ub.userID = ub.playerID')
-      .andWhere('user.crew IN ("Blossom", "Team")')
+      .andWhere('user.crew IN ("Blossom", "Team", "Lucy")')
       .getRawOne();
   }
 
@@ -129,7 +129,7 @@ export class CrewService {
       .addSelect('uProfile.currentSoloPL', 'currentSoloPL')
       .addSelect('uProfile.currentTeamPL', 'currentTeamPL')
       .innerJoin('user.userProfile', 'uProfile')
-      .where('user.crew IN ("Blossom", "Team")')
+      .where('user.crew IN ("Blossom", "Team", "Lucy" )')
       .orderBy('uProfile.currentTrophies', 'DESC')
       .getRawMany();
 
