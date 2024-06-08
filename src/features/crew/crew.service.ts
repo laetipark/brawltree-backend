@@ -14,6 +14,8 @@ import { UserProfile } from '~/users/entities/user-profile.entity';
 import { UserBattles } from '~/users/entities/user-battles.entity';
 import { SelectUserRecordDto } from '~/crew/dto/select-user-record.dto';
 import { SelectUserFriendDto } from '~/crew/dto/select-user-friend.dto';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class CrewService {
@@ -31,7 +33,34 @@ export class CrewService {
     private readonly eventsService: EventsService,
     private readonly seasonService: SeasonsService,
     private readonly configService: AppConfigService,
+    private readonly httpService: HttpService,
   ) {}
+
+  async updateCrewMember(id: string) {
+    const usersUpdatedAt = await this.users
+      .createQueryBuilder('user')
+      .select('user.updatedAt', 'updatedAt')
+      .where(`user.id = :id`, {
+        id: `#${id}`,
+      })
+      .getRawOne();
+
+    if (!usersUpdatedAt) {
+      return false;
+    }
+
+    if (
+      new Date(new Date(usersUpdatedAt).getTime() + 2 * 60 * 1000) <
+        new Date() ||
+      new Date(usersUpdatedAt).getTime() < 1001
+    ) {
+      const res = await firstValueFrom(this.httpService.patch(`crew/${id}`));
+      if (res.status !== 200) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   async selectMembersSummary() {
     return await this.users

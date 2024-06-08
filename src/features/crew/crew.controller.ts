@@ -1,8 +1,15 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Query,
+} from '@nestjs/common';
 
 import { CrewService } from './crew.service';
+import { FailureResponseEnum } from '../../common/enums/failure-response.enum';
 
-@Controller('blossom')
+@Controller('crew')
 export class CrewController {
   constructor(private crewService: CrewService) {}
 
@@ -55,6 +62,14 @@ export class CrewController {
 
   @Get('/members/:id')
   async selectMember(@Param('id') id: string) {
+    const isPatch = await this.crewService.updateCrewMember(id);
+
+    if (!isPatch) {
+      throw new NotFoundException(
+        `${FailureResponseEnum.USER_NOT_FOUND}: ${id}`,
+      );
+    }
+
     return {
       friends: await this.crewService.selectMemberFriends(id),
       seasonRecords: await this.crewService.selectMemberSeason(id),
