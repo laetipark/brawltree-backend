@@ -34,7 +34,8 @@ export class CrewService {
     private readonly seasonService: SeasonsService,
     private readonly configService: AppConfigService,
     private readonly httpService: HttpService,
-  ) {}
+  ) {
+  }
 
   async updateCrewMember(id: string) {
     const usersUpdatedAt = await this.users
@@ -51,7 +52,7 @@ export class CrewService {
 
     if (
       new Date(new Date(usersUpdatedAt).getTime() + 2 * 60 * 1000) <
-        new Date() ||
+      new Date() ||
       new Date(usersUpdatedAt).getTime() < 1001
     ) {
       const res = await firstValueFrom(this.httpService.patch(`crew/${id}`));
