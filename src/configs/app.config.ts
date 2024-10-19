@@ -15,9 +15,16 @@ const tripleModes = [
   'botDrop',
   'snowtelThieves',
   'pumpkinPlunder',
+  'wipeout5V5',
+  'knockout5V5',
+  'gemGrab5V5',
+  'brawlBall5V5',
+  'godzillaCitySmash',
+  'paintBrawl',
+  'jellyfishing',
 ];
 const soloModes = {
-  battle: ['duel'],
+  battle: ['duels'],
   survive: [
     'soloShowdown',
     'takedown',
@@ -27,7 +34,7 @@ const soloModes = {
     'trophyEscape',
   ],
 };
-const duoModes = ['duoShowdown'];
+const duoModes = ['duoShowdown', 'trioShowdown'];
 
 export default () => ({
   axios: {

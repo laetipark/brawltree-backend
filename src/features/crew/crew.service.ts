@@ -2,20 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
-import { EventsService } from '~/maps/services/events.service';
-import { SeasonsService } from '~/seasons/seasons.service';
-import { AppConfigService } from '~/utils/services/app-config.service';
 
 import { UserFriends, UserRecords } from './entities/crew.entity';
 import { BattleStats } from '~/brawlers/entities/battle-stats.entity';
-import { Maps } from '~/maps/entities/maps.entity';
 import { Users } from '~/users/entities/users.entity';
 import { UserProfile } from '~/users/entities/user-profile.entity';
-import { UserBattles } from '~/users/entities/user-battles.entity';
-import { SelectUserRecordDto } from '~/crew/dto/select-user-record.dto';
 import { SelectUserFriendDto } from '~/crew/dto/select-user-friend.dto';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { SelectUserRecordDto } from '~/crew/dto/select-user-record.dto';
 
 @Injectable()
 export class CrewService {
@@ -24,127 +17,11 @@ export class CrewService {
     private readonly brawlerStats: Repository<BattleStats>,
     @InjectRepository(Users)
     private readonly users: Repository<Users>,
-    @InjectRepository(UserBattles)
-    private readonly userBattles: Repository<UserBattles>,
-    @InjectRepository(UserRecords)
-    private readonly userRecords: Repository<UserRecords>,
     @InjectRepository(UserFriends)
     private readonly userFriends: Repository<UserFriends>,
-    private readonly eventsService: EventsService,
-    private readonly seasonService: SeasonsService,
-    private readonly configService: AppConfigService,
-    private readonly httpService: HttpService,
-  ) {
-  }
-
-  async updateCrewMember(id: string) {
-    const usersUpdatedAt = await this.users
-      .createQueryBuilder('user')
-      .select('user.updatedAt', 'updatedAt')
-      .where(`user.id = :id`, {
-        id: `#${id}`,
-      })
-      .getRawOne();
-
-    if (!usersUpdatedAt) {
-      return false;
-    }
-
-    if (
-      new Date(new Date(usersUpdatedAt).getTime() + 2 * 60 * 1000) <
-      new Date() ||
-      new Date(usersUpdatedAt).getTime() < 1001
-    ) {
-      const res = await firstValueFrom(this.httpService.patch(`crew/${id}`));
-      if (res.status !== 200) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  async selectMembersSummary() {
-    return await this.users
-      .createQueryBuilder('user')
-      .select('COUNT(uProfile.userID)', 'memberCount')
-      .addSelect('SUM(uProfile.currentTrophies)', 'currentTotalTrophies')
-      .innerJoin('user.userProfile', 'uProfile')
-      .where('user.crew IN ("Blossom", "Team", "Lucy")')
-      .getRawOne();
-  }
-
-  async selectBattlesSummary() {
-    const beginDate = new Date(
-      new Date(
-        new Date().getFullYear(),
-        new Date().getMonth(),
-        new Date().getDate(),
-      ).getTime(),
-    );
-    const endDate = new Date(
-      new Date(beginDate).getTime() + 1000 * 60 * 60 * 24,
-    );
-
-    return await this.userBattles
-      .createQueryBuilder('ub')
-      .select('COUNT(DISTINCT ub.battleTime)', 'matchCount')
-      .innerJoin('ub.user', 'user')
-      .where('ub.battleTime BETWEEN :begin AND :end', {
-        begin: beginDate,
-        end: endDate,
-      })
-      .andWhere('ub.userID = ub.playerID')
-      .andWhere('user.crew IN ("Blossom", "Team", "Lucy")')
-      .getRawOne();
-  }
-
-  async selectSeasonSummary() {
-    return await this.userRecords
-      .createQueryBuilder('uRecord')
-      .select('SUM(uRecord.matchCount)', 'matchCount')
-      .getRawOne();
-  }
-
-  async selectBrawlerSummary() {
-    return [
-      await this.brawlerStats
-        .createQueryBuilder('bs')
-        .select('bs.brawlerID', 'brawlerID')
-        .addSelect(
-          'SUM(bs.matchCount) * 100 / SUM(SUM(bs.matchCount)) OVER()',
-          'trophyLeaguePickRate',
-        )
-        .addSelect(
-          'SUM(bs.victoriesCount) * 100 / (SUM(bs.victoriesCount) + SUM(bs.defeatsCount))',
-          'trophyLeagueVictoryRate',
-        )
-        .where('bs.matchType = 0')
-        .andWhere('bs.matchGrade > 5')
-        .groupBy('bs.brawlerID')
-        .orderBy('trophyLeaguePickRate', 'DESC')
-        .addOrderBy('trophyLeagueVictoryRate', 'DESC')
-        .limit(10)
-        .getRawMany(),
-      await this.brawlerStats
-        .createQueryBuilder('bs')
-        .select('bs.brawlerID', 'brawlerID')
-        .addSelect(
-          'SUM(bs.matchCount) * 100 / SUM(SUM(bs.matchCount)) OVER()',
-          'powerLeaguePickRate',
-        )
-        .addSelect(
-          'SUM(bs.victoriesCount) * 100 / (SUM(bs.victoriesCount) + SUM(bs.defeatsCount))',
-          'powerLeagueVictoryRate',
-        )
-        .where('bs.matchType = 2')
-        .andWhere('bs.matchGrade > 16')
-        .groupBy('bs.brawlerID')
-        .orderBy('powerLeaguePickRate', 'DESC')
-        .addOrderBy('powerLeagueVictoryRate', 'DESC')
-        .limit(10)
-        .getRawMany(),
-    ];
-  }
+    @InjectRepository(UserRecords)
+    private readonly userRecords: Repository<UserRecords>,
+  ) {}
 
   async selectMemberTable() {
     const members = await this.users
@@ -168,58 +45,6 @@ export class CrewService {
       result[current.crew].push(current);
       return result;
     }, {});
-  }
-
-  async findBrawlerTable(brawler: string) {
-    return await this.users
-      .createQueryBuilder('user')
-      .select('user.id', 'userID')
-      .addSelect('user.crewName', 'name')
-      .addSelect('uProfile.profileIcon', 'profile')
-      .addSelect('ubr.brawlerID', 'brawlerID')
-      .addSelect('ubr.currentTrophies', 'currentTrophies')
-      .addSelect('ubr.highestTrophies', 'highestTrophies')
-      .innerJoin('user.userProfile', 'uProfile')
-      .innerJoin('user.userBrawlers', 'ubr')
-      .where('user.crew IN ("Blossom", "Team")')
-      .andWhere('ubr.brawlerID = :brawler', {
-        brawler: brawler,
-      })
-      .orderBy('ubr.currentTrophies', 'DESC')
-      .getRawMany();
-  }
-
-  async selectBattlesTable(
-    beginDate: Date,
-    endDate: Date,
-    type: string,
-    mode: string,
-  ) {
-    return await this.users
-      .createQueryBuilder('user')
-      .select('user.id', 'userID')
-      .addSelect('user.crewName', 'name')
-      .addSelect('uProfile.profileIcon', 'profile')
-      .addSelect('COUNT(DISTINCT ub.battleTime)', 'matchCount')
-      .addSelect('SUM(ub.trophyChange)', 'trophyChange')
-      .innerJoin('user.userProfile', 'uProfile')
-      .innerJoin('user.userBattles', 'ub')
-      .innerJoin(Maps, 'm', 'ub.mapID = m.id')
-      .where('user.crew IN ("Blossom", "Team")')
-      .andWhere('m.mode IN (:modes)', {
-        modes: mode !== 'all' ? mode : await this.configService.getModeList(),
-      })
-      .andWhere('ub.userID = ub.playerID')
-      .andWhere('ub.battleTime BETWEEN :begin AND :end', {
-        begin: beginDate,
-        end: endDate,
-      })
-      .andWhere('ub.matchType IN (:types)', {
-        types: type !== '7' ? type : await this.configService.getTypeList(),
-      })
-      .groupBy('uProfile.userID')
-      .orderBy('matchCount', 'DESC')
-      .getRawMany();
   }
 
   async selectMemberSeason(id: string) {
@@ -382,16 +207,5 @@ export class CrewService {
           };
         });
       });
-  }
-
-  getModes() {
-    return {
-      rotationTL: this.eventsService.selectModeTL(),
-      rotationPL: this.eventsService.selectModePL(),
-    };
-  }
-
-  getSeason() {
-    return this.seasonService.getRecentSeason();
   }
 }

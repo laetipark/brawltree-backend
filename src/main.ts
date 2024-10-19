@@ -6,8 +6,8 @@ import { ConfigService } from '@nestjs/config';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: true,
-    methods: 'GET,PUT,PATCH,POST',
+    origin: 'https://brawltree.me',
+    methods: 'GET, POST, PATCH',
     credentials: true,
   });
   app.useGlobalPipes(

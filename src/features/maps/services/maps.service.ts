@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Maps } from '~/maps/entities/maps.entity';
-import { Events } from '~/maps/entities/events.entity';
 
 import { BattleStats } from '~/brawlers/entities/battle-stats.entity';
 import { BattleService } from '~/utils/services/battle.service';
@@ -46,13 +45,14 @@ export class MapsService {
     grade: string[],
   ): Promise<SelectMapStatsDto[]> {
     const matchGrade = this.battleService.setMatchGrade(type, grade);
-    const mapName = await this.maps
-      .createQueryBuilder('maps')
-      .select('maps.name', 'name')
-      .where('maps.id = :id', {
-        id: id,
-      })
-      .getRawOne();
+    const mapName =
+      (await this.maps
+        .createQueryBuilder('maps')
+        .select('maps.name', 'name')
+        .where('maps.id = :id', {
+          id: id,
+        })
+        .getRawOne()) || 'Name Unknown';
 
     const mapIDs = await this.maps
       .createQueryBuilder('maps')
@@ -95,13 +95,11 @@ export class MapsService {
   async selectMaps() {
     const maps = await this.maps
       .createQueryBuilder('map')
-      .select('map.id', 'mapID')
+      .select('MAX(map.id)', 'mapID')
       .addSelect('map.name', 'mapName')
       .addSelect('map.mode', 'mode')
-      .addSelect('events.id', 'eventID')
-      .addSelect('events.startTime', 'startTime')
-      .innerJoin('map.mapRotation', 'mapRotation')
-      .leftJoin(Events, 'events', 'events.mapID = map.id')
+      .groupBy('map.name')
+      .addGroupBy('map.mode')
       .getRawMany();
 
     return maps.reduce((acc, map) => {
