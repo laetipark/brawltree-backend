@@ -6,11 +6,11 @@ import {
   OneToOne,
   PrimaryColumn,
 } from 'typeorm';
-import { Maps } from '~/maps/entities/maps.entity';
-import { Events } from './events.entity';
+import { GameMaps } from '~/maps/entities/maps.entity';
+import { GameEvents } from './events.entity';
 
-@Entity({ name: 'map_rotation' })
-export class MapRotation {
+@Entity({ name: 'game_map_rotation' })
+export class GameMapRotation {
   @PrimaryColumn({
     name: 'map_id',
     length: 8,
@@ -27,10 +27,10 @@ export class MapRotation {
   })
   isPowerLeague: boolean;
 
-  @OneToOne(() => Maps)
+  @OneToOne(() => GameMaps)
   @JoinColumn({ name: 'map_id', referencedColumnName: 'id' })
-  map: Maps;
+  map: GameMaps;
 
-  @OneToMany(() => Events, (event) => event.mapRotation)
-  events: Events[];
+  @OneToMany(() => GameEvents, (event) => event.mapRotation)
+  events: GameEvents[];
 }

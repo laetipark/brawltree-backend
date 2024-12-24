@@ -19,7 +19,7 @@ export class UserProfileService {
   /** 사용자 프로필 정보 반환
    * @param id 사용자 ID */
   async selectUserProfile(id: string): Promise<SelectUserProfileDto> {
-    const season = await this.seasonsService.getRecentSeason();
+    const season = this.seasonsService.getRecentSeason();
     const trophyChange = await this.userBattles
       .createQueryBuilder('uBattle')
       .select('SUM(uBattle.trophyChange)', 'trophyChange')
@@ -29,6 +29,7 @@ export class UserProfileService {
       .andWhere('uBattle.battleTime >= :season', {
         season: season.beginDate,
       })
+      .limit(1)
       .getRawOne();
 
     return {

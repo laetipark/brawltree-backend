@@ -17,10 +17,10 @@ export class SelectUsersDto {
   currentTrophies!: number;
 
   @IsNumber()
-  currentSoloPL!: number;
+  currentSoloRanked!: number;
 
-  @IsNumber()
-  currentTeamPL!: number;
+  // @IsNumber()
+  // currentTeamRanked!: number;
 }
 
 export class SelectUserDto {

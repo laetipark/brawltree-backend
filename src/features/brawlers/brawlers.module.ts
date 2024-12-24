@@ -7,6 +7,7 @@ import {
   Brawlers,
   BrawlerSkills,
 } from './entities/brawlers.entity';
+import { GameModes } from '~/maps/entities/modes.entity';
 
 import { BrawlersController } from './brawlers.controller';
 import { BrawlersService } from './brawlers.service';
@@ -19,6 +20,7 @@ import { UtilsModule } from '~/utils/utils.module';
       BrawlerSkills,
       BrawlerItems,
       BattleStats,
+      GameModes,
     ]),
     UtilsModule,
   ],

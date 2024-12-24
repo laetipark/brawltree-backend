@@ -8,8 +8,8 @@ import {
   BrawlerSkills,
 } from './entities/brawlers.entity';
 import { BattleStats } from './entities/battle-stats.entity';
-import { Maps } from '~/maps/entities/maps.entity';
-import { AppConfigService } from '~/utils/services/app-config.service';
+import { GameMaps } from '~/maps/entities/maps.entity';
+import { GameModes } from '~/maps/entities/modes.entity';
 
 @Injectable()
 export class BrawlersService {
@@ -22,7 +22,8 @@ export class BrawlersService {
     private brawlerItems: Repository<BrawlerItems>,
     @InjectRepository(BattleStats)
     private brawlerStats: Repository<BattleStats>,
-    private readonly appConfigService: AppConfigService,
+    @InjectRepository(GameModes)
+    private gameModes: Repository<GameModes>,
   ) {}
 
   async getBrawler(id: string) {
@@ -109,6 +110,16 @@ export class BrawlersService {
   }
 
   async getBrawlerMaps() {
+    const modes = (
+      await this.gameModes
+        .createQueryBuilder('modes')
+        .select('modes.modeName', 'modeName')
+        .where('modes.modeType NOT IN (:type)', {
+          type: [3, 2],
+        })
+        .getRawMany()
+    ).map((m) => m.modeName);
+
     return await this.brawlerStats
       .createQueryBuilder('bs')
       .select('bs.mapID', 'mapID')
@@ -125,13 +136,9 @@ export class BrawlersService {
       .addSelect('m.mode', 'mode')
       .addSelect('m.name', 'mapName')
       .leftJoin('bs.brawler', 'b')
-      .innerJoin(Maps, 'm', 'bs.mapID = m.id')
+      .innerJoin(GameMaps, 'm', 'bs.mapID = m.id')
       .where('m.mode NOT IN (:modes)', {
-        modes: [
-          ...(await this.appConfigService.getModeClass()).duoModes,
-          ...(await this.appConfigService.getModeClass()).soloModes.battle,
-          ...(await this.appConfigService.getModeClass()).soloModes.survive,
-        ],
+        modes: modes,
       })
       .groupBy('bs.brawlerID')
       .addGroupBy('bs.mapID')
@@ -171,6 +178,7 @@ export class BrawlersService {
         gender: gender || '%%',
       })
       .orderBy('RAND()')
+      .limit(1)
       .getRawOne();
   }
 }

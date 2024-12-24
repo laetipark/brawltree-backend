@@ -24,7 +24,7 @@ export class UsersService {
       .addSelect('uProfile.profileIcon', 'profileIcon')
       .addSelect('uProfile.clubName', 'clubName')
       .addSelect('uProfile.currentTrophies', 'currentTrophies')
-      .addSelect('uProfile.currentSoloPL', 'currentSoloPL')
+      .addSelect('uProfile.currentSoloRanked', 'currentSoloRanked')
       // .addSelect('uProfile.currentTeamPL', 'currentTeamPL')
       .innerJoin('user.userProfile', 'uProfile')
       .where('uProfile.name LIKE :nickname', {
@@ -49,7 +49,7 @@ export class UsersService {
       .addSelect('uProfile.profileIcon', 'profileIcon')
       .addSelect('uProfile.clubName', 'clubName')
       .addSelect('uProfile.currentTrophies', 'currentTrophies')
-      .addSelect('uProfile.currentSoloPL', 'currentSoloPL')
+      .addSelect('uProfile.currentSoloRanked', 'currentSoloRanked')
       .innerJoin('user.userProfile', 'uProfile')
       .where('user.id IN (:ids)', {
         ids: userIDs,
@@ -73,6 +73,7 @@ export class UsersService {
       .where(`user.id = :id`, {
         id: `#${id}`,
       })
+      .limit(1)
       .getRawOne();
   }
 

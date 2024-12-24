@@ -6,10 +6,10 @@ import {
   PrimaryColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { MapRotation } from '~/maps/entities/map-rotation.entity';
+import { GameMapRotation } from '~/maps/entities/map-rotation.entity';
 
-@Entity({ name: 'events' })
-export class Events {
+@Entity({ name: 'game_events' })
+export class GameEvents {
   @PrimaryGeneratedColumn({
     name: 'id',
     type: 'tinyint',
@@ -40,7 +40,7 @@ export class Events {
   })
   modifiers: string;
 
-  @ManyToOne(() => MapRotation, (mapRotation) => mapRotation.events)
+  @ManyToOne(() => GameMapRotation, (mapRotation) => mapRotation.events)
   @JoinColumn({ name: 'map_id', referencedColumnName: 'mapID' })
-  mapRotation: MapRotation;
+  mapRotation: GameMapRotation;
 }

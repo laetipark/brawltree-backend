@@ -1,10 +1,10 @@
 import { Column, Entity, OneToMany, OneToOne, PrimaryColumn } from 'typeorm';
 import { BaseEntity } from '~/database/entities/base.entity';
-import { MapRotation } from './map-rotation.entity';
+import { GameMapRotation } from './map-rotation.entity';
 import { UserBrawlerBattles } from '~/users/entities/user-brawlers.entity';
 
-@Entity({ name: 'maps' })
-export class Maps extends BaseEntity {
+@Entity({ name: 'game_maps' })
+export class GameMaps extends BaseEntity {
   @PrimaryColumn({
     length: 8,
   })
@@ -22,8 +22,8 @@ export class Maps extends BaseEntity {
   })
   name: string;
 
-  @OneToOne(() => MapRotation, (mapRotation) => mapRotation.map)
-  mapRotation: MapRotation;
+  @OneToOne(() => GameMapRotation, (mapRotation) => mapRotation.map)
+  mapRotation: GameMapRotation;
 
   @OneToMany(
     () => UserBrawlerBattles,

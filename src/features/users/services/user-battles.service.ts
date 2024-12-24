@@ -6,7 +6,7 @@ import { SeasonsService } from '~/seasons/seasons.service';
 import { EventsService } from '~/maps/services/events.service';
 import { UserBattles } from '~/users/entities/user-battles.entity';
 import { UserBrawlerBattles } from '~/users/entities/user-brawlers.entity';
-import { Maps } from '~/maps/entities/maps.entity';
+import { GameMaps } from '~/maps/entities/maps.entity';
 import {
   SelectRecentUserBattlesDto,
   SelectUserBattleLogsDto,
@@ -16,6 +16,7 @@ import {
 } from '~/users/dto/select-user-battles.dto';
 import { SeasonDto } from '~/seasons/dto/season.dto';
 import { plainToInstance } from 'class-transformer';
+import { ModesService } from '~/maps/services/modes.service';
 
 @Injectable()
 export class UserBattlesService {
@@ -25,6 +26,7 @@ export class UserBattlesService {
     @InjectRepository(UserBrawlerBattles)
     private readonly userBrawlerBattles: Repository<UserBrawlerBattles>,
     private readonly eventsService: EventsService,
+    private readonly modesService: ModesService,
     private readonly seasonsService: SeasonsService,
     private readonly configService: AppConfigService,
   ) {}
@@ -48,7 +50,7 @@ export class UserBattlesService {
         .createQueryBuilder('uBattle')
         .select('DATE_FORMAT(uBattle.battleTime, "%Y-%m-%d")', 'day')
         .addSelect('COUNT(uBattle.battleTime)', 'value')
-        .innerJoin(Maps, 'map', 'uBattle.mapID = map.id')
+        .innerJoin(GameMaps, 'map', 'uBattle.mapID = map.id')
         .where('uBattle.userID = :id AND uBattle.playerID = :id', {
           id: `#${id}`,
         })
@@ -71,7 +73,7 @@ export class UserBattlesService {
           'SUM(CASE WHEN uBattle.matchType NOT IN (4, 5) THEN uBattle.trophyChange ELSE 0 END)',
           'value',
         )
-        .innerJoin(Maps, 'map', 'uBattle.mapID = map.id')
+        .innerJoin(GameMaps, 'map', 'uBattle.mapID = map.id')
         .where('uBattle.userID = :id AND uBattle.playerID = :id', {
           id: `#${id}`,
         })
@@ -154,7 +156,7 @@ export class UserBattlesService {
         .addSelect('brawler.name', 'brawlerName')
         .addSelect('brawler.role', 'role')
         .innerJoin('uBattle.brawler', 'brawler')
-        .innerJoin(Maps, 'map', 'uBattle.mapID = map.id')
+        .innerJoin(GameMaps, 'map', 'uBattle.mapID = map.id')
         .where('uBattle.userID = :id AND uBattle.playerID = :id', {
           id: `#${id}`,
         })
@@ -257,7 +259,7 @@ export class UserBattlesService {
           '"isStarPlayer", uBattle.isStarPlayer))',
         'battlePlayers',
       )
-      .innerJoin(Maps, 'map', 'uBattle.mapID = map.id')
+      .innerJoin(GameMaps, 'map', 'uBattle.mapID = map.id')
       .where('uBattle.userID = :id', {
         id: `#${id}`,
       })
@@ -304,7 +306,7 @@ export class UserBattlesService {
   /** 최근 시즌 및 게임 모드 정보 반환 */
   async getSeasonAndGameMode() {
     return {
-      season: await this.seasonsService.getRecentSeason(),
+      season: this.seasonsService.getRecentSeason(),
       rotationTL: await this.eventsService.selectModeTL(),
       rotationPL: await this.eventsService.selectModePL(),
     };
@@ -327,7 +329,7 @@ export class UserBattlesService {
     }
 
     if (mode === 'all') {
-      match.matchMode = await this.configService.getModeList();
+      match.matchMode = await this.modesService.selectModeList();
     } else {
       match.matchMode = [mode];
     }

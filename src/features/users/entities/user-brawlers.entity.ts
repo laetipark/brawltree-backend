@@ -2,7 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { BaseEntity } from '~/database/entities/base.entity';
 import { Users } from './users.entity';
 import { BrawlerItems, Brawlers } from '~/brawlers/entities/brawlers.entity';
-import { Maps } from '~/maps/entities/maps.entity';
+import { GameMaps } from '~/maps/entities/maps.entity';
 
 abstract class Common extends BaseEntity {
   @PrimaryColumn({
@@ -109,9 +109,9 @@ export class UserBrawlerBattles extends Common {
   @JoinColumn({ name: 'brawler_id', referencedColumnName: 'id' })
   brawler: Brawlers;
 
-  @ManyToOne(() => Maps, (map) => map.userBrawlerBattles)
+  @ManyToOne(() => GameMaps, (map) => map.userBrawlerBattles)
   @JoinColumn({ name: 'map_id', referencedColumnName: 'id' })
-  map: Maps;
+  map: GameMaps;
 }
 
 @Entity({ name: 'user_brawler_items' })

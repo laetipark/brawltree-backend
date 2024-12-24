@@ -5,41 +5,44 @@ import { SeasonDto } from '~/seasons/dto/season.dto';
 export class SeasonsService {
   constructor() {}
 
+  convertSeasonTime(date: Date) {
+    const seasonTime = new Date(date);
+
+    seasonTime.setDate(1 + ((11 - date.getDay() + 7) % 7));
+    seasonTime.setHours(18, 0, 0, 0);
+
+    return seasonTime;
+  }
+
   /** 현재 시즌 정보 반환 */
-  async getRecentSeason(): Promise<SeasonDto> {
+  getRecentSeason(): SeasonDto {
     const date = new Date();
 
     // 주어진 날짜에 해당하는 월의 첫째날을 찾음
-    const thisMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    let prevSeasonMonth = new Date(date.getFullYear(), date.getMonth(), 1, 18);
     // 해당 달의 첫째주 목요일을 찾음
-    const beginDate = new Date(thisMonth);
-    beginDate.setDate(1 + ((11 - thisMonth.getDay() + 7) % 7));
-    beginDate.setHours(18, 0, 0, 0);
+    let prevSeasonTime = this.convertSeasonTime(prevSeasonMonth);
 
     // 현재 날짜가 해당 달의 첫째주 목요일 이전인 경우
-    if (date.getTime() < beginDate.getTime()) {
+    if (date.getDate() < prevSeasonTime.getDate()) {
       // 이전 달의 첫째주 목요일 찾기
-      thisMonth.setMonth(thisMonth.getMonth() - 1);
-      thisMonth.setDate(1);
-      beginDate.setTime(thisMonth.getTime());
-      beginDate.setDate(1 + ((11 - thisMonth.getDay() + 7) % 7));
-      beginDate.setHours(18, 0, 0, 0);
+      prevSeasonMonth = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+      prevSeasonTime = this.convertSeasonTime(prevSeasonMonth);
     }
 
     // 다음 달을 찾음
-    const nextMonth = new Date(
-      thisMonth.getFullYear(),
-      thisMonth.getMonth() + 1,
+    const currSeasonMonth = new Date(
+      prevSeasonMonth.getFullYear(),
+      prevSeasonMonth.getMonth() + 1,
       1,
+      18,
     );
     // 다음 달의 첫째주 목요일을 찾음
-    const endDate = new Date(nextMonth);
-    endDate.setDate(1 + ((11 - nextMonth.getDay() + 7) % 7));
-    endDate.setHours(18, 0, 0, 0);
+    const currSeasonTime = this.convertSeasonTime(currSeasonMonth);
 
     return {
-      beginDate,
-      endDate,
+      beginDate: prevSeasonTime,
+      endDate: currSeasonTime,
     };
   }
 }

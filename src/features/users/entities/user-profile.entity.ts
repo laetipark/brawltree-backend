@@ -76,62 +76,30 @@ export class UserProfile extends BaseEntity {
   soloMatchVictories: number;
 
   @Column({
-    name: 'brawler_rank_25',
+    name: 'brawler_rank_50',
     type: 'smallint',
     unsigned: true,
     default: () => 0,
   })
-  brawlerRank25: number;
+  brawlerRank50: number;
 
   @Column({
-    name: 'brawler_rank_30',
-    type: 'smallint',
-    unsigned: true,
-    default: () => 0,
-  })
-  brawlerRank30: number;
-
-  @Column({
-    name: 'brawler_rank_35',
-    type: 'smallint',
-    unsigned: true,
-    default: () => 0,
-  })
-  brawlerRank35: number;
-
-  @Column({
-    name: 'current_solo_league_rank',
+    name: 'current_solo_ranked',
     type: 'tinyint',
     unsigned: true,
     default: () => 0,
   })
-  currentSoloPL: number;
+  currentSoloRanked: number;
 
   @Column({
-    name: 'highest_solo_league_rank',
+    name: 'highest_solo_ranked',
     type: 'tinyint',
     unsigned: true,
     default: () => 0,
   })
-  highestSoloPL: number;
+  highestSoloRanked: number;
 
-  @Column({
-    name: 'current_team_league_rank',
-    type: 'tinyint',
-    unsigned: true,
-    default: () => 0,
-  })
-  currentTeamPL: number;
-
-  @Column({
-    name: 'highest_team_league_rank',
-    type: 'tinyint',
-    unsigned: true,
-    default: () => 0,
-  })
-  highestTeamPL: number;
-
-  @OneToOne(() => Users, (user) => user.userProfile, {
+  @OneToOne(() => Users, {
     cascade: true,
     eager: true,
   })

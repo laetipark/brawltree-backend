@@ -34,24 +34,24 @@ export class SelectUserProfileDto {
   @IsNumber()
   soloMatchVictories: number;
 
-  @IsNumber()
-  brawlerRank25: number;
+  // @IsNumber()
+  // brawlerRank25: number;
+  //
+  // @IsNumber()
+  // brawlerRank30: number;
 
   @IsNumber()
-  brawlerRank30: number;
+  brawlerRank50: number;
 
   @IsNumber()
-  brawlerRank35: number;
+  currentSoloRanked: number;
 
   @IsNumber()
-  currentSoloPL: number;
+  highestSoloRanked: number;
 
-  @IsNumber()
-  highestSoloPL: number;
+  // @IsNumber()
+  // currentTeamPL: number;
 
-  @IsNumber()
-  currentTeamPL: number;
-
-  @IsNumber()
-  highestTeamPL: number;
+  // @IsNumber()
+  // highestTeamPL: number;
 }

@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 
-import { Maps } from '../entities/maps.entity';
-import { Events } from '../entities/events.entity';
+import { GameMaps } from '../entities/maps.entity';
+import { GameEvents } from '../entities/events.entity';
 
 import { EventsService } from '../services/events.service';
 
@@ -11,19 +11,19 @@ export class EventsController {
 
   /** 금일 트로피 리그 맵 목록 조회 */
   @Get('/tl/curr')
-  async selectTLDailyEvents(): Promise<Events[]> {
+  async selectTLDailyEvents(): Promise<GameEvents[]> {
     return this.eventsService.selectRotationTLDaily();
   }
 
   /** 익일 트로피 리그 맵 목록 조회 */
   @Get('/tl/tomm')
-  async selectTLNextEvents(): Promise<Events[]> {
+  async selectTLNextEvents(): Promise<GameEvents[]> {
     return this.eventsService.findRotationTLNext();
   }
 
   /** 파워 리그 맵 목록 조회 */
   @Get('/pl')
-  async selectPLEvents(): Promise<Maps[]> {
+  async selectPLEvents(): Promise<GameMaps[]> {
     return this.eventsService.findRotationPL();
   }
 }

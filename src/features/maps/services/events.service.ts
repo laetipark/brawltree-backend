@@ -2,16 +2,19 @@ import { Injectable } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Maps } from '../entities/maps.entity';
-import { MapRotation } from '~/maps/entities/map-rotation.entity';
-import { Events } from '../entities/events.entity';
+import { GameMaps } from '../entities/maps.entity';
+import { GameMapRotation } from '~/maps/entities/map-rotation.entity';
+import { GameEvents } from '../entities/events.entity';
+import { GameModes } from '~/maps/entities/modes.entity';
 import { AppConfigService } from '~/utils/services/app-config.service';
 
 @Injectable()
 export class EventsService {
   constructor(
-    @InjectRepository(MapRotation)
-    private readonly mapRotation: Repository<MapRotation>,
+    @InjectRepository(GameMapRotation)
+    private readonly mapRotation: Repository<GameMapRotation>,
+    @InjectRepository(GameModes)
+    private readonly gameModes: Repository<GameModes>,
     private readonly configService: AppConfigService,
   ) {}
 
@@ -25,10 +28,8 @@ export class EventsService {
       .groupBy('map.mode')
       .getRawMany();
 
-    const modeList = rotation.map((map) => map.mode);
-    const filterModeList = (await this.configService.getModeList()).filter(
-      (mode) => modeList.includes(mode),
-    );
+    const filterModeList = rotation.map((map) => map.mode);
+
     filterModeList.unshift('all');
     return filterModeList;
   }
@@ -43,16 +44,14 @@ export class EventsService {
       .groupBy('map.mode')
       .getRawMany();
 
-    const modeList = rotation.map((map) => map.mode);
-    const filterModeList = (await this.configService.getModeList()).filter(
-      (mode) => modeList.includes(mode),
-    );
+    const filterModeList = rotation.map((map) => map.mode);
+
     filterModeList.unshift('all');
     return filterModeList;
   }
 
   /** 금일 트로피 리그 맵 목록 반환 */
-  async selectRotationTLDaily(): Promise<Events[]> {
+  async selectRotationTLDaily(): Promise<GameEvents[]> {
     return await this.mapRotation
       .createQueryBuilder('mRotation')
       .select('e.id', 'id')
@@ -69,7 +68,7 @@ export class EventsService {
           .subQuery()
           .select('e.id', 'id')
           .addSelect('MAX(e.startTime)', 'startTime')
-          .from(Events, 'e')
+          .from(GameEvents, 'e')
           .groupBy('e.id')
           .getQuery();
         return '(e.id, e.startTime) IN ' + subQuery;
@@ -84,7 +83,7 @@ export class EventsService {
   }
 
   /** 익일 트로피 리그 맵 목록 반환 */
-  async findRotationTLNext(): Promise<Events[]> {
+  async findRotationTLNext(): Promise<GameEvents[]> {
     return await this.mapRotation
       .createQueryBuilder('mRotation')
       .select('e.id', 'id')
@@ -101,7 +100,7 @@ export class EventsService {
           .subQuery()
           .select('e.id', 'id')
           .addSelect('MIN(e.startTime)', 'startTime')
-          .from(Events, 'e')
+          .from(GameEvents, 'e')
           .groupBy('e.id')
           .getQuery();
         return '(e.id, e.startTime) IN ' + subQuery;
@@ -116,7 +115,7 @@ export class EventsService {
   }
 
   /** 파워 리그 맵 목록 반환 */
-  async findRotationPL(): Promise<Maps[]> {
+  async findRotationPL(): Promise<GameMaps[]> {
     return await this.mapRotation
       .createQueryBuilder('mRotation')
       .select('map.id', 'mapID')

@@ -22,6 +22,7 @@ const tripleModes = [
   'godzillaCitySmash',
   'paintBrawl',
   'jellyfishing',
+  'zombiePlunder',
 ];
 const soloModes = {
   battle: ['duels'],
