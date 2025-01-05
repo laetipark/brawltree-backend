@@ -40,6 +40,7 @@ const duoModes = ['duoShowdown', 'trioShowdown'];
 export default () => ({
   axios: {
     baseURL: process.env.CRAWLER_HOST,
+    apiURL: 'https://api.brawltree.me',
     cdnURL: 'https://cdn.brawltree.me',
   },
   game: {

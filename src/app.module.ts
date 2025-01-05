@@ -8,6 +8,7 @@ import { BrawlersModule } from '~/brawlers/brawlers.module';
 import { UtilsModule } from '~/utils/utils.module';
 import AppConfig from './configs/app.config';
 import DatabaseConfig from './configs/database.config';
+import { RankingsModule } from './features/rankings/rankings.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import DatabaseConfig from './configs/database.config';
     MapsModule,
     UsersModule,
     CrewModule,
+    RankingsModule,
     UtilsModule,
   ],
   controllers: [],

@@ -20,4 +20,9 @@ export class AppConfigService {
   }> {
     return this.configService.get<any>('game.modeClass');
   }
+
+  /** api 주소 반환 */
+  getAPIUrl(): string {
+    return this.configService.get<string>('axios.apiURL');
+  }
 }

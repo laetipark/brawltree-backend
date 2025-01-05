@@ -1,1 +1,11 @@
+### 사용자 전투 기록 조회
 PATCH http://localhost:3322/brawlian/2Q22JRYJ2/battles?type=7&mode=all&stack=0
+
+### 플레이어 랭킹 조회
+GET http://localhost:3322/rankings/players
+
+### 클럽 랭킹 조회
+GET http://localhost:3322/rankings/clubs?countryCode=global
+
+### 브롤러 랭킹 조회
+GET http://localhost:3322/rankings/brawlers?countryCode=global&brawlerID=16000000
