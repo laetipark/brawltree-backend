@@ -59,6 +59,14 @@ export class BattleStats extends BaseEntity {
   })
   defeatsCount: number;
 
+  @Column({
+    name: 'star_player_count',
+    type: 'int',
+    unsigned: true,
+    default: () => 0,
+  })
+  starPlayerCount: number;
+
   @ManyToOne(() => Brawlers, (brawler) => brawler.battleStats)
   @JoinColumn({ name: 'brawler_id', referencedColumnName: 'id' })
   brawler: Brawlers;

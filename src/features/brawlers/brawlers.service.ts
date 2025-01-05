@@ -5,40 +5,40 @@ import { Repository } from 'typeorm';
 import {
   BrawlerItems,
   Brawlers,
-  BrawlerSkills,
+  BrawlerSkills
 } from './entities/brawlers.entity';
 import { BattleStats } from './entities/battle-stats.entity';
 import { GameMaps } from '~/maps/entities/maps.entity';
 import { GameModes } from '~/maps/entities/modes.entity';
 
 @Injectable()
-export class BrawlersService {
+export class BrawlersService{
   constructor(
     @InjectRepository(Brawlers)
-    private brawlers: Repository<Brawlers>,
+    private brawlers:Repository<Brawlers>,
     @InjectRepository(BrawlerSkills)
-    private brawlerSkills: Repository<BrawlerSkills>,
+    private brawlerSkills:Repository<BrawlerSkills>,
     @InjectRepository(BrawlerItems)
-    private brawlerItems: Repository<BrawlerItems>,
+    private brawlerItems:Repository<BrawlerItems>,
     @InjectRepository(BattleStats)
-    private brawlerStats: Repository<BattleStats>,
+    private brawlerStats:Repository<BattleStats>,
     @InjectRepository(GameModes)
-    private gameModes: Repository<GameModes>,
-  ) {}
+    private gameModes:Repository<GameModes>
+  ){}
 
-  async getBrawler(id: string) {
+  async getBrawler(id:string){
     return await this.brawlerSkills.findOne({
-      where: {
-        brawlerID: id,
-      },
+      where:{
+        brawlerID:id
+      }
     });
   }
 
-  async getBrawlers(): Promise<Brawlers[]> {
+  async getBrawlers():Promise<Brawlers[]>{
     return await this.brawlers.find({});
   }
 
-  async selectBrawlerSummary() {
+  async selectBrawlerSummary(){
     return [
       await this.brawlerStats
         .createQueryBuilder('bs')
@@ -46,11 +46,11 @@ export class BrawlersService {
         .addSelect('b.name', 'brawlerName')
         .addSelect(
           'SUM(bs.matchCount) * 100 / SUM(SUM(bs.matchCount)) OVER()',
-          'trophyPickRate',
+          'trophyPickRate'
         )
         .addSelect(
           'SUM(bs.victoriesCount) * 100 / (SUM(bs.victoriesCount) + SUM(bs.defeatsCount))',
-          'trophyVictoryRate',
+          'trophyVictoryRate'
         )
         .innerJoin('bs.brawler', 'b')
         .where('bs.matchType = 0')
@@ -66,11 +66,11 @@ export class BrawlersService {
         .addSelect('b.name', 'brawlerName')
         .addSelect(
           'SUM(bs.matchCount) * 100 / SUM(SUM(bs.matchCount)) OVER()',
-          'rankedPickRate',
+          'rankedPickRate'
         )
         .addSelect(
           'SUM(bs.victoriesCount) * 100 / (SUM(bs.victoriesCount) + SUM(bs.defeatsCount))',
-          'rankedVictoryRate',
+          'rankedVictoryRate'
         )
         .innerJoin('bs.brawler', 'b')
         .where('bs.matchType = 2')
@@ -79,43 +79,43 @@ export class BrawlersService {
         .orderBy('rankedPickRate', 'DESC')
         .addOrderBy('rankedVictoryRate', 'DESC')
         .limit(10)
-        .getRawMany(),
+        .getRawMany()
     ];
   }
 
-  async getBrawlerStats() {
+  async getBrawlerStats(){
     return await this.brawlerStats
       .createQueryBuilder('bs')
       .select('bs.brawlerID', 'brawlerID')
       .addSelect('bs.matchType', 'matchType')
       .addSelect(
         'SUM(bs.matchCount) * 100 / SUM(SUM(bs.matchCount)) OVER(PARTITION BY bs.matchType)',
-        'pickRate',
+        'pickRate'
       )
       .addSelect(
         'SUM(bs.victoriesCount) * 100 / (SUM(bs.victoriesCount) + SUM(bs.defeatsCount))',
-        'victoryRate',
+        'victoryRate'
       )
       .groupBy('bs.brawlerID')
       .addGroupBy('bs.matchType')
       .getRawMany();
   }
 
-  async getBrawlerItems(id: string) {
+  async getBrawlerItems(id:string){
     return await this.brawlerItems.find({
-      where: {
-        brawlerID: id,
-      },
+      where:{
+        brawlerID:id
+      }
     });
   }
 
-  async getBrawlerMaps() {
+  async getBrawlerMaps(){
     const modes = (
       await this.gameModes
         .createQueryBuilder('modes')
         .select('modes.modeName', 'modeName')
         .where('modes.modeType NOT IN (:type)', {
-          type: [3, 2],
+          type:[3, 2]
         })
         .getRawMany()
     ).map((m) => m.modeName);
@@ -126,11 +126,11 @@ export class BrawlersService {
       .addSelect('bs.brawlerID', 'brawlerID')
       .addSelect(
         'ROUND(SUM(bs.matchCount) * 100 / SUM(SUM(bs.matchCount)) OVER(PARTITION BY bs.mapID), 2)',
-        'pickRate',
+        'pickRate'
       )
       .addSelect(
         'ROUND(SUM(bs.victoriesCount) * 100 / (SUM(bs.victoriesCount) + SUM(bs.defeatsCount)), 2)',
-        'victoryRate',
+        'victoryRate'
       )
       .addSelect('b.name', 'brawlerName')
       .addSelect('m.mode', 'mode')
@@ -138,7 +138,7 @@ export class BrawlersService {
       .leftJoin('bs.brawler', 'b')
       .innerJoin(GameMaps, 'm', 'bs.mapID = m.id')
       .where('m.mode NOT IN (:modes)', {
-        modes: modes,
+        modes:modes
       })
       .groupBy('bs.brawlerID')
       .addGroupBy('bs.mapID')
@@ -156,10 +156,10 @@ export class BrawlersService {
    * @param gender 브롤러 성별
    */
   async getRandomBrawler(
-    rarity: string,
-    role: string,
-    gender: string,
-  ): Promise<Brawlers> {
+    rarity:string,
+    role:string,
+    gender:string
+  ):Promise<Brawlers>{
     return await this.brawlers
       .createQueryBuilder('b')
       .select('b.id', 'id')
@@ -169,13 +169,13 @@ export class BrawlersService {
       .addSelect('b.gender', 'gender')
       .addSelect('b.icon', 'icon')
       .where('b.rarity LIKE :rarity', {
-        rarity: rarity || '%%',
+        rarity:rarity || '%%'
       })
       .andWhere('b.role LIKE :role', {
-        role: role || '%%',
+        role:role || '%%'
       })
       .andWhere('b.gender LIKE :gender', {
-        gender: gender || '%%',
+        gender:gender || '%%'
       })
       .orderBy('RAND()')
       .limit(1)
