@@ -6,32 +6,32 @@ import { Brawlers } from '~/brawlers/entities/brawlers.entity';
 export class BattleStats extends BaseEntity {
   @PrimaryColumn({
     name: 'map_id',
-    length: 8,
+    length: 8
   })
   mapID: string;
 
   @PrimaryColumn({
     name: 'brawler_id',
-    length: 8,
+    length: 8
   })
   brawlerID: string;
 
   @PrimaryColumn({
     name: 'match_type',
-    type: 'tinyint',
+    type: 'tinyint'
   })
   matchType: number;
 
   @PrimaryColumn({
     name: 'match_grade',
-    type: 'tinyint',
+    type: 'tinyint'
   })
   matchGrade: number;
 
   @Column({
     name: 'mode_name',
     type: 'varchar',
-    length: 12,
+    length: 12
   })
   mode: string;
 
@@ -39,7 +39,7 @@ export class BattleStats extends BaseEntity {
     name: 'match_count',
     type: 'int',
     unsigned: true,
-    default: () => 0,
+    default: () => 0
   })
   matchCount: number;
 
@@ -47,7 +47,7 @@ export class BattleStats extends BaseEntity {
     name: 'victories_count',
     type: 'int',
     unsigned: true,
-    default: () => 0,
+    default: () => 0
   })
   victoriesCount: number;
 
@@ -55,7 +55,7 @@ export class BattleStats extends BaseEntity {
     name: 'defeats_count',
     type: 'int',
     unsigned: true,
-    default: () => 0,
+    default: () => 0
   })
   defeatsCount: number;
 
@@ -63,7 +63,7 @@ export class BattleStats extends BaseEntity {
     name: 'star_player_count',
     type: 'int',
     unsigned: true,
-    default: () => 0,
+    default: () => 0
   })
   starPlayerCount: number;
 

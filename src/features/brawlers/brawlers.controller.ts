@@ -12,7 +12,7 @@ export class BrawlersController {
     return {
       brawlers: await this.brawlerService.getBrawlers(),
       stats: await this.brawlerService.getBrawlerStats(),
-      maps: await this.brawlerService.getBrawlerMaps(),
+      maps: await this.brawlerService.getBrawlerMaps()
     };
   }
 
@@ -20,7 +20,7 @@ export class BrawlersController {
   async selectRandomBrawler(
     @Query('rarity') rarity: string,
     @Query('role') role: string,
-    @Query('gender') gender: string,
+    @Query('gender') gender: string
   ): Promise<Brawlers> {
     return await this.brawlerService.getRandomBrawler(rarity, role, gender);
   }
@@ -32,7 +32,7 @@ export class BrawlersController {
 
     return {
       brawlersTrophy: brawlersTrophy,
-      brawlersRanked: brawlersRanked,
+      brawlersRanked: brawlersRanked
     };
   }
 
@@ -40,7 +40,7 @@ export class BrawlersController {
   async selectBrawlerSummary(@Param('id') id: string) {
     return {
       info: await this.brawlerService.getBrawler(id),
-      items: await this.brawlerService.getBrawlerItems(id),
+      items: await this.brawlerService.getBrawlerItems(id)
     };
   }
 }

@@ -4,7 +4,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  PrimaryColumn,
+  PrimaryColumn
 } from 'typeorm';
 import { BaseEntity, SoftDeleteEntity } from '~/database/entities/base.entity';
 import { BattleStats } from './battle-stats.entity';
@@ -12,40 +12,40 @@ import { UserBattles } from '~/users/entities/user-battles.entity';
 import {
   UserBrawlerBattles,
   UserBrawlerItems,
-  UserBrawlers,
+  UserBrawlers
 } from '~/users/entities/user-brawlers.entity';
 
 @Entity({ name: 'brawlers' })
 export class Brawlers extends BaseEntity {
   @PrimaryColumn({
-    length: 8,
+    length: 8
   })
   id: string;
 
   @Column({
     type: 'varchar',
-    length: 20,
+    length: 20
   })
   name: string;
 
   @Column({
     type: 'varchar',
     length: 20,
-    nullable: true,
+    nullable: true
   })
   rarity: string;
 
   @Column({
     type: 'varchar',
     length: 20,
-    nullable: true,
+    nullable: true
   })
   role: string;
 
   @Column({
     type: 'varchar',
     length: 10,
-    nullable: true,
+    nullable: true
   })
   gender: string;
 
@@ -53,7 +53,7 @@ export class Brawlers extends BaseEntity {
     name: 'discord_pin',
     type: 'varchar',
     length: 40,
-    nullable: true,
+    nullable: true
   })
   icon: string;
 

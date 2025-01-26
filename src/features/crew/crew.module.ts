@@ -18,13 +18,13 @@ import { MapsModule } from '~/maps/maps.module';
       Users,
       UserBattles,
       UserRecords,
-      UserFriends,
+      UserFriends
     ]),
     MapsModule,
     SeasonsModule,
-    UtilsModule,
+    UtilsModule
   ],
   controllers: [CrewController],
-  providers: [CrewService],
+  providers: [CrewService]
 })
 export class CrewModule {}

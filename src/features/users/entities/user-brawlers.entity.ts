@@ -8,13 +8,13 @@ abstract class Common extends BaseEntity {
   @PrimaryColumn({
     name: 'user_id',
     type: 'varchar',
-    length: 20,
+    length: 20
   })
   userID: string;
 
   @PrimaryColumn({
     name: 'brawler_id',
-    length: 8,
+    length: 8
   })
   brawlerID: string;
 }
@@ -23,32 +23,32 @@ abstract class Common extends BaseEntity {
 export class UserBrawlers extends Common {
   @Column({
     name: 'brawler_power',
-    type: 'tinyint',
+    type: 'tinyint'
   })
   brawlerPower: number;
 
   @Column({
     name: 'begin_trophies',
-    type: 'smallint',
+    type: 'smallint'
   })
   beginTrophies: number;
 
   @Column({
     name: 'current_trophies',
-    type: 'smallint',
+    type: 'smallint'
   })
   currentTrophies: number;
 
   @Column({
     name: 'highest_trophies',
-    type: 'smallint',
+    type: 'smallint'
   })
   highestTrophies: number;
 
   @Column({
     name: 'brawler_rank',
     type: 'varchar',
-    length: 2,
+    length: 2
   })
   brawlerRank: string;
 
@@ -65,27 +65,34 @@ export class UserBrawlers extends Common {
 export class UserBrawlerBattles extends Common {
   @PrimaryColumn({
     name: 'map_id',
-    length: 8,
+    length: 8
   })
   mapID: string;
 
   @PrimaryColumn({
     name: 'match_type',
-    type: 'tinyint',
+    type: 'tinyint'
   })
   matchType: number;
 
   @PrimaryColumn({
     name: 'match_grade',
-    type: 'tinyint',
+    type: 'tinyint'
   })
   matchGrade: number;
+
+  @Column({
+    name: 'mode_name',
+    type: 'varchar',
+    length: 12
+  })
+  mode: string;
 
   @Column({
     name: 'match_count',
     type: 'int',
     unsigned: true,
-    nullable: true,
+    nullable: true
   })
   matchCount: number;
 
@@ -93,7 +100,7 @@ export class UserBrawlerBattles extends Common {
     name: 'victories_count',
     type: 'int',
     unsigned: true,
-    nullable: true,
+    nullable: true
   })
   victoriesCount: number;
 
@@ -101,9 +108,17 @@ export class UserBrawlerBattles extends Common {
     name: 'defeats_count',
     type: 'int',
     unsigned: true,
-    nullable: true,
+    nullable: true
   })
   defeatsCount: number;
+
+  @Column({
+    name: 'star_player_count',
+    type: 'int',
+    unsigned: true,
+    default: () => 0
+  })
+  starPlayerCount: number;
 
   @ManyToOne(() => Brawlers, (brawler) => brawler.userBrawlerBattles)
   @JoinColumn({ name: 'brawler_id', referencedColumnName: 'id' })
@@ -118,7 +133,7 @@ export class UserBrawlerBattles extends Common {
 export class UserBrawlerItems extends Common {
   @PrimaryColumn({
     name: 'item_id',
-    length: 8,
+    length: 8
   })
   itemID: string;
 
@@ -130,12 +145,12 @@ export class UserBrawlerItems extends Common {
   @JoinColumn([
     {
       name: 'brawler_id',
-      referencedColumnName: 'brawlerID',
+      referencedColumnName: 'brawlerID'
     },
     {
       name: 'item_id',
-      referencedColumnName: 'id',
-    },
+      referencedColumnName: 'id'
+    }
   ])
   brawlerItem: BrawlerItems;
 }

@@ -1,28 +1,28 @@
 import { Column, Entity, OneToMany, OneToOne, PrimaryColumn } from 'typeorm';
 import { SoftDeleteEntity } from '~/database/entities/base.entity';
-import { UserBattles } from './user-battles.entity';
+import { UserProfile } from '~/users/entities/user-profile.entity';
+import { UserBattles } from '~/users/entities/user-battles.entity';
 import { UserBrawlers } from './user-brawlers.entity';
-import { UserProfile } from './user-profile.entity';
 import { UserFriends, UserRecords } from '~/crew/entities/crew.entity';
 
 @Entity({ name: 'users' })
 export class Users extends SoftDeleteEntity {
   @PrimaryColumn({
     type: 'varchar',
-    length: 20,
+    length: 20
   })
   id: string;
 
   @Column({
     name: 'last_battled_on',
-    type: 'timestamp',
+    type: 'timestamp'
   })
   lastBattledOn: Date;
 
   @Column({
     type: 'varchar',
     length: 20,
-    nullable: true,
+    nullable: true
   })
   crew: string;
 
@@ -30,15 +30,21 @@ export class Users extends SoftDeleteEntity {
     name: 'crew_name',
     type: 'varchar',
     length: 30,
-    nullable: true,
+    nullable: true
   })
   crewName: string;
 
   @Column({
-    name: 'is_cycle',
-    default: false,
+    name: 'is_cron_item',
+    default: false
   })
-  isCycle: boolean;
+  isCronItem: boolean;
+
+  @Column({
+    name: 'is_cron',
+    default: false
+  })
+  isCron: boolean;
 
   @OneToOne(() => UserProfile, (user) => user.user)
   userProfile: UserProfile;

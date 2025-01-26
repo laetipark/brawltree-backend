@@ -13,7 +13,7 @@ export class UserProfileService {
     private readonly userProfile: Repository<UserProfile>,
     @InjectRepository(UserBattles)
     private readonly userBattles: Repository<UserBattles>,
-    private readonly seasonsService: SeasonsService,
+    private readonly seasonsService: SeasonsService
   ) {}
 
   /** 사용자 프로필 정보 반환
@@ -24,10 +24,10 @@ export class UserProfileService {
       .createQueryBuilder('uBattle')
       .select('SUM(uBattle.trophyChange)', 'trophyChange')
       .where('uBattle.userID = :id AND uBattle.playerID = :id', {
-        id: `#${id}`,
+        id: `#${id}`
       })
       .andWhere('uBattle.battleTime >= :season', {
-        season: season.beginDate,
+        season: season.beginDate
       })
       .limit(1)
       .getRawOne();
@@ -35,10 +35,10 @@ export class UserProfileService {
     return {
       ...(await this.userProfile.findOne({
         where: {
-          userID: `#${id}`,
-        },
+          userID: `#${id}`
+        }
       })),
-      trophyChange: trophyChange.trophyChange,
+      trophyChange: trophyChange.trophyChange
     };
   }
 }

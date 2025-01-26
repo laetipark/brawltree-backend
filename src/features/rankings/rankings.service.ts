@@ -25,7 +25,7 @@ export class RankingsService{
 
       return res.data?.items || [];
     }catch(error){
-      Logger.error(error, 'SelectUser');
+      Logger.error(error, 'getRankingsFromAPI');
     }
 
     return null;

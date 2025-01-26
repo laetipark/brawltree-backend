@@ -11,7 +11,7 @@ export class UsersService {
   constructor(
     @InjectRepository(Users)
     private readonly users: Repository<Users>,
-    private readonly httpService: HttpService,
+    private readonly httpService: HttpService
   ) {}
 
   /** 이름에 입력값이 포함된 사용자 조회 결과 반환
@@ -28,13 +28,13 @@ export class UsersService {
       // .addSelect('uProfile.currentTeamPL', 'currentTeamPL')
       .innerJoin('user.userProfile', 'uProfile')
       .where('uProfile.name LIKE :nickname', {
-        nickname: `%${keyword}%`,
+        nickname: `%${keyword}%`
       })
       .orWhere('user.crewName LIKE :nickname', {
-        nickname: `%${keyword}%`,
+        nickname: `%${keyword}%`
       })
       .orWhere('user.id LIKE :id', {
-        id: `#${keyword}%`,
+        id: `#${keyword}%`
       })
       .getRawMany();
   }
@@ -52,7 +52,7 @@ export class UsersService {
       .addSelect('uProfile.currentSoloRanked', 'currentSoloRanked')
       .innerJoin('user.userProfile', 'uProfile')
       .where('user.id IN (:ids)', {
-        ids: userIDs,
+        ids: userIDs
       })
       .getRawMany();
   }
@@ -71,7 +71,7 @@ export class UsersService {
       .addSelect('uProfile.profileIcon', 'profileIcon')
       .innerJoin('user.userProfile', 'uProfile')
       .where(`user.id = :id`, {
-        id: `#${id}`,
+        id: `#${id}`
       })
       .limit(1)
       .getRawOne();
@@ -83,22 +83,22 @@ export class UsersService {
   async updateUserFromCrawler(user: any, id: string) {
     const isResponse = {
       insert: false,
-      update: false,
+      update: false
     };
 
     try {
       // 사용자 정보 추가
-      if (!user) {
+      if(!user) {
         const res = await firstValueFrom(
-          this.httpService.post(`brawlian/${id}`),
+          this.httpService.post(`brawlian/${id}`)
         );
-        if (res.status === 201) {
+        if(res.status === 201) {
           isResponse.insert = true;
         }
       }
 
       // 사용자 정보 갱신
-      if (
+      if(
         isResponse.insert ||
         (user &&
           (new Date(new Date(user.updatedAt).getTime() + 2 * 60 * 1000) <
@@ -106,13 +106,13 @@ export class UsersService {
             new Date(user.lastBattledOn).getTime() < 1001))
       ) {
         const res = await firstValueFrom(
-          this.httpService.patch(`brawlian/${id}`),
+          this.httpService.patch(`brawlian/${id}`)
         );
-        if (res.status === 200) {
+        if(res.status === 200) {
           isResponse.update = true;
         }
       }
-    } catch (error) {
+    } catch(error) {
       Logger.error(error, 'SelectUser');
     }
 

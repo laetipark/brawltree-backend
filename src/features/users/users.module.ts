@@ -15,7 +15,7 @@ import { UserBattles } from './entities/user-battles.entity';
 import {
   UserBrawlerBattles,
   UserBrawlerItems,
-  UserBrawlers,
+  UserBrawlers
 } from './entities/user-brawlers.entity';
 import { Brawlers } from '~/brawlers/entities/brawlers.entity';
 
@@ -28,18 +28,18 @@ import { Brawlers } from '~/brawlers/entities/brawlers.entity';
       UserBattles,
       UserBrawlers,
       UserBrawlerBattles,
-      UserBrawlerItems,
+      UserBrawlerItems
     ]),
     MapsModule,
     SeasonsModule,
-    UtilsModule,
+    UtilsModule
   ],
   controllers: [UsersController],
   providers: [
     UsersService,
     UserProfileService,
     UserBattlesService,
-    UserBrawlersService,
-  ],
+    UserBrawlersService
+  ]
 })
 export class UsersModule {}

@@ -13,14 +13,12 @@ import { SelectUserRecordDto } from '~/crew/dto/select-user-record.dto';
 @Injectable()
 export class CrewService {
   constructor(
-    @InjectRepository(BattleStats)
-    private readonly brawlerStats: Repository<BattleStats>,
     @InjectRepository(Users)
     private readonly users: Repository<Users>,
     @InjectRepository(UserFriends)
     private readonly userFriends: Repository<UserFriends>,
     @InjectRepository(UserRecords)
-    private readonly userRecords: Repository<UserRecords>,
+    private readonly userRecords: Repository<UserRecords>
   ) {}
 
   async selectMemberTable() {
@@ -35,7 +33,7 @@ export class CrewService {
       .addSelect('uProfile.currentSoloRanked', 'currentSoloRanked')
       .addSelect('uProfile.highestSoloRanked', 'highestSoloRanked')
       .innerJoin('user.userProfile', 'uProfile')
-      .where('user.crew IN ("Blossom", "Team", "Lucy" )')
+      .where('user.crew IN ("Blossom", "Team", "Lucy")')
       .orderBy('uProfile.currentTrophies', 'DESC')
       .getRawMany();
 
@@ -57,10 +55,10 @@ export class CrewService {
       .addSelect('SUM(uRecord.defeatsCount)', 'defeatsCount')
       .addSelect(
         'ROUND(uRecord.victoriesCount * 100 / SUM(uRecord.victoriesCount + uRecord.defeatsCount), 2)',
-        'victoryRate',
+        'victoryRate'
       )
       .where('uRecord.userID = :id', {
-        id: `#${id}`,
+        id: `#${id}`
       })
       .groupBy('uRecord.matchType')
       .addGroupBy('uRecord.matchGrade')
@@ -74,14 +72,14 @@ export class CrewService {
             matchType,
             matchCount,
             victoriesCount,
-            defeatsCount,
+            defeatsCount
           }: SelectUserRecordDto = item;
-          if (!totalData[matchType]) {
+          if(!totalData[matchType]) {
             totalData[matchType] = {
               matchType,
               matchCount: 0,
               victoriesCount: 0,
-              defeatsCount: 0,
+              defeatsCount: 0
             };
           }
 
@@ -95,18 +93,18 @@ export class CrewService {
           const mode = current.mode;
 
           // matchType에 따라 그룹화
-          if (!result[matchType]) {
+          if(!result[matchType]) {
             result[matchType] = {};
           }
 
           // mode에 따라 그룹화
-          if (!result[matchType][mode]) {
+          if(!result[matchType][mode]) {
             result[matchType][mode] = {
               mode,
               items: [],
               matchCount: 0,
               victoriesCount: 0,
-              defeatsCount: 0,
+              defeatsCount: 0
             };
           }
           result[matchType][mode].matchCount += current.matchCount;
@@ -125,7 +123,7 @@ export class CrewService {
             victoryRate:
               (totalData[key].victoriesCount * 100) /
               (totalData[key].victoriesCount + totalData[key].defeatsCount),
-            matchList: keyData[key],
+            matchList: keyData[key]
           };
         });
       });
@@ -145,12 +143,12 @@ export class CrewService {
       .addSelect('SUM(uFriend.defeatsCount)', 'defeatsCount')
       .addSelect(
         'ROUND(uFriend.victoriesCount * 100 / SUM(uFriend.victoriesCount + uFriend.defeatsCount), 2)',
-        'victoryRate',
+        'victoryRate'
       )
       .innerJoin(Users, 'user', 'uFriend.friendID = user.id')
       .innerJoin(UserProfile, 'uProfile', 'uFriend.friendID = uProfile.userID')
       .where('uFriend.userID = :id', {
-        id: `#${id}`,
+        id: `#${id}`
       })
       .groupBy('uFriend.friendID')
       .addGroupBy('uFriend.matchType')
@@ -169,17 +167,17 @@ export class CrewService {
             friendName,
             matchCount,
             victoriesCount,
-            defeatsCount,
+            defeatsCount
             // friendPoints,
           } = item;
-          if (!totalData[friendID]) {
+          if(!totalData[friendID]) {
             totalData[friendID] = {
               friendID,
               friendName,
               profileIcon,
               matchCount: 0,
               victoriesCount: 0,
-              defeatsCount: 0,
+              defeatsCount: 0
               // friendPoints: 0,
             };
           }
@@ -202,7 +200,7 @@ export class CrewService {
             victoryRate:
               (totalData[key].victoriesCount * 100) /
               (totalData[key].victoriesCount + totalData[key].defeatsCount),
-            matchList: keyData[key],
+            matchList: keyData[key]
           };
         });
       });

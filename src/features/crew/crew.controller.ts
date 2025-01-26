@@ -4,8 +4,7 @@ import { CrewService } from './crew.service';
 
 @Controller('crew')
 export class CrewController {
-  constructor(private crewService: CrewService) {
-  }
+  constructor(private crewService: CrewService) {}
 
   @Get('/members')
   async selectMembersTable() {
@@ -24,7 +23,7 @@ export class CrewController {
 
     return {
       friends: await this.crewService.selectMemberFriends(id),
-      seasonRecords: await this.crewService.selectMemberSeason(id),
+      seasonRecords: await this.crewService.selectMemberSeason(id)
     };
   }
 }

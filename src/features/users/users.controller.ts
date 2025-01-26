@@ -5,7 +5,7 @@ import {
   NotFoundException,
   Param,
   ParseIntPipe,
-  Query,
+  Query
 } from '@nestjs/common';
 import { UsersService } from './services/users.service';
 import { UserProfileService } from './services/user-profile.service';
@@ -19,7 +19,7 @@ export class UsersController {
     private readonly usersService: UsersService,
     private readonly userProfileService: UserProfileService,
     private readonly userBattlesService: UserBattlesService,
-    private readonly userBrawlersService: UserBrawlersService,
+    private readonly userBrawlersService: UserBrawlersService
   ) {}
 
   /** 키워드(닉네임 또는 태그)에 입력값이 포함된 사용자 조회
@@ -46,18 +46,18 @@ export class UsersController {
     const user = await this.usersService.selectUser(id);
     const { insert, update } = await this.usersService.updateUserFromCrawler(
       user,
-      id,
+      id
     );
 
-    if (!user && !insert && !update) {
+    if(!user && !insert && !update) {
       throw new NotFoundException(
-        `${FailureResponseEnum.USER_NOT_FOUND}: ${id}`,
+        `${FailureResponseEnum.USER_NOT_FOUND}: ${id}`
       );
     }
 
     return {
       user: await this.usersService.selectUser(id),
-      profile: await this.userProfileService.selectUserProfile(id),
+      profile: await this.userProfileService.selectUserProfile(id)
     };
   }
 
@@ -67,7 +67,7 @@ export class UsersController {
   @Get('/:id/brawler/:brawler')
   async selectUserBrawler(
     @Param('id') id: string,
-    @Param('brawler') brawlerID: string,
+    @Param('brawler') brawlerID: string
   ) {
     // return await this.userBrawlersService.selectUserBrawler(id, brawlerID);
   }
@@ -82,7 +82,7 @@ export class UsersController {
     return {
       brawlers,
       brawlerItems,
-      brawlerGraphs,
+      brawlerGraphs
     };
   }
 
@@ -97,7 +97,7 @@ export class UsersController {
     @Param('id') id: string,
     @Query('type') type: string,
     @Query('mode') mode: string,
-    @Query('stack', ParseIntPipe) stack: number,
+    @Query('stack', ParseIntPipe) stack: number
   ) {
     const { season, rotationTL, rotationPL } =
       await this.userBattlesService.getSeasonAndGameMode();
@@ -109,7 +109,7 @@ export class UsersController {
         type,
         mode,
         season,
-        stack || 1,
+        stack || 1
       );
 
     return {
@@ -120,7 +120,7 @@ export class UsersController {
       battles: userBattleLogs,
       rotationTL: rotationTL,
       rotationPL: rotationPL,
-      season: season,
+      season: season
     };
   }
 }
