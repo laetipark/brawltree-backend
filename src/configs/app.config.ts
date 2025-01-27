@@ -22,7 +22,7 @@ const tripleModes = [
   'godzillaCitySmash',
   'paintBrawl',
   'jellyfishing',
-  'zombiePlunder',
+  'zombiePlunder'
 ];
 const soloModes = {
   battle: ['duels'],
@@ -32,8 +32,8 @@ const soloModes = {
     'holdTheTrophy',
     'loneStar',
     'hunters',
-    'trophyEscape',
-  ],
+    'trophyEscape'
+  ]
 };
 const duoModes = ['duoShowdown', 'trioShowdown'];
 
@@ -41,20 +41,20 @@ export default () => ({
   axios: {
     baseURL: process.env.CRAWLER_HOST,
     apiURL: 'https://api.brawltree.me',
-    cdnURL: 'https://cdn.brawltree.me',
+    cdnURL: 'https://cdn.brawltree.me'
   },
   game: {
     modeClass: {
       tripleModes: tripleModes,
       soloModes: soloModes,
-      duoModes: duoModes,
+      duoModes: duoModes
     },
     typeList: [0, 2, 3, 4, 5, 6],
     modeList: [
       ...tripleModes,
       ...soloModes.battle,
       ...soloModes.survive,
-      ...duoModes,
-    ],
-  },
+      ...duoModes
+    ]
+  }
 });
