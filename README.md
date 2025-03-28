@@ -1,73 +1,23 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+![BrawlTree](https://brawltree.me/images/logo/brawltree/logo_horizontal.png)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-  
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+# 📆 Brawl Tree Backend
 
-## Description
+## #️⃣ 소개
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+브롤스타즈 `게임 요소`나 `사용자`들의 `전투 기록 데이터` 검색을 위한 **`Backend`** 서버.
 
-## Installation
+<br>
 
-```bash
-$ npm install
-```
+## 🛠️ 기술 스택
 
-## Running the app
+![NODE.JS](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)
+![NESTJS](https://img.shields.io/badge/Nest.js-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)
+![TYPESCRIPT](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![TYPEORM](https://img.shields.io/badge/TypeORM-FCAD03?style=for-the-badge&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDI1NiAyMzMiPjxwYXRoIGZpbGw9IiMzMzMiIGQ9Ik0xMzkgMzJhNiA2IDAgMCAxIDUgNnY2NWE2IDYgMCAwIDEtNSA1SDg2YTYgNiAwIDAgMS02LTVWMzhhNiA2IDAgMCAxIDYtNmg1M1ptMCAzSDg2YTMgMyAwIDAgMC0zIDN2NjVhMyAzIDAgMCAwIDMgM2g1M2EzIDMgMCAwIDAgMy0zVjM4YTMgMyAwIDAgMC0zLTNaTTkzIDkzdjNoLTN2LTNoM1ptNDIgMHYzSDk1di0zaDQwWk05MyA3NnY0aC0zdi00aDNabTQyIDB2NEg5NXYtNGg0MFpNOTMgNjF2M2gtM3YtM2gzWm00MiAwdjNIOTV2LTNoNDBabTAtMTV2NEg5MHYtNGg0NVptNCA3NmE2IDYgMCAwIDEgNSA1djY1YTYgNiAwIDAgMS01IDZIODZhNiA2IDAgMCAxLTYtNnYtNjVhNiA2IDAgMCAxIDYtNWg1M1ptMCAySDg2YTMgMyAwIDAgMC0zIDN2NjVhMyAzIDAgMCAwIDMgM2g1M2EzIDMgMCAwIDAgMy0zdi02NWEzIDMgMCAwIDAtMy0zWm0tNDYgNTh2NGgtM3YtNGgzWm00MiAwdjRIOTV2LTRoNDBabS00Mi0xNnYzaC0zdi0zaDNabTQyIDB2M0g5NXYtM2g0MFptLTQyLTE2djRoLTN2LTRoM1ptNDIgMHY0SDk1di00aDQwWm0wLTE1djRIOTB2LTRoNDVabTE5LTY1djNoMTl2ODZoLTE5djNoMjJWNzBoLTN6TTE5IDE1QzIzIDkgMjkgNSAzNSAzaDJsMS0xaDNsMS0xaDZsMS0xaDd2MTVjLTEzLTEtMTkgMy0yMiA3djFhMTMgMTMgMCAwIDAtMSAydjFoLTF2NjdsLTEgMXY5aC0xdjJjLTIgNS02IDktMTYgMTEgOSAyIDE0IDYgMTYgMTF2MmwxIDF2OGwxIDJ2NjZoMXYyYzIgNSA4IDEwIDIyIDloMXYxNUg0NmwtMS0xaC0yYTU5IDU5IDAgMCAxLTEgMCA1NiA1NiAwIDAgMS0xIDBoLTF2LTFoLTJjLTgtMi0xNS02LTIwLTE0YTMxIDMxIDAgMCAxIDE0LTI0bC0xIDFjLTggNS0xMiAxMy0xMyAyM2EyNyAyNyAwIDAgMS0yLTEydi05bC0xLTZ2LTIybC0xLTEwdi0xN2MwLTgtMy0xMi03LTEzdi0xSDZhOSA5IDAgMCAwLTEgMHYtMUgxYTMzIDMzIDAgMCAwLTEgMHYtMThoNmMzLTIgOC01IDgtMTRWODBsMS0xMVY0MmwxLTZ2LThjMC01IDEtMTAgMy0xM1ptMTgxIDBWMGgxMHYxaDVsMSAxaDNjOCAzIDE1IDcgMTkgMTVhMjcgMjcgMCAwIDEgMiAxMXY5bDEgM3YyNmwxIDl2MTdjMCA4IDQgMTIgNyAxNGgydjFoNXYxOGEyNSAyNSAwIDAgMC0yIDBoLTNsLTEgMWMtNCAxLTggNS04IDEzdjEzbC0xIDExdjI3bC0xIDd2N2EyOCAyOCAwIDAgMS0xIDl2MWMtNCA5LTEzIDE0LTIyIDE2aC0xbC0xIDFoLTZ2MWgtOXYtMTVjMTQgMSAyMC0zIDIyLThoMXYtM2gxdi02N2wxLTF2LThsMS0yIDEtMmMyLTUgNy04IDE1LTEwLTExLTItMTUtNy0xNi0xM2wtMS0xdi04bC0xLTJWMzlhMjcgMjcgMCAwIDAgMTEtMTNoMWEyOCAyOCAwIDAgMS0xMiAxM1YyN2ExNSAxNSAwIDAgMCAwLTEgMTUgMTUgMCAwIDAtMSAwdi0yYy0yLTUtOC0xMC0yMi05aC0xWiIvPjwvc3ZnPg==)
+![MYSQL](https://img.shields.io/badge/MySQL-00758F?style=for-the-badge&logo=mysql&logoColor=white)
+![REDIS](https://img.shields.io/badge/Redis-FF4438?style=for-the-badge&logo=redis&logoColor=white)
 
-```bash
-# development
-$ npm run start
+<br>
 
-# watch mode
-$ npm run start:dev
+## 🌏 요청 API 명세
 
-# production mode
-$ npm run start:prod
-```
-
-## Test
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-  Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
