@@ -20,8 +20,16 @@ export class UserBrawlersService {
   ) {}
 
   async selectUserBrawlers(id: string) {
-    const season = await this.seasonsService.getRecentSeason();
-    const brawlersSummary = await this.brawlers
+    const season = this.seasonsService.getRecentSeason();
+    const brawlers = await this.brawlers
+      .createQueryBuilder('brawler')
+      .select('brawler.id', 'brawlerID')
+      .addSelect('brawler.name', 'name')
+      .addSelect('brawler.rarity', 'rarity')
+      .orderBy('brawler.id', 'ASC')
+      .getRawMany();
+
+    const userBrawlers = await this.brawlers
       .createQueryBuilder('brawler')
       .select('brawler.id', 'brawlerID')
       .addSelect('brawler.name', 'name')
@@ -44,40 +52,45 @@ export class UserBrawlersService {
       .orderBy('uBrawler.currentTrophies', 'DESC')
       .getRawMany();
 
+    const userBrawlersIds = userBrawlers.map((brawler) => brawler.brawlerID);
+    const userWithoutBrawlers = brawlers.filter(
+      (brawler) => !userBrawlersIds.includes(brawler.brawlerID)
+    );
+
     const brawlerPickRates = await this.brawlers
       .createQueryBuilder('brawler')
       .select('brawler.id', 'brawlerID')
       .addSelect(
         'ROUND(IFNULL(' +
-        'SUM(CASE WHEN uBrawlerBattle.matchType = 0 ' +
-        'THEN uBrawlerBattle.matchCount ELSE 0 END) * 100 / ' +
-        'SUM(SUM(CASE WHEN uBrawlerBattle.matchType = 0 ' +
-        'THEN uBrawlerBattle.matchCount ELSE 0 END)) OVER(), 0), 2)',
-        'trophyLeaguePickRate'
+          'SUM(CASE WHEN uBrawlerBattle.matchType = 0 ' +
+          'THEN uBrawlerBattle.matchCount ELSE 0 END) * 100 / ' +
+          'SUM(SUM(CASE WHEN uBrawlerBattle.matchType = 0 ' +
+          'THEN uBrawlerBattle.matchCount ELSE 0 END)) OVER(), 0), 2)',
+        'trophyPickRate'
       )
       .addSelect(
         'ROUND(IFNULL(' +
-        'SUM(CASE WHEN uBrawlerBattle.matchType = 0 ' +
-        'THEN uBrawlerBattle.victoriesCount ELSE 0 END) * 100 / ' +
-        'SUM(CASE WHEN uBrawlerBattle.matchType = 0 ' +
-        'THEN uBrawlerBattle.victoriesCount + uBrawlerBattle.defeatsCount ELSE 0 END), 0), 2)',
-        'trophyLeagueVictoryRate'
+          'SUM(CASE WHEN uBrawlerBattle.matchType = 0 ' +
+          'THEN uBrawlerBattle.victoriesCount ELSE 0 END) * 100 / ' +
+          'SUM(CASE WHEN uBrawlerBattle.matchType = 0 ' +
+          'THEN uBrawlerBattle.victoriesCount + uBrawlerBattle.defeatsCount ELSE 0 END), 0), 2)',
+        'trophyVictoryRate'
       )
       .addSelect(
         'ROUND(IFNULL(' +
-        'SUM(CASE WHEN uBrawlerBattle.matchType = 2 ' +
-        'THEN uBrawlerBattle.matchCount ELSE 0 END) * 100 / ' +
-        'SUM(SUM(CASE WHEN uBrawlerBattle.matchType = 2 ' +
-        'THEN uBrawlerBattle.matchCount ELSE 0 END)) OVER(), 0), 2)',
-        'powerLeaguePickRate'
+          'SUM(CASE WHEN uBrawlerBattle.matchType = 2 ' +
+          'THEN uBrawlerBattle.matchCount ELSE 0 END) * 100 / ' +
+          'SUM(SUM(CASE WHEN uBrawlerBattle.matchType = 2 ' +
+          'THEN uBrawlerBattle.matchCount ELSE 0 END)) OVER(), 0), 2)',
+        'rankedPickRate'
       )
       .addSelect(
         'ROUND(IFNULL(' +
-        'SUM(CASE WHEN uBrawlerBattle.matchType = 2 ' +
-        'THEN uBrawlerBattle.victoriesCount ELSE 0 END) * 100 / ' +
-        'SUM(CASE WHEN uBrawlerBattle.matchType = 2 ' +
-        'THEN uBrawlerBattle.victoriesCount + uBrawlerBattle.defeatsCount ELSE 0 END), 0), 2)',
-        'powerLeagueVictoryRate'
+          'SUM(CASE WHEN uBrawlerBattle.matchType = 2 ' +
+          'THEN uBrawlerBattle.victoriesCount ELSE 0 END) * 100 / ' +
+          'SUM(CASE WHEN uBrawlerBattle.matchType = 2 ' +
+          'THEN uBrawlerBattle.victoriesCount + uBrawlerBattle.defeatsCount ELSE 0 END), 0), 2)',
+        'rankedVictoryRate'
       )
       .leftJoin('brawler.userBrawlerBattles', 'uBrawlerBattle')
       .where('uBrawlerBattle.userID = :id', {
@@ -86,15 +99,15 @@ export class UserBrawlersService {
       .groupBy('brawler.id')
       .getRawMany();
 
-    const brawlers = brawlersSummary.map((b1) => {
+    const userOwnedBrawlers = userBrawlers.map((b1) => {
       const b2 = brawlerPickRates.find((b) => b.brawlerID === b1.brawlerID);
-      if(!b2) {
+      if (!b2) {
         return {
           ...b1,
-          trophyLeaguePickRate: '0.00',
-          trophyLeagueVictoryRate: '0.00',
-          powerLeaguePickRate: '0.00',
-          powerLeagueVictoryRate: '0.00'
+          trophyPickRate: '0.00',
+          trophyVictoryRate: '0.00',
+          rankedPickRate: '0.00',
+          rankedVictoryRate: '0.00'
         };
       }
       return { ...b1, ...b2 };
@@ -138,28 +151,30 @@ export class UserBrawlersService {
             x: item.x,
             y:
               parseInt(item.y) +
-              brawlers.find((brawler) => brawler.brawlerID === item.brawlerID)
-                ?.beginTrophies || 0
+                userOwnedBrawlers.find(
+                  (brawler) => brawler.brawlerID === item.brawlerID
+                )?.beginTrophies || 0
           };
         });
 
         const beginDate = new Date(season.beginDate.getTime() - 24 * 60 * 1000);
-        brawlers.map((item) => {
+        userOwnedBrawlers.map((item) => {
           graphJSON.push({
             brawlerID: item.brawlerID,
             x:
               (beginDate.getMonth() + 1).toString().padStart(2, '0') +
               '-' +
               beginDate.getDate().toString().padStart(2, '0'),
-            y: brawlers.find((brawler) => brawler.brawlerID === item.brawlerID)
-              .beginTrophies
+            y: userOwnedBrawlers.find(
+              (brawler) => brawler.brawlerID === item.brawlerID
+            ).beginTrophies
           });
         });
 
         return graphJSON.sort((a, b) => {
-          if(a.brawlerID === b.brawlerID) {
-            if(a.x < b.x) return -1;
-            if(a.x > b.x) return 1;
+          if (a.brawlerID === b.brawlerID) {
+            if (a.x < b.x) return -1;
+            if (a.x > b.x) return 1;
             return 0;
           }
           return a.brawlerID - b.brawlerID;
@@ -167,7 +182,8 @@ export class UserBrawlersService {
       });
 
     return {
-      brawlers,
+      userWithoutBrawlers: userWithoutBrawlers,
+      userOwnedBrawlers: userOwnedBrawlers,
       brawlerItems: items,
       brawlerGraphs: graph
     };

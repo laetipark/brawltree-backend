@@ -8,7 +8,8 @@ import { CrewService } from './crew.service';
 import { BattleStats } from '~/brawlers/entities/battle-stats.entity';
 import { Users } from '~/users/entities/users.entity';
 import { UserBattles } from '~/users/entities/user-battles.entity';
-import { UserFriends, UserRecords } from './entities/crew.entity';
+import { UserBrawlerBattles } from '~/users/entities/user-brawlers.entity';
+import { UserFriends } from './entities/crew.entity';
 import { MapsModule } from '~/maps/maps.module';
 
 @Module({
@@ -17,7 +18,7 @@ import { MapsModule } from '~/maps/maps.module';
       BattleStats,
       Users,
       UserBattles,
-      UserRecords,
+      UserBrawlerBattles,
       UserFriends
     ]),
     MapsModule,

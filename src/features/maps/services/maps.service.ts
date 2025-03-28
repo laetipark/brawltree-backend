@@ -9,51 +9,70 @@ import { BattleService } from '~/utils/services/battle.service';
 import { SelectMapDto, SelectMapStatsDto } from '~/maps/dto/select-map.dto';
 
 @Injectable()
-export class MapsService{
+export class MapsService {
   constructor(
     @InjectRepository(BattleStats)
-    private readonly battleStats:Repository<BattleStats>,
+    private readonly battleStats: Repository<BattleStats>,
     @InjectRepository(GameMaps)
-    private readonly maps:Repository<GameMaps>,
-    private readonly battleService:BattleService
-  ){}
+    private readonly maps: Repository<GameMaps>,
+    private readonly battleService: BattleService
+  ) {}
 
   /** 맵 ID에 대한 맵 정보 반환
-   * @param id 맵 ID */
-  async selectMap(id:string):Promise<SelectMapDto>{
-    return await this.maps
-      .createQueryBuilder('map')
-      .select('map.id', 'mapID')
-      .addSelect('map.name', 'mapName')
-      .addSelect('map.mode', 'mode')
-      .addSelect('mRotation.isTrophyLeague', 'isTrophyLeague')
-      .addSelect('mRotation.isPowerLeague', 'isPowerLeague')
-      .leftJoin('map.mapRotation', 'mRotation')
-      .where('map.id = :id', {
-        id:id
-      })
-      .limit(1)
-      .getRawOne();
+   * @param name 맵 ID */
+  async selectMap(name: string): Promise<SelectMapDto> {
+    const findMap = (data: SelectMapDto[]) => {
+      const bothTrue = data.find(
+        (item) => item.isTrophyLeague && item.isPowerLeague
+      );
+      if (bothTrue) {
+        return bothTrue;
+      }
+
+      const eitherTrue = data.find(
+        (item) => item.isTrophyLeague || item.isPowerLeague
+      );
+      if (eitherTrue) {
+        return eitherTrue;
+      }
+
+      return data[0];
+    };
+
+    return findMap(
+      await this.maps
+        .createQueryBuilder('map')
+        .select('map.id', 'mapID')
+        .addSelect('map.name', 'mapName')
+        .addSelect('map.mode', 'mode')
+        .addSelect('mRotation.isTrophyLeague', 'isTrophyLeague')
+        .addSelect('mRotation.isPowerLeague', 'isPowerLeague')
+        .leftJoin('map.mapRotation', 'mRotation')
+        .where('map.name = :name', {
+          name: name
+        })
+        .getRawMany()
+    );
   }
 
-  /** 맵 ID에 대한 전투 통계 반환
-   * @param id 맵 ID
+  /** 맵 이름에 대한 전투 통계 반환
+   * @param name 맵 ID
    * @param type 전투 타입
    * @param limit
    * @param grade 전투 등급 */
   async selectMapStats(
-    id:string,
-    type:string,
-    grade:string[],
-    limit?:number
-  ):Promise<SelectMapStatsDto[]>{
+    name: string,
+    type: string,
+    grade: string[],
+    limit?: number
+  ): Promise<SelectMapStatsDto[]> {
     const matchGrade = this.battleService.setMatchGrade(type, grade);
     const mapName =
       (await this.maps
         .createQueryBuilder('maps')
         .select('maps.name', 'name')
-        .where('maps.id = :id', {
-          id:id
+        .where('maps.name = :name', {
+          name: name
         })
         .limit(1)
         .getRawOne()) || 'Name Unknown';
@@ -62,7 +81,7 @@ export class MapsService{
       .createQueryBuilder('maps')
       .select('maps.id', 'id')
       .where('maps.name = :name', {
-        name:mapName.name
+        name: mapName.name
       })
       .getRawMany()
       .then((maps) => maps.map((map) => map.id));
@@ -81,20 +100,20 @@ export class MapsService{
       .addSelect('brawler.name', 'brawlerName')
       .leftJoin('battleStats.brawler', 'brawler')
       .where('battleStats.mapID IN (:ids)', {
-        ids:mapIDs
+        ids: mapIDs
       })
       .andWhere('battleStats.matchType = :type', {
-        type:type
+        type: type
       })
       .andWhere('battleStats.matchGrade IN (:grade)', {
-        grade:matchGrade
+        grade: matchGrade
       })
       .groupBy('battleStats.brawlerID')
       .addGroupBy('brawler.name')
       .orderBy('pickRate', 'DESC')
       .addOrderBy('victoryRate', 'DESC');
 
-    if(limit){
+    if (limit) {
       query.limit(limit);
     }
 
@@ -104,7 +123,7 @@ export class MapsService{
   /**
    * 모든 맵 목록 조회
    */
-  async selectMaps(){
+  async selectMaps() {
     const maps = await this.maps
       .createQueryBuilder('map')
       .select('MAX(map.id)', 'mapID')
@@ -117,11 +136,11 @@ export class MapsService{
     return maps.reduce((acc, map) => {
       const mode = map.mode;
 
-      if(!acc[mode]){
+      if (!acc[mode]) {
         acc[mode] = [];
       }
 
-      if(!acc[mode].find((m) => m.mapID === map.mapID)){
+      if (!acc[mode].find((m) => m.mapID === map.mapID)) {
         acc[mode].push(map);
       }
 
@@ -132,7 +151,7 @@ export class MapsService{
   /** 맵 이름에 대한 맵 정보 반환
    * @param name 맵 ID
    * @param mode 모드 이름 */
-  async selectMapByName(name:string, mode?:string):Promise<SelectMapDto>{
+  async selectMapByName(name: string, mode?: string): Promise<SelectMapDto> {
     const query = this.maps
       .createQueryBuilder('map')
       .select('map.id', 'mapID')
@@ -140,12 +159,12 @@ export class MapsService{
       .addSelect('map.mode', 'mode')
       .leftJoin('map.mapRotation', 'mRotation')
       .where('map.name = :name', {
-        name:name
+        name: name
       });
 
-    if(mode){
+    if (mode) {
       query.andWhere('map.mode = :mode', {
-        mode:mode
+        mode: mode
       });
     }
 

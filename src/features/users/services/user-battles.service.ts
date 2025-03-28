@@ -14,7 +14,7 @@ import {
   SelectRecentUserBattlesDto,
   SelectUserBattleLogsDto,
   SelectUserBattlesDto,
-  SelectUserBattlesSummaryDto,
+  SelectUserSummaryBattlesDto,
   SelectUserBrawlerBattlesDto
 } from '~/users/dto/select-user-battles.dto';
 import { SeasonDto } from '~/seasons/dto/season.dto';
@@ -38,7 +38,7 @@ export class UserBattlesService {
    * @param type 전투 타입
    * @param mode 전투 모드
    * @param season 최근 시즌 정보 */
-  async selectUserBattles(
+  async selectUserDailyBattles(
     id: string,
     type: string,
     mode: string,
@@ -47,7 +47,7 @@ export class UserBattlesService {
     const query = await this.getQuery(type, mode);
 
     // 모드별 시즌 전투 요약 통계
-    const battlesSummary = plainToInstance(SelectUserBattlesSummaryDto, [
+    const summaryBattles = plainToInstance(SelectUserSummaryBattlesDto, [
       await this.userBattles
         .createQueryBuilder('uBattle')
         .select('DATE_FORMAT(uBattle.battleTime, "%Y-%m-%d")', 'day')
@@ -94,52 +94,102 @@ export class UserBattlesService {
     ]);
 
     // 모드별 최근 브롤러 전투 요약 통계
-    const brawlersSummary = await this.userBrawlerBattles
-      .createQueryBuilder('uBrawlerBattle')
-      .select('uBrawlerBattle.brawlerID', 'brawlerID')
-      .addSelect('SUM(uBrawlerBattle.matchCount)', 'matchCount')
-      .addSelect(
-        'ROUND(SUM(uBrawlerBattle.matchCount) * 100 / SUM(SUM(uBrawlerBattle.matchCount)) OVER(), 2)',
-        'pickRate'
-      )
-      .addSelect(
-        'ROUND(SUM(uBrawlerBattle.victoriesCount) * 100 / SUM(uBrawlerBattle.victoriesCount + uBrawlerBattle.defeatsCount), 2)',
-        'victoryRate'
-      )
-      .addSelect('brawler.name', 'name')
-      .innerJoin('uBrawlerBattle.brawler', 'brawler')
-      .innerJoin('uBrawlerBattle.map', 'map')
-      .where('uBrawlerBattle.userID = :id', {
+    const dailyStatsQuery = this.userBattles
+      .createQueryBuilder('uBattles')
+      .select('DATE(uBattles.battleTime)', 'date')
+      .addSelect('COUNT(*)', 'dailyTotalCount')
+      .innerJoin(GameMaps, 'map', 'uBattles.mapID = map.id')
+      .where('uBattles.userID = :id AND uBattles.playerID = :id', {
         id: `#${id}`
       })
-      .andWhere('uBrawlerBattle.matchType IN (:type)', {
+      .andWhere('uBattles.matchType IN (:type)', {
         type: query.matchType
       })
       .andWhere('map.mode IN (:mode)', {
         mode: query.matchMode
       })
-      .groupBy('uBrawlerBattle.brawlerID')
+      .groupBy('DATE(uBattles.battleTime)');
+
+    const dailyBrawlerStats = await this.userBattles
+      .createQueryBuilder('uBattles')
+      .select('uBattles.brawlerID', 'brawlerID')
+      .addSelect('brawler.name', 'brawlerName')
+      .addSelect('DATE(uBattles.battleTime)', 'date')
+      .addSelect('COUNT(*)', 'matchCount')
+      .addSelect(
+        'SUM(CASE WHEN uBattles.gameResult = -1 THEN 1 ELSE 0 END)',
+        'victoriesCount'
+      )
+      .addSelect(
+        'SUM(CASE WHEN uBattles.gameResult = 1 THEN 1 ELSE 0 END)',
+        'defeatsCount'
+      )
+      .addSelect('dailyBattles.dailyTotalCount', 'dailyTotalCount')
+      .innerJoin(
+        `(${dailyStatsQuery.getQuery()})`,
+        'dailyBattles',
+        'dailyBattles.date = DATE(uBattles.battleTime)'
+      )
+      .innerJoin('uBattles.brawler', 'brawler')
+      .innerJoin(GameMaps, 'map', 'uBattles.mapID = map.id')
+      .where('uBattles.userID = :id AND uBattles.playerID = :id', {
+        id: `#${id}`
+      })
+      .andWhere('uBattles.matchType IN (:type)', {
+        type: query.matchType
+      })
+      .andWhere('map.mode IN (:mode)', {
+        mode: query.matchMode
+      })
+      .groupBy('DATE(uBattles.battleTime)')
+      .addGroupBy('uBattles.brawlerID')
       .addGroupBy('brawler.name')
-      .orderBy('matchCount', 'DESC')
-      .limit(5)
+      .addGroupBy('dailyBattles.dailyTotalCount')
+      .orderBy('date', 'ASC')
+      .addOrderBy('brawler.id', 'ASC')
       .getRawMany();
 
-    return { battlesSummary, brawlersSummary };
+    const groupedData = dailyBrawlerStats.reduce((acc, curr) => {
+      const date = curr.date;
+      if (!acc[date]) {
+        acc[date] = {
+          date: date,
+          brawlers: []
+        };
+      }
+
+      const pickPercentage = (curr.matchCount * 100) / curr.dailyTotalCount;
+      const victoryRate =
+        (curr.victoriesCount * 100) /
+        (Number(curr.victoriesCount) + Number(curr.defeatsCount));
+
+      acc[date].brawlers.push({
+        brawlerID: curr.brawlerID,
+        brawlerName: curr.brawlerName,
+        matchCount: curr.matchCount,
+        pickRate: parseFloat(((pickPercentage * 100) / 100).toFixed(2)),
+        victoryRate: parseFloat(victoryRate.toFixed(2))
+      });
+      return acc;
+    }, {});
+
+    const dailyBrawlers = Object.values(groupedData);
+
+    return { summaryBattles, dailyBrawlers };
   }
 
   /** 사용자 전투 상세 통계 및 전투 기록 정보 반환
    * @param id 사용자 ID
    * @param type 전투 타입
    * @param mode 전투 모드
-   * @param season 최근 시즌 정보
    * @param stack */
   async selectUserBattleLogs(
     id: string,
     type: string,
     mode: string,
-    season: SeasonDto,
     stack: number
   ): Promise<SelectUserBattleLogsDto> {
+    const season = this.seasonsService.getRecentSeason();
     const query = await this.getQuery(type, mode);
     const limit = 30 * stack;
 
@@ -178,15 +228,15 @@ export class UserBattlesService {
 
     // 시즌 사용한 브롤러 통계
     const counter = {};
-    recentUserBattles.forEach(function(item) {
+    recentUserBattles.forEach(function (item) {
       const brawlerID = item.brawlerID;
       const matchRes = item.gameResult;
 
-      if(!counter[brawlerID]) {
+      if (!counter[brawlerID]) {
         counter[brawlerID] = {};
       }
 
-      if(!counter[brawlerID][matchRes]) {
+      if (!counter[brawlerID][matchRes]) {
         counter[brawlerID][matchRes] = 1;
       } else {
         counter[brawlerID][matchRes]++;
@@ -219,18 +269,17 @@ export class UserBattlesService {
           a: {
             brawlerName: string;
             matchCount: number;
-            resultCount: number;
+            resultCount: { '-1': number; '0': number; '1': number };
             brawlerID: string;
           },
           b: {
             brawlerName: string;
             matchCount: number;
-            resultCount: number;
+            resultCount: { '-1': number; '0': number; '1': number };
             brawlerID: string;
           }
         ) => b.matchCount - a.matchCount
-      )
-      .slice(0, 6);
+      );
 
     // 전투 기록 목록
     const userBattleLogs: SelectUserBattlesDto[] = await this.userBattles
@@ -238,27 +287,27 @@ export class UserBattlesService {
       .select('uBattle.userID', 'userID')
       .addSelect(
         'JSON_OBJECT(' +
-        '"userID", uBattle.userID,' +
-        '"battleTime", uBattle.battleTime,' +
-        '"duration", uBattle.duration,' +
-        '"matchType", uBattle.matchType,' +
-        '"modeCode", uBattle.modeCode,' +
-        '"matchGrade", uBattle.matchGrade,' +
-        '"trophyChange", uBattle.trophyChange)',
+          '"userID", uBattle.userID,' +
+          '"battleTime", uBattle.battleTime,' +
+          '"duration", uBattle.duration,' +
+          '"matchType", uBattle.matchType,' +
+          '"modeCode", uBattle.modeCode,' +
+          '"matchGrade", uBattle.matchGrade,' +
+          '"trophyChange", uBattle.trophyChange)',
         'battleInfo'
       )
       .addSelect(
         'JSON_ARRAYAGG(' +
-        'JSON_OBJECT(' +
-        '"playerID", uBattle.playerID,' +
-        '"playerName", uBattle.playerName,' +
-        '"teamNumber", uBattle.teamNumber,' +
-        '"brawlerID", uBattle.brawlerID,' +
-        '"brawlerPower", uBattle.brawlerPower,' +
-        '"brawlerTrophies", uBattle.brawlerTrophies,' +
-        '"gameRank", uBattle.gameRank,' +
-        '"gameResult", uBattle.gameResult,' +
-        '"isStarPlayer", uBattle.isStarPlayer))',
+          'JSON_OBJECT(' +
+          '"playerID", uBattle.playerID,' +
+          '"playerName", uBattle.playerName,' +
+          '"teamNumber", uBattle.teamNumber,' +
+          '"brawlerID", uBattle.brawlerID,' +
+          '"brawlerPower", uBattle.brawlerPower,' +
+          '"brawlerTrophies", uBattle.brawlerTrophies,' +
+          '"gameRank", uBattle.gameRank,' +
+          '"gameResult", uBattle.gameResult,' +
+          '"isStarPlayer", uBattle.isStarPlayer))',
         'battlePlayers'
       )
       .innerJoin(GameMaps, 'map', 'uBattle.mapID = map.id')
@@ -306,11 +355,43 @@ export class UserBattlesService {
   }
 
   /** 최근 시즌 및 게임 모드 정보 반환 */
-  async getSeasonAndGameMode() {
+  async selectUserBattleModes(id: string) {
+    const modeTL = await this.userBrawlerBattles
+      .createQueryBuilder('uBrawlerBattles')
+      .select('uBrawlerBattles.mode', 'modeName')
+      .where('uBrawlerBattles.userID = :id', {
+        id: `#${id}`
+      })
+      .andWhere('uBrawlerBattles.matchType = 0')
+      .addGroupBy('uBrawlerBattles.mode')
+      .getRawMany()
+      .then((results) => {
+        const filterModeList = results.map((map) => map.modeName);
+
+        filterModeList.unshift('all');
+        return filterModeList;
+      });
+
+    const modePL = await this.userBrawlerBattles
+      .createQueryBuilder('uBrawlerBattles')
+      .select('uBrawlerBattles.mode', 'modeName')
+      .where('uBrawlerBattles.userID = :id', {
+        id: `#${id}`
+      })
+      .andWhere('uBrawlerBattles.matchType IN (2, 3)')
+      .addGroupBy('uBrawlerBattles.mode')
+      .getRawMany()
+      .then((results) => {
+        const filterModeList = results.map((map) => map.modeName);
+
+        filterModeList.unshift('all');
+        return filterModeList;
+      });
+
     return {
       season: this.seasonsService.getRecentSeason(),
-      rotationTL: await this.eventsService.selectModeTL(),
-      rotationPL: await this.eventsService.selectModePL()
+      modeTL,
+      modePL
     };
   }
 
@@ -324,13 +405,13 @@ export class UserBattlesService {
       matchMode: []
     };
 
-    if(type === '7') {
+    if (type === '7') {
       match.matchType = await this.configService.getTypeList();
     } else {
       match.matchType = [type];
     }
 
-    if(mode === 'all') {
+    if (mode === 'all') {
       match.matchMode = await this.modesService.selectModeList();
     } else {
       match.matchMode = [mode];

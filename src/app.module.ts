@@ -9,25 +9,27 @@ import { UtilsModule } from '~/utils/utils.module';
 import AppConfig from './configs/app.config';
 import DatabaseConfig from './configs/database.config';
 import { RankingsModule } from './features/rankings/rankings.module';
+import { NewsModule } from './features/news/news.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.${process.env.NODE_ENV}.env`,
-      load: [AppConfig],
+      load: [AppConfig]
     }),
     TypeOrmModule.forRootAsync({
-      useClass: DatabaseConfig,
+      useClass: DatabaseConfig
     }),
     BrawlersModule,
     MapsModule,
     UsersModule,
     CrewModule,
     RankingsModule,
-    UtilsModule,
+    NewsModule,
+    UtilsModule
   ],
   controllers: [],
-  providers: [],
+  providers: []
 })
 export class AppModule {}

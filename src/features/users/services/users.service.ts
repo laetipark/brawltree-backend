@@ -25,17 +25,18 @@ export class UsersService {
       .addSelect('uProfile.clubName', 'clubName')
       .addSelect('uProfile.currentTrophies', 'currentTrophies')
       .addSelect('uProfile.currentSoloRanked', 'currentSoloRanked')
-      // .addSelect('uProfile.currentTeamPL', 'currentTeamPL')
       .innerJoin('user.userProfile', 'uProfile')
-      .where('uProfile.name LIKE :nickname', {
-        nickname: `%${keyword}%`
+      .where('uProfile.name LIKE :keyword', {
+        keyword: `%${keyword}%`
       })
-      .orWhere('user.crewName LIKE :nickname', {
-        nickname: `%${keyword}%`
+      .orWhere('user.crewName LIKE :crewName', {
+        crewName: `%${keyword}%`
       })
       .orWhere('user.id LIKE :id', {
         id: `#${keyword}%`
       })
+      .orderBy('uProfile.currentTrophies', 'DESC')
+      .limit(50)
       .getRawMany();
   }
 
@@ -66,6 +67,7 @@ export class UsersService {
       .addSelect('user.lastBattledOn', 'lastBattledOn')
       .addSelect('user.crew', 'crew')
       .addSelect('user.crewName', 'crewName')
+      .addSelect('user.isCrew', 'isCrew')
       .addSelect('user.updatedAt', 'updatedAt')
       .addSelect('uProfile.name', 'userName')
       .addSelect('uProfile.profileIcon', 'profileIcon')
@@ -88,17 +90,17 @@ export class UsersService {
 
     try {
       // 사용자 정보 추가
-      if(!user) {
+      if (!user) {
         const res = await firstValueFrom(
           this.httpService.post(`brawlian/${id}`)
         );
-        if(res.status === 201) {
+        if (res.status === 201) {
           isResponse.insert = true;
         }
       }
 
       // 사용자 정보 갱신
-      if(
+      if (
         isResponse.insert ||
         (user &&
           (new Date(new Date(user.updatedAt).getTime() + 2 * 60 * 1000) <
@@ -108,11 +110,11 @@ export class UsersService {
         const res = await firstValueFrom(
           this.httpService.patch(`brawlian/${id}`)
         );
-        if(res.status === 200) {
+        if (res.status === 200) {
           isResponse.update = true;
         }
       }
-    } catch(error) {
+    } catch (error) {
       Logger.error(error, 'SelectUser');
     }
 

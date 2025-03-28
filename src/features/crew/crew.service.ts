@@ -3,12 +3,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
 
-import { UserFriends, UserRecords } from './entities/crew.entity';
-import { BattleStats } from '~/brawlers/entities/battle-stats.entity';
+import { UserFriends } from './entities/crew.entity';
 import { Users } from '~/users/entities/users.entity';
 import { UserProfile } from '~/users/entities/user-profile.entity';
+import { UserBrawlerBattles } from '~/users/entities/user-brawlers.entity';
 import { SelectUserFriendDto } from '~/crew/dto/select-user-friend.dto';
-import { SelectUserRecordDto } from '~/crew/dto/select-user-record.dto';
+import { SelectUserSeasonDto } from '~/crew/dto/select-user-season.dto';
 
 @Injectable()
 export class CrewService {
@@ -17,8 +17,8 @@ export class CrewService {
     private readonly users: Repository<Users>,
     @InjectRepository(UserFriends)
     private readonly userFriends: Repository<UserFriends>,
-    @InjectRepository(UserRecords)
-    private readonly userRecords: Repository<UserRecords>
+    @InjectRepository(UserBrawlerBattles)
+    private readonly uBrawlerBattles: Repository<UserBrawlerBattles>
   ) {}
 
   async selectMemberTable() {
@@ -44,37 +44,37 @@ export class CrewService {
     }, {});
   }
 
-  async selectMemberSeason(id: string) {
-    return await this.userRecords
-      .createQueryBuilder('uRecord')
-      .select('uRecord.matchType', 'matchType')
-      .addSelect('uRecord.matchGrade', 'matchGrade')
-      .addSelect('uRecord.mode', 'mode')
-      .addSelect('SUM(uRecord.matchCount)', 'matchCount')
-      .addSelect('SUM(uRecord.victoriesCount)', 'victoriesCount')
-      .addSelect('SUM(uRecord.defeatsCount)', 'defeatsCount')
+  async selectMemberSeasons(id: string): Promise<SelectUserSeasonDto[]> {
+    return await this.uBrawlerBattles
+      .createQueryBuilder('uBrawlerBattles')
+      .select('uBrawlerBattles.matchType', 'matchType')
+      .addSelect('uBrawlerBattles.matchGrade', 'matchGrade')
+      .addSelect('uBrawlerBattles.mode', 'modeName')
+      .addSelect('SUM(uBrawlerBattles.matchCount)', 'matchCount')
+      .addSelect('SUM(uBrawlerBattles.victoriesCount)', 'victoriesCount')
+      .addSelect('SUM(uBrawlerBattles.defeatsCount)', 'defeatsCount')
       .addSelect(
-        'ROUND(uRecord.victoriesCount * 100 / SUM(uRecord.victoriesCount + uRecord.defeatsCount), 2)',
+        'ROUND(SUM(uBrawlerBattles.victoriesCount) * 100 / SUM(uBrawlerBattles.victoriesCount + uBrawlerBattles.defeatsCount), 2)',
         'victoryRate'
       )
-      .where('uRecord.userID = :id', {
+      .where('uBrawlerBattles.userID = :id', {
         id: `#${id}`
       })
-      .groupBy('uRecord.matchType')
-      .addGroupBy('uRecord.matchGrade')
-      .addGroupBy('uRecord.mode')
+      .groupBy('uBrawlerBattles.matchType')
+      .addGroupBy('uBrawlerBattles.matchGrade')
+      .addGroupBy('uBrawlerBattles.mode')
       .getRawMany()
-      .then((result: SelectUserRecordDto[]) => {
-        const data = plainToInstance(SelectUserRecordDto, result);
+      .then((result: SelectUserSeasonDto[]) => {
+        const data = plainToInstance(SelectUserSeasonDto, result);
         const totalData = [];
-        data.forEach((item: SelectUserRecordDto) => {
+        data.forEach((item: SelectUserSeasonDto) => {
           const {
             matchType,
             matchCount,
             victoriesCount,
             defeatsCount
-          }: SelectUserRecordDto = item;
-          if(!totalData[matchType]) {
+          }: SelectUserSeasonDto = item;
+          if (!totalData[matchType]) {
             totalData[matchType] = {
               matchType,
               matchCount: 0,
@@ -90,15 +90,15 @@ export class CrewService {
 
         const keyData = data.reduce((result, current) => {
           const matchType = current.matchType;
-          const mode = current.mode;
+          const mode = current.modeName;
 
           // matchType에 따라 그룹화
-          if(!result[matchType]) {
+          if (!result[matchType]) {
             result[matchType] = {};
           }
 
           // mode에 따라 그룹화
-          if(!result[matchType][mode]) {
+          if (!result[matchType][mode]) {
             result[matchType][mode] = {
               mode,
               items: [],
@@ -130,7 +130,7 @@ export class CrewService {
   }
 
   async selectMemberFriends(id: string) {
-    return await this.userFriends
+    const friends = await this.userFriends
       .createQueryBuilder('uFriend')
       .select('uFriend.friendID', 'friendID')
       .addSelect('uFriend.matchType', 'matchType')
@@ -145,6 +145,7 @@ export class CrewService {
         'ROUND(uFriend.victoriesCount * 100 / SUM(uFriend.victoriesCount + uFriend.defeatsCount), 2)',
         'victoryRate'
       )
+      .addSelect('MIN(uFriend.createdAt)', 'createdAt')
       .innerJoin(Users, 'user', 'uFriend.friendID = user.id')
       .innerJoin(UserProfile, 'uProfile', 'uFriend.friendID = uProfile.userID')
       .where('uFriend.userID = :id', {
@@ -167,18 +168,19 @@ export class CrewService {
             friendName,
             matchCount,
             victoriesCount,
-            defeatsCount
+            defeatsCount,
+            createdAt
             // friendPoints,
           } = item;
-          if(!totalData[friendID]) {
+          if (!totalData[friendID]) {
             totalData[friendID] = {
               friendID,
               friendName,
               profileIcon,
               matchCount: 0,
               victoriesCount: 0,
-              defeatsCount: 0
-              // friendPoints: 0,
+              defeatsCount: 0,
+              createdAt
             };
           }
           totalData[friendID].matchCount += matchCount;
@@ -204,5 +206,18 @@ export class CrewService {
           };
         });
       });
+
+    const { friendsUpdatedAt } = await this.userFriends
+      .createQueryBuilder('uFriend')
+      .select('MAX(uFriend.updatedAt)', 'friendsUpdatedAt')
+      .where('uFriend.userID = :id', {
+        id: `#${id}`
+      })
+      .groupBy('uFriend.userID')
+      .getRawOne();
+
+    return {
+      friendList: { friends, friendsUpdatedAt }
+    };
   }
 }

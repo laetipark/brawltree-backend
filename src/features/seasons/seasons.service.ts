@@ -35,14 +35,14 @@ export class SeasonsService {
       prevSeasonMonth.getFullYear(),
       prevSeasonMonth.getMonth() + 1,
       1,
-      18,
+      18
     );
     // 다음 달의 첫째주 목요일을 찾음
     const currSeasonTime = this.convertSeasonTime(currSeasonMonth);
 
     return {
       beginDate: prevSeasonTime,
-      endDate: currSeasonTime,
+      endDate: currSeasonTime
     };
   }
 }

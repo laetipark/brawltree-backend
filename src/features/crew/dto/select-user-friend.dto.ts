@@ -1,4 +1,4 @@
-import { IsNumber, IsString } from 'class-validator';
+import { IsDate, IsNumber, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class SelectUserFriendDto {
@@ -41,4 +41,8 @@ export class SelectUserFriendDto {
   @IsNumber()
   @Type(() => Number)
   friendPoints!: number;
+
+  @IsDate()
+  @Type(() => Date)
+  createdAt!: Date;
 }

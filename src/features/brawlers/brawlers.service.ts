@@ -58,7 +58,7 @@ export class BrawlersService {
         .groupBy('bs.brawlerID')
         .orderBy('trophyPickRate', 'DESC')
         .addOrderBy('trophyVictoryRate', 'DESC')
-        .limit(10)
+        .limit(12)
         .getRawMany(),
       await this.brawlerStats
         .createQueryBuilder('bs')
@@ -78,7 +78,7 @@ export class BrawlersService {
         .groupBy('bs.brawlerID')
         .orderBy('rankedPickRate', 'DESC')
         .addOrderBy('rankedVictoryRate', 'DESC')
-        .limit(10)
+        .limit(12)
         .getRawMany()
     ];
   }

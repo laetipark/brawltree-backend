@@ -14,6 +14,9 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "paths": {
+      "~/common/*": [
+        "./src/common/*"
+      ],
       "~/configs/*": [
         "./src/configs/*"
       ],

@@ -1,7 +1,7 @@
 import { IsNumber, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class SelectUserRecordDto {
+export class SelectUserSeasonDto {
   @IsNumber()
   @Type(() => Number)
   matchType!: number;
@@ -11,7 +11,7 @@ export class SelectUserRecordDto {
   matchGrade!: number;
 
   @IsString()
-  mode!: string;
+  modeName!: string;
 
   @IsNumber()
   @Type(() => Number)

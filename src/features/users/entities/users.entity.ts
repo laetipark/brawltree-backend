@@ -35,6 +35,12 @@ export class Users extends SoftDeleteEntity {
   crewName: string;
 
   @Column({
+    name: 'is_crew',
+    default: false
+  })
+  isCrew: boolean;
+
+  @Column({
     name: 'is_cron_item',
     default: false
   })

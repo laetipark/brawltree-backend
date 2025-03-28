@@ -1,7 +1,13 @@
-import { IsBoolean, IsDateString, IsNumber, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsDateString,
+  IsNumber,
+  IsObject,
+  IsString
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class SelectUserBattlesSummaryDto {
+export class SelectUserSummaryBattlesDto {
   @IsString()
   day: string;
 
@@ -55,8 +61,8 @@ export class SelectUserBrawlerBattlesDto {
   @IsNumber()
   matchCount: number;
 
-  @IsNumber()
-  resultCount: number;
+  @IsObject()
+  resultCount: { '-1': number; '0': number; '1': number };
 
   @IsString()
   brawlerID: string;

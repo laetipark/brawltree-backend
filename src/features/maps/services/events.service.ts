@@ -5,17 +5,12 @@ import { Repository } from 'typeorm';
 import { GameMaps } from '../entities/maps.entity';
 import { GameMapRotation } from '~/maps/entities/map-rotation.entity';
 import { GameEvents } from '../entities/events.entity';
-import { GameModes } from '~/maps/entities/modes.entity';
-import { AppConfigService } from '~/utils/services/app-config.service';
 
 @Injectable()
 export class EventsService {
   constructor(
     @InjectRepository(GameMapRotation)
-    private readonly mapRotation: Repository<GameMapRotation>,
-    @InjectRepository(GameModes)
-    private readonly gameModes: Repository<GameModes>,
-    private readonly configService: AppConfigService,
+    private readonly mapRotation: Repository<GameMapRotation>
   ) {}
 
   /** 트로피 리그 모드 반환 */
@@ -75,7 +70,7 @@ export class EventsService {
       })
       .andWhere('mRotation.isTrophyLeague = TRUE')
       .andWhere('e.startTime <= :time AND e.endTime >= :time', {
-        time: new Date(),
+        time: new Date()
       })
       .orderBy('e.id', 'ASC')
       .addOrderBy('e.startTime', 'DESC')
@@ -107,23 +102,28 @@ export class EventsService {
       })
       .andWhere('mRotation.isTrophyLeague = TRUE')
       .orWhere('e.startTime > :time', {
-        time: new Date(),
+        time: new Date()
       })
       .orderBy('e.id', 'ASC')
       .addOrderBy('e.startTime', 'DESC')
       .getRawMany();
   }
 
-  /** 파워 리그 맵 목록 반환 */
+  /** 경쟁전 맵 목록 반환 */
   async findRotationPL(): Promise<GameMaps[]> {
-    return await this.mapRotation
-      .createQueryBuilder('mRotation')
-      .select('map.id', 'mapID')
-      .addSelect('map.mode', 'mode')
-      .addSelect('map.name', 'mapName')
-      .innerJoin('mRotation.map', 'map')
-      .where('mRotation.isPowerLeague = TRUE')
-      .orderBy('map.mode', 'ASC')
-      .getRawMany();
+    return (
+      await this.mapRotation
+        .createQueryBuilder('mRotation')
+        .select('map.id', 'mapID')
+        .addSelect('map.mode', 'mode')
+        .addSelect('map.name', 'mapName')
+        .innerJoin('mRotation.map', 'map')
+        .where('mRotation.isPowerLeague = TRUE')
+        .orderBy('map.mode', 'ASC')
+        .getRawMany()
+    ).filter(
+      (value, index, self) =>
+        index === self.findIndex((t) => t.mapName === value.mapName)
+    );
   }
 }

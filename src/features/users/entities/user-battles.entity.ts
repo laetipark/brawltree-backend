@@ -1,9 +1,20 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryColumn
+} from 'typeorm';
 import { Brawlers } from '~/brawlers/entities/brawlers.entity';
 import { Users } from '~/users/entities/users.entity';
 import { BaseEntity } from '~/database/entities/base.entity';
 
 @Entity({ name: 'user_battles' })
+@Index(['userID', 'playerID', 'brawlerID', 'battleTime'], { unique: true })
+@Index(['userID', 'playerID', 'battleTime'])
+@Index(['userID', 'playerID', 'battleTime', 'matchType', 'mapID'])
+@Index(['userID', 'playerID', 'brawlerID', 'battleTime', 'matchType', 'mapID'])
 export class UserBattles extends BaseEntity {
   @PrimaryColumn({
     name: 'user_id',
