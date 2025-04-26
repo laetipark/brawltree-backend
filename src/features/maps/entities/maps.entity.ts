@@ -6,19 +6,19 @@ import { UserBrawlerBattles } from '~/users/entities/user-brawlers.entity';
 @Entity({ name: 'game_maps' })
 export class GameMaps extends BaseEntity {
   @PrimaryColumn({
-    length: 8,
+    length: 8
   })
   id: string;
 
   @Column({
     type: 'varchar',
-    length: 12,
+    length: 12
   })
   mode: string;
 
   @Column({
     type: 'varchar',
-    length: 30,
+    length: 30
   })
   name: string;
 
@@ -27,7 +27,7 @@ export class GameMaps extends BaseEntity {
 
   @OneToMany(
     () => UserBrawlerBattles,
-    (userBrawlerBattle) => userBrawlerBattle.map,
+    (userBrawlerBattle) => userBrawlerBattle.map
   )
   userBrawlerBattles: UserBrawlerBattles[];
 }

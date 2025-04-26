@@ -4,7 +4,7 @@ import {
   JoinColumn,
   OneToMany,
   OneToOne,
-  PrimaryColumn,
+  PrimaryColumn
 } from 'typeorm';
 import { GameMaps } from '~/maps/entities/maps.entity';
 import { GameEvents } from './events.entity';
@@ -13,17 +13,17 @@ import { GameEvents } from './events.entity';
 export class GameMapRotation {
   @PrimaryColumn({
     name: 'map_id',
-    length: 8,
+    length: 8
   })
   mapID: string;
 
   @Column({
-    name: 'is_trophy_league',
+    name: 'is_trophy_league'
   })
   isTrophyLeague: boolean;
 
   @Column({
-    name: 'is_power_league',
+    name: 'is_power_league'
   })
   isPowerLeague: boolean;
 

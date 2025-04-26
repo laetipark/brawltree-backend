@@ -4,7 +4,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
-  PrimaryGeneratedColumn,
+  PrimaryGeneratedColumn
 } from 'typeorm';
 import { GameMapRotation } from '~/maps/entities/map-rotation.entity';
 
@@ -13,30 +13,30 @@ export class GameEvents {
   @PrimaryGeneratedColumn({
     name: 'id',
     type: 'tinyint',
-    unsigned: true,
+    unsigned: true
   })
   id: number;
 
   @PrimaryColumn({
-    name: 'start_time',
+    name: 'start_time'
   })
   startTime: Date;
 
   @Column({
-    name: 'end_time',
+    name: 'end_time'
   })
   endTime: Date;
 
   @Column({
     name: 'map_id',
-    length: 8,
+    length: 8
   })
   mapID: string;
 
   @Column({
     type: 'varchar',
     length: 50,
-    nullable: true,
+    nullable: true
   })
   modifiers: string;
 

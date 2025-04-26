@@ -6,13 +6,13 @@ export class GameModes extends BaseEntity {
   @PrimaryColumn({
     name: 'mode_name',
     type: 'varchar',
-    length: 30,
+    length: 30
   })
   modeName: string;
 
   @Column({
     name: 'mode_type',
-    type: 'tinyint',
+    type: 'tinyint'
   })
   modeType: number;
 }

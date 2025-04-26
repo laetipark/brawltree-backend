@@ -8,12 +8,12 @@ async function bootstrap() {
   app.enableCors({
     origin: ['https://brawltree.me', 'http://localhost:3323'],
     methods: 'GET, POST, PATCH',
-    credentials: true,
+    credentials: true
   });
   app.useGlobalPipes(
     new ValidationPipe({
-      transform: true,
-    }),
+      transform: true
+    })
   );
   const configService = app.get(ConfigService);
   const port = configService.get<number>('HOST_PORT', 3000);

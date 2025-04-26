@@ -3,6 +3,6 @@ import { SeasonsService } from '~/seasons/seasons.service';
 
 @Module({
   providers: [SeasonsService],
-  exports: [SeasonsService],
+  exports: [SeasonsService]
 })
 export class SeasonsModule {}

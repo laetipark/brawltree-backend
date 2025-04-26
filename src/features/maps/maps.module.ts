@@ -20,12 +20,12 @@ import { ModesService } from '~/maps/services/modes.service';
       GameMaps,
       GameMapRotation,
       GameModes,
-      GameEvents,
+      GameEvents
     ]),
-    UtilsModule,
+    UtilsModule
   ],
   controllers: [MapsController, EventsController],
   providers: [MapsService, EventsService, ModesService],
-  exports: [EventsService, ModesService],
+  exports: [EventsService, ModesService]
 })
 export class MapsModule {}

@@ -8,7 +8,7 @@ import { GameModes } from '~/maps/entities/modes.entity';
 export class ModesService {
   constructor(
     @InjectRepository(GameModes)
-    private readonly gameModes: Repository<GameModes>,
+    private readonly gameModes: Repository<GameModes>
   ) {}
 
   /** 모드 리스트 반환 */

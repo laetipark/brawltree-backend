@@ -5,7 +5,7 @@ export abstract class BaseEntity {
     name: 'created_at',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
-    select: false,
+    select: false
   })
   createdAt: Date;
 
@@ -14,7 +14,7 @@ export abstract class BaseEntity {
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
-    select: false,
+    select: false
   })
   updatedAt: Date;
 }
@@ -24,7 +24,7 @@ export abstract class SoftDeleteEntity extends BaseEntity {
     name: 'deleted_at',
     type: 'timestamp',
     default: () => null,
-    select: false,
+    select: false
   })
   deletedAt: Date;
 }
